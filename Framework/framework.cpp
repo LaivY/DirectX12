@@ -90,11 +90,11 @@ void GameFramework::OnKeyboardEvent()
 	}
 	if (GetAsyncKeyState('A') & 0x8000)
 	{
-		m_camera->Move(Vector3::Mul(m_camera->GetU(), 5.0f * -m_timer.GetDeltaTime()));
+		m_camera->Move(Vector3::Mul(m_camera->GetU(), -5.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('S') & 0x8000)
 	{
-		m_camera->Move(Vector3::Mul(m_camera->GetN(), 5.0f * -m_timer.GetDeltaTime()));
+		m_camera->Move(Vector3::Mul(m_camera->GetN(), -5.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
@@ -106,7 +106,7 @@ void GameFramework::OnKeyboardEvent()
 	}
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
 	{
-		m_camera->Move(Vector3::Mul(m_camera->GetV(), 5.0f * -m_timer.GetDeltaTime()));
+		m_camera->Move(Vector3::Mul(m_camera->GetV(), -5.0f * m_timer.GetDeltaTime()));
 	}
 }
 
@@ -201,16 +201,6 @@ void GameFramework::CreateRenderTargetView()
 
 void GameFramework::CreateDepthStencilView()
 {
-	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
-	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	depthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	D3D12_CLEAR_VALUE clearValue{};
-	clearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	clearValue.DepthStencil.Depth = 1.0f;
-	clearValue.DepthStencil.Stencil = 0;
-
 	D3D12_RESOURCE_DESC resourceDesc{};
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	resourceDesc.Alignment = 0;
@@ -224,6 +214,11 @@ void GameFramework::CreateDepthStencilView()
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
+	D3D12_CLEAR_VALUE clearValue{};
+	clearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	clearValue.DepthStencil.Depth = 1.0f;
+	clearValue.DepthStencil.Stencil = 0;
+
 	DX::ThrowIfFailed(m_device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
@@ -232,6 +227,10 @@ void GameFramework::CreateDepthStencilView()
 		&clearValue,
 		IID_PPV_ARGS(&m_depthStencil)));
 
+	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+	depthStencilViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	depthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
 	m_device->CreateDepthStencilView(m_depthStencil.Get(), &depthStencilViewDesc, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
@@ -246,7 +245,7 @@ void GameFramework::CreateRootSignature()
 	rootParameter[1].InitAsConstants(32, 1, 0, D3D12_SHADER_VISIBILITY_ALL);
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(2, rootParameter, 0, NULL, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	rootSignatureDesc.Init(_countof(rootParameter), rootParameter, 0, NULL, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> signature, error;
 	DX::ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
@@ -288,7 +287,6 @@ void GameFramework::CreatePipelineStateObject()
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	psoDesc.SampleDesc.Count = 1;
-	psoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 	DX::ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
@@ -392,15 +390,15 @@ void GameFramework::LoadAssets()
 	m_gameObjects.push_back(move(obj));
 
 	// 플레이어 생성
-	//m_player = make_shared<Player>();
-	//m_player->SetMesh(Mesh(m_device, m_commandList, vertices, indices));
+	m_player = make_shared<Player>();
+	m_player->SetMesh(Mesh(m_device, m_commandList, vertices, indices));
 
 	// 카메라 생성
 	m_camera = make_unique<Camera>();
 	m_camera->SetEye(XMFLOAT3{ 0.0f, 0.0f, 0.0f });
 	m_camera->SetAt(XMFLOAT3{ 0.0f, 0.0f, 1.0f });
 	m_camera->SetUp(XMFLOAT3{ 0.0f, 1.0f, 0.0f });
-	//m_camera->SetPlayer(m_player);
+	m_camera->SetPlayer(m_player);
 
 	XMFLOAT4X4 projMatrix;
 	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 1.0f, 1000.0f));
@@ -422,8 +420,8 @@ void GameFramework::PopulateCommandList()
 	// Indicate that the back buffer will be used as a render target
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle{ m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvDescriptorSize };
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle{ m_dsvHeap->GetCPUDescriptorHandleForHeapStart() };
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
 
 	// 렌더타겟, 깊이스텐실 버퍼 지우기
