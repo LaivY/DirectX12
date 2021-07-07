@@ -347,6 +347,9 @@ void GameFramework::LoadPipeline()
 
 void GameFramework::LoadAssets()
 {
+	// 명령을 추가할 것이기 때문에 Reset
+	m_commandList->Reset(m_commandAllocator.Get(), NULL);
+
 	// 게임오브젝트(큐브) 생성
 	vector<Vertex> vertices;
 	vertices.emplace_back(XMFLOAT3{ -0.5f, +0.5f, +0.5f }, XMFLOAT4{ 1.0f, 0.0f, 0.0f, 1.0f });
@@ -404,6 +407,12 @@ void GameFramework::LoadAssets()
 	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 1.0f, 1000.0f));
 	m_camera->SetProjMatrix(projMatrix);
 
+	// 명령 제출
+	m_commandList->Close();
+	ID3D12CommandList* ppCommandList[] = { m_commandList.Get() };
+	m_commandQueue->ExecuteCommandLists(_countof(ppCommandList), ppCommandList);
+
+	// 명령들이 완료될 때까지 대기
 	WaitForPreviousFrame();
 }
 

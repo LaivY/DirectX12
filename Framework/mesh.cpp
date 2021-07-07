@@ -29,12 +29,6 @@ Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsComman
 	vertextData.SlicePitch = vertextData.RowPitch;
 	UpdateSubresources<1>(commandList.Get(), m_vertexBuffer.Get(), m_vertexUploadBuffer.Get(), 0, 0, 1, &vertextData);
 
-	//CD3DX12_RANGE readRange{ 0, 0 };
-	//DX::ThrowIfFailed(m_vertexUploadBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pDataBegin)));
-	//memcpy(pDataBegin, vertices.data(), vertexBufferSize);
-	//m_vertexUploadBuffer->Unmap(0, NULL);
-	//commandList->CopyResource(m_vertexBuffer.Get(), m_vertexUploadBuffer.Get());
-
 	// 정점 버퍼 상태 변경
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_vertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
