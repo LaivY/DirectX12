@@ -9,24 +9,29 @@ cbuffer cbCamera : register(b1)
     matrix projMatrix;
 }
 
-struct PSInput
+struct VSInput
+{
+    float4 position : POSITION;
+    float4 color : COLOR;
+};
+
+struct VSOutput
 {
     float4 position : SV_POSITION;
     float4 color : COLOR;
 };
 
-PSInput VSMain(float4 position : POSITION, float4 color : COLOR)
-{
-    PSInput result;
-    position = mul(position, worldMatrix);
-    position = mul(position, viewMatrix);
-    position = mul(position, projMatrix);
-    result.position = position;
-    result.color = color;
+VSOutput VSMain(VSInput input)
+{   
+    VSOutput result;
+    result.position = mul(input.position, worldMatrix);
+    result.position = mul(result.position, viewMatrix);
+    result.position = mul(result.position, projMatrix);
+    result.color = input.color;
     return result;
 }
 
-float4 PSMain(PSInput input) : SV_TARGET
-{
+float4 PSMain(VSOutput input) : SV_TARGET
+{   
     return input.color;
 }

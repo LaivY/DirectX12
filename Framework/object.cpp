@@ -5,6 +5,11 @@ GameObject::GameObject()
 	XMStoreFloat4x4(&m_worldMatrix, XMMatrixIdentity());
 }
 
+GameObject::~GameObject()
+{
+	m_Mesh->ReleaseUploadBuffer();
+}
+
 void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
 	// 셰이더 월드 변환 행렬 최신화

@@ -8,6 +8,7 @@ public:
 	~Mesh() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const;
+	void ReleaseUploadBuffer();
 
 private:
 	UINT						m_nVertices;

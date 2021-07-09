@@ -78,3 +78,9 @@ void Mesh::Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
 	m_commandList->DrawIndexedInstanced(m_nIndices, 1, 0, 0, 0);
 }
+
+void Mesh::ReleaseUploadBuffer()
+{
+	if (m_vertexUploadBuffer) m_vertexUploadBuffer.Reset();
+	if (m_indexUploadBuffer) m_indexUploadBuffer.Reset();
+}
