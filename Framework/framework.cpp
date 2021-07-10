@@ -6,7 +6,7 @@ GameFramework::GameFramework(UINT width, UINT height) :
 	m_width{ width },
 	m_height{ height },
 	m_frameIndex{ 0 },
-	m_viewport{ 0.0f, 0.0f, static_cast<FLOAT>(width), static_cast<FLOAT>(height) },
+	m_viewport{ 0.0f, 0.0f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.0f, 1.0f },
 	m_scissorRect{ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) },
 	m_rtvDescriptorSize{ 0 }
 {
@@ -162,7 +162,7 @@ void GameFramework::CreateSwapChain(const ComPtr<IDXGIFactory4>& factory)
 	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH; // 전체화면으로 전환할 때 적합한 디스플레이 모드를 선택
 
 	ComPtr<IDXGISwapChain> swapChain;
-	factory->CreateSwapChain(m_commandQueue.Get(), &swapChainDesc, &swapChain);
+	DX::ThrowIfFailed(factory->CreateSwapChain(m_commandQueue.Get(), &swapChainDesc, &swapChain));
 	DX::ThrowIfFailed(swapChain.As(&m_swapChain));
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
@@ -174,7 +174,7 @@ void GameFramework::CreateRtvDsvDescriptorHeap()
 	rtvHeapDesc.NumDescriptors = FrameCount;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	rtvHeapDesc.NodeMask = 0;
+	rtvHeapDesc.NodeMask = NULL;
 	DX::ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
 	m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -183,7 +183,7 @@ void GameFramework::CreateRtvDsvDescriptorHeap()
 	dsvHeapDesc.NumDescriptors = 1;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	dsvHeapDesc.NodeMask = 0;
+	dsvHeapDesc.NodeMask = NULL;
 	DX::ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
 }
 
@@ -403,7 +403,7 @@ void GameFramework::LoadAssets()
 	m_camera->SetPlayer(m_player);
 
 	XMFLOAT4X4 projMatrix;
-	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 1.0f, 1000.0f));
+	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 0.1f, 1000.0f));
 	m_camera->SetProjMatrix(projMatrix);
 
 	// 명령 제출
