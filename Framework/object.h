@@ -8,8 +8,10 @@ public:
 	GameObject();
 	~GameObject();
 
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
-	void Update() { };
+	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+	virtual void Update() { };
+	void Move(const XMFLOAT3& shift);
+	void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
 	void SetMesh(const Mesh& pMesh);
 	XMFLOAT3 GetPosition() const;
@@ -19,5 +21,9 @@ public:
 
 protected:
 	XMFLOAT4X4			m_worldMatrix;
+	FLOAT				m_roll;
+	FLOAT				m_pitch;
+	FLOAT				m_yaw;
+
 	unique_ptr<Mesh>	m_Mesh;
 };

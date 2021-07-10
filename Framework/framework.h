@@ -11,7 +11,6 @@ public:
 	~GameFramework();
 
 	void GameLoop();
-
 	void OnInit(HINSTANCE hInstance, HWND hWnd);
 	void OnUpdate();
 	void OnRender();

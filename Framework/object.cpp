@@ -21,6 +21,17 @@ void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) co
 	if (m_Mesh) m_Mesh->Render(commandList);
 }
 
+void GameObject::Move(const XMFLOAT3& shift)
+{
+	XMFLOAT3 pos{ GetPosition() };
+	SetPosition(Vector3::Add(pos, shift));
+}
+
+void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
+{
+
+}
+
 void GameObject::SetMesh(const Mesh& mesh)
 {
 	if (m_Mesh) m_Mesh.reset();

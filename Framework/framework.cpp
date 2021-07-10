@@ -85,7 +85,7 @@ void GameFramework::OnKeyboardEvent()
 {
 	if (GetAsyncKeyState('W') & 0x8000)
 	{
-		m_camera->Move(Vector3::Mul(m_camera->GetN(), 5.0f * m_timer.GetDeltaTime()));
+		m_player->Move(Vector3::Mul(m_camera->GetN(), 5.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('A') & 0x8000)
 	{
