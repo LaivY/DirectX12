@@ -7,6 +7,7 @@
 #include <windows.h>
 
 // C/C++
+#include <algorithm>
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
@@ -73,16 +74,18 @@ namespace Vector3
         XMStoreFloat3(&result, XMVector3Normalize(XMLoadFloat3(&a)));
         return result;
     }
+    inline FLOAT Length(const XMFLOAT3& a)
+    {
+        XMFLOAT3 result;
+        XMVECTOR v{ XMVector3Length(XMLoadFloat3(&a)) };
+        XMStoreFloat3(&result, v);
+        return result.x;
+    }
 }
 
 struct Vertex
 {
-    Vertex(const XMFLOAT3& p, const XMFLOAT4& c)
-    {
-        position = p;
-        color = c;
-    }
-
+    Vertex(const XMFLOAT3& p, const XMFLOAT4& c) : position{ p }, color{ c } { }
     XMFLOAT3 position;
     XMFLOAT4 color;
 };

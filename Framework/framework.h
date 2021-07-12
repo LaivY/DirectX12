@@ -78,5 +78,5 @@ private:
 	// GameObjects
 	vector<unique_ptr<GameObject>>		m_gameObjects;
 	shared_ptr<Player>					m_player;
-	unique_ptr<Camera>					m_camera;
+	shared_ptr<Camera>					m_camera;
 };

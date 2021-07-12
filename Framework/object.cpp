@@ -1,6 +1,6 @@
 #include "object.h"
 
-GameObject::GameObject()
+GameObject::GameObject() : m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }
 {
 	XMStoreFloat4x4(&m_worldMatrix, XMMatrixIdentity());
 }
@@ -23,8 +23,7 @@ void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) co
 
 void GameObject::Move(const XMFLOAT3& shift)
 {
-	XMFLOAT3 pos{ GetPosition() };
-	SetPosition(Vector3::Add(pos, shift));
+	SetPosition(Vector3::Add(GetPosition(), shift));
 }
 
 void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)

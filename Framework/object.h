@@ -10,8 +10,8 @@ public:
 
 	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	virtual void Update() { };
-	void Move(const XMFLOAT3& shift);
-	void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+	virtual void Move(const XMFLOAT3& shift);
+	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
 	void SetMesh(const Mesh& pMesh);
 	XMFLOAT3 GetPosition() const;

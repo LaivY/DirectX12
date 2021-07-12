@@ -3,13 +3,13 @@
 Camera::Camera() :
 	m_eye{ 0.0f, 0.0f, 0.0f }, m_at{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
 	m_u{ 1.0f, 0.0f, 0.0f }, m_v{ 0.0f, 1.0f, 0.0f }, m_n{ 0.0f, 0.0f, 1.0f },
-	m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_delay{ 0.0f }, m_offset{ 0.0f, 0.0f, 0.0f }
+	m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_delay{ 0.0f }
 {
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&m_projMatrix, XMMatrixIdentity());
 }
 
-void Camera::Update(const ComPtr<ID3D12GraphicsCommandList>& commandList)
+void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
 	// 카메라 뷰 변환 행렬 최신화
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_at)), XMLoadFloat3(&m_up)));
@@ -84,4 +84,56 @@ void Camera::SetPlayer(const shared_ptr<Player>& player)
 {
 	if (m_player) m_player.reset();
 	m_player = player;
+	SetEye(m_player->GetPosition());
+}
+
+ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_offset{ 0.0f, 1.0f, -4.0f }, m_delay{ 0.1f }
+{
+
+}
+
+void ThirdPersonCamera::UpdatePosition(FLOAT deltaTime)
+{
+	XMFLOAT3 destination{ Vector3::Add(m_player->GetPosition(), m_offset) };
+	XMFLOAT3 direction{ Vector3::Sub(destination, GetEye()) };
+	XMFLOAT3 shift{ Vector3::Mul(direction, deltaTime * 1 / m_delay) };
+	SetEye(Vector3::Add(GetEye(), shift));
+}
+
+void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
+{
+	if (roll != 0.0f)
+	{
+		XMMATRIX rotate{ XMMatrixIdentity() };
+		if (m_roll + roll > MAX_ROLL)
+		{
+			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MAX_ROLL - m_roll));
+			m_roll = MAX_ROLL;
+		}
+		else if (m_roll + roll < MIN_ROLL)
+		{
+			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MIN_ROLL - m_roll));
+			m_roll = MIN_ROLL;
+		}
+		else
+		{
+			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(roll));
+			m_roll += roll;
+		}
+		XMStoreFloat3(&m_at, XMVector3TransformNormal(XMLoadFloat3(&m_at), rotate));
+		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
+	}
+	if (pitch != 0.0f)
+	{
+		m_pitch += pitch;
+		XMFLOAT3 yAxis{ 0.0f, 1.0f, 0.0f };
+		XMMATRIX rotate{ XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(pitch)) };
+		XMStoreFloat3(&m_at, XMVector3TransformNormal(XMLoadFloat3(&m_at), rotate));
+		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
+	}
+	if (yaw != 0.0f)
+	{
+		// z축으로는 회전할 수 없음
+	}
+	UpdateLocalAxis();
 }

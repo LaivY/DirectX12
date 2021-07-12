@@ -7,13 +7,12 @@ public:
 	Timer();
 	~Timer() = default;
 
-	void Start();
-	void End();
+	void Tick();
 	FLOAT GetDeltaTime() const { return m_deltaTime; }
+	FLOAT GetFPS() const { return 1.0f / m_deltaTime; }
 
 private:
-	LARGE_INTEGER	m_start;
-	LARGE_INTEGER	m_end;
-	LARGE_INTEGER	m_timer;
+	LARGE_INTEGER	m_tick;
+	LARGE_INTEGER	m_frequency;
 	FLOAT			m_deltaTime;
 };

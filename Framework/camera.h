@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "player.h"
 
-#define MAX_ROLL +10
+#define MAX_ROLL +20
 #define MIN_ROLL -10
 
 class Camera
@@ -11,10 +11,12 @@ public:
 	Camera();
 	~Camera() = default;
 
-	void Update(const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
 	void UpdateLocalAxis();
+	virtual void UpdatePosition(FLOAT deltaTime) { };
+
 	void Move(const XMFLOAT3& shift);
-	void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
 	XMFLOAT4X4 GetViewMatrix() const { return m_viewMatrix; }
 	XMFLOAT4X4 GetProjMatrix() const { return m_projMatrix; }
@@ -32,13 +34,10 @@ public:
 	XMFLOAT3 GetV() const { return m_v; }
 	XMFLOAT3 GetN() const { return m_n; }
 
-	Player* GetPlayer() const { return m_player.get(); }
+	shared_ptr<Player> GetPlayer() const { return m_player; }
 	void SetPlayer(const shared_ptr<Player>& player);
 
-	XMFLOAT3 GetOffset() const { return m_offset; }
-	void SetOffset(const XMFLOAT3& offset) { m_offset = offset; }
-
-private:
+protected:
 	// 뷰, 투영 변환 행렬
 	XMFLOAT4X4			m_viewMatrix;
 	XMFLOAT4X4			m_projMatrix;
@@ -61,7 +60,24 @@ private:
 	// 움직임 딜레이
 	FLOAT				m_delay;
 
-	// 플레이어, 오프셋
+	// 플레이어
 	shared_ptr<Player>	m_player;
-	XMFLOAT3			m_offset;
+};
+
+class ThirdPersonCamera : public Camera
+{
+public:
+	ThirdPersonCamera();
+	~ThirdPersonCamera() = default;
+
+	virtual void UpdatePosition(FLOAT deltaTime);
+	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+
+	XMFLOAT3 GetOffset() const { return m_offset; }
+	void SetOffset(const XMFLOAT3& offset) { m_offset = offset; }
+	void SetDelay(FLOAT delay) { m_delay = delay; }
+
+private:
+	XMFLOAT3	m_offset;
+	FLOAT		m_delay;
 };
