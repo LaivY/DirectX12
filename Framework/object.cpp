@@ -1,6 +1,6 @@
 #include "object.h"
 
-GameObject::GameObject() : m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }
+GameObject::GameObject() : m_right{ 1.0f, 0.0f, 0.0f }, m_up{ 0.0f, 1.0f, 0.0f }, m_front{ 0.0f, 0.0f, 1.0f }, m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }
 {
 	XMStoreFloat4x4(&m_worldMatrix, XMMatrixIdentity());
 }
@@ -28,7 +28,15 @@ void GameObject::Move(const XMFLOAT3& shift)
 
 void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
+	// 회전
+	XMMATRIX rotate{ XMMatrixRotationRollPitchYaw(XMConvertToRadians(roll), XMConvertToRadians(pitch), XMConvertToRadians(yaw)) };
+	XMMATRIX worldMatrix{ rotate * XMLoadFloat4x4(&m_worldMatrix) };
+	XMStoreFloat4x4(&m_worldMatrix, worldMatrix);
 
+	// 로컬 x,y,z축 최신화
+	XMStoreFloat3(&m_right, XMVector3TransformNormal(XMLoadFloat3(&m_right), rotate));
+	XMStoreFloat3(&m_up, XMVector3TransformNormal(XMLoadFloat3(&m_up), rotate));
+	XMStoreFloat3(&m_front, XMVector3TransformNormal(XMLoadFloat3(&m_front), rotate));
 }
 
 void GameObject::SetMesh(const Mesh& mesh)

@@ -1,7 +1,7 @@
 #include "camera.h"
 
 Camera::Camera() :
-	m_eye{ 0.0f, 0.0f, 0.0f }, m_at{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
+	m_eye{ 0.0f, 0.0f, 0.0f }, m_look{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
 	m_u{ 1.0f, 0.0f, 0.0f }, m_v{ 0.0f, 1.0f, 0.0f }, m_n{ 0.0f, 0.0f, 1.0f },
 	m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_delay{ 0.0f }
 {
@@ -12,7 +12,7 @@ Camera::Camera() :
 void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
 	// 카메라 뷰 변환 행렬 최신화
-	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_at)), XMLoadFloat3(&m_up)));
+	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_look)), XMLoadFloat3(&m_up)));
 	
 	// DIRECTX는 행우선(row-major), HLSL는 열우선(column-major)
 	// 행렬이 셰이더로 넘어갈 때 자동으로 전치 행렬로 변환된다.
@@ -28,7 +28,7 @@ void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comma
 void Camera::UpdateLocalAxis()
 {
 	// 로컬 z축
-	m_n = Vector3::Normalize(m_at);
+	m_n = Vector3::Normalize(m_look);
 
 	// 로컬 x축
 	m_u = Vector3::Normalize(Vector3::Cross(m_up, m_n));
@@ -63,7 +63,7 @@ void Camera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(roll));
 			m_roll += roll;
 		}
-		XMStoreFloat3(&m_at, XMVector3TransformNormal(XMLoadFloat3(&m_at), rotate));
+		XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
 	}
 	if (pitch != 0.0f)
 	{
@@ -71,7 +71,7 @@ void Camera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 		m_pitch += pitch;
 
 		XMMATRIX rotate{ XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(pitch)) };
-		XMStoreFloat3(&m_at, XMVector3TransformNormal(XMLoadFloat3(&m_at), rotate));
+		XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
 	}
 	if (yaw != 0.0f)
 	{
@@ -87,7 +87,9 @@ void Camera::SetPlayer(const shared_ptr<Player>& player)
 	SetEye(m_player->GetPosition());
 }
 
-ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_offset{ 0.0f, 1.0f, -4.0f }, m_delay{ 0.1f }
+//-------------------------------------
+
+ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_offset{ 0.0f, 1.0f, -5.0f }, m_delay{ 0.1f }
 {
 
 }
@@ -102,38 +104,11 @@ void ThirdPersonCamera::UpdatePosition(FLOAT deltaTime)
 
 void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
-	if (roll != 0.0f)
-	{
-		XMMATRIX rotate{ XMMatrixIdentity() };
-		if (m_roll + roll > MAX_ROLL)
-		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MAX_ROLL - m_roll));
-			m_roll = MAX_ROLL;
-		}
-		else if (m_roll + roll < MIN_ROLL)
-		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MIN_ROLL - m_roll));
-			m_roll = MIN_ROLL;
-		}
-		else
-		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(roll));
-			m_roll += roll;
-		}
-		XMStoreFloat3(&m_at, XMVector3TransformNormal(XMLoadFloat3(&m_at), rotate));
-		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
-	}
-	if (pitch != 0.0f)
-	{
-		m_pitch += pitch;
-		XMFLOAT3 yAxis{ 0.0f, 1.0f, 0.0f };
-		XMMATRIX rotate{ XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(pitch)) };
-		XMStoreFloat3(&m_at, XMVector3TransformNormal(XMLoadFloat3(&m_at), rotate));
-		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
-	}
-	if (yaw != 0.0f)
-	{
-		// z축으로는 회전할 수 없음
-	}
-	UpdateLocalAxis();
+	// 회전
+	XMMATRIX rotate{ XMMatrixRotationRollPitchYaw(XMConvertToRadians(roll), XMConvertToRadians(pitch), XMConvertToRadians(yaw)) };
+	XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
+
+	// 항상 플레이어를 바라보도록 설정
+	XMFLOAT3 look{ Vector3::Sub(m_player->GetPosition(), m_eye) };
+	if (Vector3::Length(look)) m_look = look;
 }

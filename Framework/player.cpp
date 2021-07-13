@@ -6,6 +6,12 @@ Player::Player() : GameObject{}, m_velocity{ 0.0f, 0.0f, 0.0f }, m_maxVelocity{ 
 
 }
 
+void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
+{
+	GameObject::Rotate(roll, pitch, yaw);
+	m_camera->Rotate(roll, pitch, yaw);
+}
+
 void Player::AddVelocity(const XMFLOAT3& increase)
 {
 	m_velocity = Vector3::Add(m_velocity, increase);

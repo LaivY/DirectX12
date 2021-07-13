@@ -79,8 +79,7 @@ void GameFramework::OnMouseEvent()
 	// 움직인 정도에 비례해서 회전
 	int dx = newMousePosition.x - oldMousePosition.x;
 	int dy = newMousePosition.y - oldMousePosition.y;
-	if (dx != 0) m_camera->Rotate(0.0f, dx * 5.0f * m_timer.GetDeltaTime(), 0.0f);
-	if (dy != 0) m_camera->Rotate(dy * 5.0f * m_timer.GetDeltaTime(), 0.0f, 0.0f);
+	m_player->Rotate(dy * 5.0f * m_timer.GetDeltaTime(), dx * 5.0f * m_timer.GetDeltaTime(), 0.0f);
 	SetCursorPos(oldMousePosition.x, oldMousePosition.y);
 }
 
