@@ -45,7 +45,7 @@ void GameFramework::OnUpdate()
 	if (m_player)
 	{
 		m_player->Move(m_player->GetVelocity());
-		m_player->ApplyFriction();
+		m_player->ApplyFriction(m_timer.GetDeltaTime());
 	}
 }
 
@@ -87,27 +87,27 @@ void GameFramework::OnKeyboardEvent()
 {
 	if (GetAsyncKeyState('W') & 0x8000)
 	{
-		m_player->Move(Vector3::Mul(m_camera->GetN(), 5.0f * m_timer.GetDeltaTime()));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetFront(), 10.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('A') & 0x8000)
 	{
-		m_player->Move(Vector3::Mul(m_camera->GetU(), -5.0f * m_timer.GetDeltaTime()));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetRight(), 10.0f * -m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('S') & 0x8000)
 	{
-		m_player->Move(Vector3::Mul(m_camera->GetN(), -5.0f * m_timer.GetDeltaTime()));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetFront(), 10.0f * -m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
-		m_player->Move(Vector3::Mul(m_camera->GetU(), 5.0f * m_timer.GetDeltaTime()));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetRight(), 10.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 	{
-		m_player->Move(Vector3::Mul(m_camera->GetV(), 5.0f * m_timer.GetDeltaTime()));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetUp(), 10.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
 	{
-		m_player->Move(Vector3::Mul(m_camera->GetV(), -5.0f * m_timer.GetDeltaTime()));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetUp(), 10.0f * -m_timer.GetDeltaTime()));
 	}
 }
 

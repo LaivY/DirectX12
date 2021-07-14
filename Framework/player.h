@@ -2,6 +2,9 @@
 #include "stdafx.h"
 #include "object.h"
 
+#define ROLL_MAX +20
+#define ROLL_MIN -10
+
 class Camera;
 
 class Player : public GameObject
@@ -12,7 +15,7 @@ public:
 
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
-	void ApplyFriction() { m_velocity = Vector3::Mul(m_velocity, 1.0f - m_friction); }
+	void ApplyFriction(FLOAT deltaTime);
 
 	XMFLOAT3 GetVelocity() const { return m_velocity; }
 	void SetVelocity(const XMFLOAT3& velocity) { m_velocity = velocity; }
@@ -21,7 +24,7 @@ public:
 
 private:
 	XMFLOAT3			m_velocity;		// 속도
-	XMFLOAT3			m_maxVelocity;	// 최대속도
-	FLOAT				m_friction;		// 마찰력(0.0 ~ 1.0)
+	FLOAT				m_maxVelocity;	// 최대속도
+	FLOAT				m_friction;		// 마찰력
 	shared_ptr<Camera>	m_camera;		// 카메라
 };

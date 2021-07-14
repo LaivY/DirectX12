@@ -104,9 +104,27 @@ void ThirdPersonCamera::UpdatePosition(FLOAT deltaTime)
 
 void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
+	XMMATRIX rotate{ XMMatrixIdentity() };
+
 	// 회전
-	XMMATRIX rotate{ XMMatrixRotationRollPitchYaw(XMConvertToRadians(roll), XMConvertToRadians(pitch), XMConvertToRadians(yaw)) };
-	XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
+	if (roll != 0.0f)
+	{
+		m_roll += roll;
+		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetRight()), XMConvertToRadians(roll));
+		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
+	}
+	if (pitch != 0.0f)
+	{
+		m_pitch += pitch;
+		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetUp()), XMConvertToRadians(pitch));
+		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
+	}
+	if (yaw != 0.0f)
+	{
+		m_yaw += yaw;
+		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetFront()), XMConvertToRadians(yaw));
+		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
+	}
 
 	// 항상 플레이어를 바라보도록 설정
 	XMFLOAT3 look{ Vector3::Sub(m_player->GetPosition(), m_eye) };
