@@ -13,6 +13,7 @@ struct VSInput
 {
     float4 position : POSITION;
     float4 color : COLOR;
+    matrix worldMatrix : INSTANCE;
 };
 
 struct VSOutput
@@ -24,7 +25,7 @@ struct VSOutput
 VSOutput VSMain(VSInput input)
 {      
     VSOutput result;
-    result.position = mul(input.position, worldMatrix);
+    result.position = mul(input.position, input.worldMatrix);
     result.position = mul(result.position, viewMatrix);
     result.position = mul(result.position, projMatrix);
     result.color = input.color;

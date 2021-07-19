@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31424.327
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Framework", "Framework\DirectX12.vcxproj", "{B8575145-2654-4C74-B0A4-37FD7F5C1899}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Instancing", "Instancing\Instancing.vcxproj", "{82620D25-E751-4A9D-B2D1-8E4BF687B106}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{B8575145-2654-4C74-B0A4-37FD7F5C1899}.Release|x64.Build.0 = Release|x64
 		{B8575145-2654-4C74-B0A4-37FD7F5C1899}.Release|x86.ActiveCfg = Release|Win32
 		{B8575145-2654-4C74-B0A4-37FD7F5C1899}.Release|x86.Build.0 = Release|Win32
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Debug|x64.ActiveCfg = Debug|x64
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Debug|x64.Build.0 = Debug|x64
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Debug|x86.ActiveCfg = Debug|Win32
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Debug|x86.Build.0 = Debug|Win32
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Release|x64.ActiveCfg = Release|x64
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Release|x64.Build.0 = Release|x64
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Release|x86.ActiveCfg = Release|Win32
+		{82620D25-E751-4A9D-B2D1-8E4BF687B106}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
