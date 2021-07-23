@@ -21,11 +21,6 @@ void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) co
 	if (m_Mesh) m_Mesh->Render(commandList);
 }
 
-void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const D3D12_VERTEX_BUFFER_VIEW& instanceBufferView) const
-{
-	if (m_Mesh) m_Mesh->Render(commandList, instanceBufferView);
-}
-
 void GameObject::Move(const XMFLOAT3& shift)
 {
 	SetPosition(Vector3::Add(GetPosition(), shift));

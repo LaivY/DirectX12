@@ -3,11 +3,7 @@
 #include "object.h"
 #include "camera.h"
 #include "timer.h"
-
-struct Instance
-{
-	XMFLOAT4X4 worldMatrix;
-};
+#include "instancing.h"
 
 class GameFramework
 {
@@ -86,7 +82,5 @@ private:
 	shared_ptr<Camera>					m_camera;
 
 	// Instancing
-	ComPtr<ID3D12Resource>				m_instanceUploadBuffer;
-	D3D12_VERTEX_BUFFER_VIEW			m_instanceBufferView;
-	Instance*							m_instanceData;
+	unique_ptr<Instancing>				m_instance;
 };

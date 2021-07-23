@@ -270,11 +270,7 @@ void GameFramework::CreatePipelineStateObject()
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "INSTANCE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-		{ "INSTANCE", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-		{ "INSTANCE", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-		{ "INSTANCE", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
 	// PSO 생성
@@ -355,7 +351,7 @@ void GameFramework::LoadAssets()
 	// 명령을 추가할 것이기 때문에 Reset
 	m_commandList->Reset(m_commandAllocator.Get(), NULL);
 
-	// 게임오브젝트(큐브) 생성
+	// 큐브 메쉬 생성
 	vector<Vertex> vertices;
 	vertices.emplace_back(XMFLOAT3{ -0.5f, +0.5f, +0.5f }, XMFLOAT4{ 1.0f, 0.0f, 0.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ +0.5f, +0.5f, +0.5f }, XMFLOAT4{ 0.0f, 1.0f, 0.0f, 1.0f });
@@ -386,6 +382,11 @@ void GameFramework::LoadAssets()
 	indices.push_back(2); indices.push_back(1); indices.push_back(5);
 	indices.push_back(2); indices.push_back(5); indices.push_back(6);
 
+	Mesh cube(m_device, m_commandList, vertices, indices);
+
+	// 인스턴스 설정
+	m_instance = make_unique<Instancing>(m_device, m_rootSignature, cube, sizeof(Instance), 1000);
+
 	// 큐브 1000개 생성
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -393,26 +394,6 @@ void GameFramework::LoadAssets()
 		obj->SetPosition(XMFLOAT3(i % 10 * 5, (i / 10) % 10 * 5, (i / 100) % 10 * 5));
 		m_gameObjects.push_back(move(obj));
 	}
-
-	// 첫번째 큐브 메쉬 설정
-	m_gameObjects.front()->SetMesh(Mesh(m_device, m_commandList, vertices, indices));
-
-	// 인스턴스 버퍼 생성
-	DX::ThrowIfFailed(m_device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(sizeof(Instance) * 1000),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		NULL,
-		IID_PPV_ARGS(&m_instanceUploadBuffer)));
-
-	// 인스턴스 버퍼 포인터
-	m_instanceUploadBuffer->Map(0, NULL, reinterpret_cast<void**>(&m_instanceData));
-
-	// 인스턴스 버퍼 뷰 생성
-	m_instanceBufferView.BufferLocation = m_instanceUploadBuffer->GetGPUVirtualAddress();
-	m_instanceBufferView.StrideInBytes = sizeof(Instance);
-	m_instanceBufferView.SizeInBytes = sizeof(Instance) * 1000;
 
 	// 플레이어 생성
 	m_player = make_shared<Player>();
@@ -478,15 +459,19 @@ void GameFramework::PopulateCommandList()
 	// 플레이어 렌더링
 	if (m_player) m_player->Render(m_commandList);
 
-	// 게임오브젝트 렌더링
-	//for (const auto& obj : m_gameObjects) obj->Render(m_commandList);
+	// 인스턴싱
+	if (m_instance)
+	{
+		// 인스턴스 데이터 최신화
+		Instance* pData{ m_instance->GetInstancePointer() };
 
-	// 인스턴싱 데이터 설정
-	for (int i = 0; i < 1000; ++i)
-		m_instanceData[i].worldMatrix = Matrix::Transpose(m_gameObjects[i]->GetWorldMatrix());
+		int i = 0;
+		for (const auto& obj : m_gameObjects)
+			pData[i++].worldMatrix = Matrix::Transpose(obj->GetWorldMatrix());
 
-	// 큐브 1000개 렌더링
-	m_gameObjects.front()->Render(m_commandList, m_instanceBufferView);
+		// 렌더링
+		m_instance->Render(m_commandList);
+	}
 
 	// Indicate back buffer will now be used to present
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
