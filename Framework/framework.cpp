@@ -41,11 +41,17 @@ void GameFramework::OnInit(HINSTANCE hInstance, HWND hWnd)
 
 void GameFramework::OnUpdate()
 {
-	if (m_camera) m_camera->UpdatePosition(m_timer.GetDeltaTime());
-	if (m_player)
+	shared_ptr<Camera> camera{ m_scene->GetCamera() };
+	shared_ptr<Player> player{ m_scene->GetPlayer() };
+
+	if (camera)
 	{
-		m_player->Move(m_player->GetVelocity());
-		m_player->ApplyFriction(m_timer.GetDeltaTime());
+		camera->UpdatePosition(m_timer.GetDeltaTime());
+	}
+	if (player)
+	{
+		player->Move(m_scene->GetPlayer()->GetVelocity());
+		player->ApplyFriction(m_timer.GetDeltaTime());
 	}
 }
 
@@ -79,35 +85,36 @@ void GameFramework::OnMouseEvent()
 	// 움직인 정도에 비례해서 회전
 	int dx = newMousePosition.x - oldMousePosition.x;
 	int dy = newMousePosition.y - oldMousePosition.y;
-	m_player->Rotate(dy * 5.0f * m_timer.GetDeltaTime(), dx * 5.0f * m_timer.GetDeltaTime(), 0.0f);
+	m_scene->GetPlayer()->Rotate(dy * 5.0f * m_timer.GetDeltaTime(), dx * 5.0f * m_timer.GetDeltaTime(), 0.0f);
 	SetCursorPos(oldMousePosition.x, oldMousePosition.y);
 }
 
 void GameFramework::OnKeyboardEvent()
 {
+	shared_ptr<Player> player{ m_scene->GetPlayer() };
 	if (GetAsyncKeyState('W') & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetFront(), 10.0f * m_timer.GetDeltaTime()));
+		player->AddVelocity(Vector3::Mul(player->GetFront(), 10.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('A') & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetRight(), 10.0f * -m_timer.GetDeltaTime()));
+		player->AddVelocity(Vector3::Mul(player->GetRight(), 10.0f * -m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('S') & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetFront(), 10.0f * -m_timer.GetDeltaTime()));
+		player->AddVelocity(Vector3::Mul(player->GetFront(), 10.0f * -m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetRight(), 10.0f * m_timer.GetDeltaTime()));
+		player->AddVelocity(Vector3::Mul(player->GetRight(), 10.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetUp(), 10.0f * m_timer.GetDeltaTime()));
+		player->AddVelocity(Vector3::Mul(player->GetUp(), 10.0f * m_timer.GetDeltaTime()));
 	}
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetUp(), 10.0f * -m_timer.GetDeltaTime()));
+		player->AddVelocity(Vector3::Mul(player->GetUp(), 10.0f * -m_timer.GetDeltaTime()));
 	}
 }
 
@@ -351,7 +358,10 @@ void GameFramework::LoadAssets()
 	// 명령을 추가할 것이기 때문에 Reset
 	m_commandList->Reset(m_commandAllocator.Get(), NULL);
 
-	// 게임오브젝트(큐브) 생성
+	// 씬 생성
+	m_scene = make_unique<Scene>();
+
+	// 큐브 메쉬
 	vector<Vertex> vertices;
 	vertices.emplace_back(XMFLOAT3{ -0.5f, +0.5f, +0.5f }, XMFLOAT4{ 1.0f, 0.0f, 0.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ +0.5f, +0.5f, +0.5f }, XMFLOAT4{ 0.0f, 1.0f, 0.0f, 1.0f });
@@ -382,34 +392,33 @@ void GameFramework::LoadAssets()
 	indices.push_back(2); indices.push_back(1); indices.push_back(5);
 	indices.push_back(2); indices.push_back(5); indices.push_back(6);
 
-	unique_ptr<GameObject> obj{ make_unique<GameObject>() };
-	obj->SetMesh(Mesh(m_device, m_commandList, vertices, indices));
-	obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 5.0f });
-	m_gameObjects.push_back(move(obj));
+	Mesh cube{ m_device, m_commandList, vertices, indices };
 
-	obj.reset();
-	obj = make_unique<GameObject>();
-	obj->SetMesh(Mesh(m_device, m_commandList, vertices, indices));
-	obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 10.0f });
-	m_gameObjects.push_back(move(obj));
+	// 게임오브젝트 생성
+	unique_ptr<GameObject> obj{ make_unique<GameObject>() };
+	obj->SetMesh(cube);
+	obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 5.0f });
+	m_scene->GetGameObjects().push_back(move(obj));
 
 	// 플레이어 생성
-	m_player = make_shared<Player>();
-	m_player->SetMesh(Mesh(m_device, m_commandList, vertices, indices));
+	shared_ptr<Player> player{ make_shared<Player>() };
+	player->SetMesh(cube);
+	m_scene->SetPlayer(player);
 
 	// 카메라 생성
-	m_camera = make_shared<ThirdPersonCamera>();
-	m_camera->SetEye(XMFLOAT3{ 0.0f, 0.0f, 0.0f });
-	m_camera->SetAt(XMFLOAT3{ 0.0f, 0.0f, 1.0f });
-	m_camera->SetUp(XMFLOAT3{ 0.0f, 1.0f, 0.0f });
-	m_camera->SetPlayer(m_player);
-
-	// 플레이어 카메라 설정
-	m_player->SetCamera(m_camera);
+	shared_ptr<ThirdPersonCamera> camera{ make_shared<ThirdPersonCamera>() };
+	camera->SetEye(XMFLOAT3{ 0.0f, 0.0f, 0.0f });
+	camera->SetAt(XMFLOAT3{ 0.0f, 0.0f, 1.0f });
+	camera->SetUp(XMFLOAT3{ 0.0f, 1.0f, 0.0f });
+	camera->SetPlayer(m_scene->GetPlayer());
 
 	XMFLOAT4X4 projMatrix;
 	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 0.1f, 1000.0f));
-	m_camera->SetProjMatrix(projMatrix);
+	camera->SetProjMatrix(projMatrix);
+	m_scene->SetCamera(camera);
+
+	// 플레이어 카메라 설정
+	m_scene->GetPlayer()->SetCamera(m_scene->GetCamera());
 
 	// 명령 제출
 	m_commandList->Close();
@@ -420,7 +429,7 @@ void GameFramework::LoadAssets()
 	WaitForPreviousFrame();
 
 	// 메쉬의 정점, 인덱스 데이터가 DEFAULT버퍼로 복사가 완료됬으므로 UPLOAD버퍼를 해제한다.
-	for (auto& obj : m_gameObjects)
+	for (const auto& obj : m_scene->GetGameObjects())
 		obj->ReleaseMeshUploadBuffer();
 
 	// 타이머 초기화
@@ -450,14 +459,8 @@ void GameFramework::PopulateCommandList()
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, NULL);
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 
-	// 카메라 셰이더 변수(뷰, 투영 변환 행렬) 최신화
-	if (m_camera) m_camera->UpdateShaderVariable(m_commandList);
-
-	// 플레이어 렌더링
-	if (m_player) m_player->Render(m_commandList);
-
-	// 게임오브젝트 렌더링
-	for (const auto& obj : m_gameObjects) obj->Render(m_commandList);
+	// 렌더링
+	if (m_scene) m_scene->Render(m_commandList);
 
 	// Indicate back buffer will now be used to present
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

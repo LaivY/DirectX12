@@ -13,7 +13,7 @@ public:
 	virtual void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
-	void SetMesh(const Mesh& pMesh);
+	void SetMesh(const Mesh& Mesh);
 	XMFLOAT3 GetPosition() const;
 	void SetPosition(const XMFLOAT3& position);
 
@@ -21,7 +21,7 @@ public:
 	XMFLOAT3 GetUp() const { return m_up; }
 	XMFLOAT3 GetFront() const { return m_front; }
 
-	void ReleaseMeshUploadBuffer() const { m_Mesh->ReleaseUploadBuffer(); }
+	void ReleaseMeshUploadBuffer() const { m_mesh->ReleaseUploadBuffer(); }
 
 protected:
 	XMFLOAT4X4			m_worldMatrix;	// 월드 변환
@@ -34,5 +34,6 @@ protected:
 	FLOAT				m_pitch;		// y축 회전각
 	FLOAT				m_yaw;			// z축 회전각
 
-	unique_ptr<Mesh>	m_Mesh;			// 메쉬
+	//unique_ptr<Mesh>	m_Mesh;			// 메쉬
+	shared_ptr<Mesh>	m_mesh;			// 메쉬
 };

@@ -7,7 +7,7 @@ GameObject::GameObject() : m_right{ 1.0f, 0.0f, 0.0f }, m_up{ 0.0f, 1.0f, 0.0f }
 
 GameObject::~GameObject()
 {
-	m_Mesh->ReleaseUploadBuffer();
+	m_mesh->ReleaseUploadBuffer();
 }
 
 void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
@@ -18,7 +18,7 @@ void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) co
 	commandList->SetGraphicsRoot32BitConstants(0, 16, &worldMatrix, 0);
 
 	// ·»´õ¸µ
-	if (m_Mesh) m_Mesh->Render(commandList);
+	if (m_mesh) m_mesh->Render(commandList);
 }
 
 void GameObject::Move(const XMFLOAT3& shift)
@@ -41,8 +41,8 @@ void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 
 void GameObject::SetMesh(const Mesh& mesh)
 {
-	if (m_Mesh) m_Mesh.reset();
-	m_Mesh = make_unique<Mesh>(mesh);
+	if (m_mesh) m_mesh.reset();
+	m_mesh = make_shared<Mesh>(mesh);
 }
 
 XMFLOAT3 GameObject::GetPosition() const

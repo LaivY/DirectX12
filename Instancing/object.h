@@ -23,7 +23,7 @@ public:
 	XMFLOAT3 GetUp() const { return m_up; }
 	XMFLOAT3 GetFront() const { return m_front; }
 
-	void ReleaseMeshUploadBuffer() const { if (m_Mesh) m_Mesh->ReleaseUploadBuffer(); }
+	void ReleaseMeshUploadBuffer() const { if (m_mesh) m_mesh->ReleaseUploadBuffer(); }
 
 protected:
 	XMFLOAT4X4			m_worldMatrix;	// 월드 변환
@@ -36,5 +36,5 @@ protected:
 	FLOAT				m_pitch;		// y축 회전각
 	FLOAT				m_yaw;			// z축 회전각
 
-	unique_ptr<Mesh>	m_Mesh;			// 메쉬
+	unique_ptr<Mesh>	m_mesh;			// 메쉬
 };

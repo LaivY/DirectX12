@@ -3,6 +3,7 @@
 #include "object.h"
 #include "camera.h"
 #include "timer.h"
+#include "scene.h"
 
 class GameFramework
 {
@@ -75,8 +76,6 @@ private:
 	// Timer
 	Timer								m_timer;
 
-	// GameObjects
-	vector<unique_ptr<GameObject>>		m_gameObjects;
-	shared_ptr<Player>					m_player;
-	shared_ptr<Camera>					m_camera;
+	// Scene
+	unique_ptr<Scene>					m_scene;
 };
