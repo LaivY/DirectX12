@@ -8,7 +8,8 @@ GameFramework::GameFramework(UINT width, UINT height) :
 	m_frameIndex{ 0 },
 	m_viewport{ 0.0f, 0.0f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.0f, 1.0f },
 	m_scissorRect{ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) },
-	m_rtvDescriptorSize{ 0 }
+	m_rtvDescriptorSize{ 0 },
+	m_doCapture{ TRUE }
 {
 	m_aspectRatio = static_cast<FLOAT>(width) / static_cast<FLOAT>(height);
 }
@@ -23,8 +24,8 @@ void GameFramework::GameLoop()
 	m_timer.Tick();
 	if (m_isActive)
 	{
-		OnMouseEvent();
 		OnKeyboardEvent();
+		OnMouseEvent();
 	}
 	OnUpdate();
 	OnRender();
@@ -47,12 +48,6 @@ void GameFramework::OnUpdate()
 		m_player->Move(m_player->GetVelocity());
 		m_player->ApplyFriction(m_timer.GetDeltaTime());
 	}
-
-	if (m_pickedObject)
-	{
-		XMFLOAT3 pos{ m_pickedObject->GetPosition() };
-		//cout << pos.x << ", " << pos.y << ", " << pos.z << endl;
-	}
 }
 
 void GameFramework::OnRender()
@@ -71,26 +66,6 @@ void GameFramework::OnDestroy()
 {
 	WaitForPreviousFrame();
 	CloseHandle(m_fenceEvent);
-}
-
-void GameFramework::OnMouseEvent()
-{
-	//GetCursorPos(&m_mousePosition);
-	//m_pickedObject = GetPickedGameObject(m_mousePosition.x, m_mousePosition.y);
-	//return;
-
-	//SetCursor(NULL);
-	//RECT rect; GetWindowRect(m_hWnd, &rect);
-	//POINT oldMousePosition{ rect.left + m_width / 2, rect.top + m_height / 2 };
-
-	//// 움직인 마우스 좌표
-	//POINT newMousePosition; GetCursorPos(&newMousePosition);
-
-	//// 움직인 정도에 비례해서 회전
-	//int dx = newMousePosition.x - oldMousePosition.x;
-	//int dy = newMousePosition.y - oldMousePosition.y;
-	//m_player->Rotate(dy * 5.0f * m_timer.GetDeltaTime(), dx * 5.0f * m_timer.GetDeltaTime(), 0.0f);
-	//SetCursorPos(oldMousePosition.x, oldMousePosition.y);
 }
 
 void GameFramework::OnKeyboardEvent()
@@ -121,18 +96,50 @@ void GameFramework::OnKeyboardEvent()
 	}
 }
 
+void GameFramework::OnKeyboardCallBack(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_KEYUP:
+		if (wParam == VK_CONTROL) m_doCapture = TRUE;
+		break;
+	case WM_KEYDOWN:
+		if (wParam == VK_CONTROL) m_doCapture = FALSE;
+		break;
+	}
+}
+
+void GameFramework::OnMouseEvent()
+{
+	if (m_doCapture)
+	{
+		SetCursor(NULL);
+		RECT rect; GetWindowRect(m_hWnd, &rect);
+		POINT oldMousePosition{ rect.left + m_width / 2, rect.top + m_height / 2 };
+
+		// 움직인 마우스 좌표
+		POINT newMousePosition; GetCursorPos(&newMousePosition);
+
+		// 움직인 정도에 비례해서 회전
+		int dx = newMousePosition.x - oldMousePosition.x;
+		int dy = newMousePosition.y - oldMousePosition.y;
+		m_player->Rotate(dy * 5.0f * m_timer.GetDeltaTime(), dx * 5.0f * m_timer.GetDeltaTime(), 0.0f);
+		SetCursorPos(oldMousePosition.x, oldMousePosition.y);
+	}
+}
+
 void GameFramework::OnMouseCallBack(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	GameObject* obj{ NULL };
-	XMFLOAT3 pos{ -1.0f, -1.0f, -1.0f };
-
 	switch (message)
 	{
 	case WM_LBUTTONDOWN:
+	{
 		// 픽킹된 오브젝트가 있다면 플레이어를 해당 위치로 이동
+		GameObject* obj{ NULL };
 		obj = GetPickedGameObject(LOWORD(lParam), HIWORD(lParam));
 		if (obj) m_player->SetPosition(obj->GetPosition());
 		break;
+	}
 	}
 }
 
@@ -525,19 +532,19 @@ GameObject* GameFramework::GetPickedGameObject(LONG x, LONG y) const
 	XMFLOAT4X4 inverseProjMatrix{ Matrix::Inverse(projMatrix) };
 
 	// 마우스 클릭 좌표를 뷰포트에서 투영 좌표계로 변경
-	XMFLOAT3 cursor{ 
-		 ( ( ( 2.0f * x ) / m_viewport.Width )  - 1.0f ), // projMatrix._11, 
-		-( ( ( 2.0f * y ) / m_viewport.Height ) - 1.0f ), // projMatrix._22, 
+	XMFLOAT3 cursor{
+		 ( ( ( 2.0f * x ) / m_viewport.Width )  - 1.0f ) / projMatrix._11,
+		-( ( ( 2.0f * y ) / m_viewport.Height ) - 1.0f ) / projMatrix._22,
 		1.0f
 	};
 
 	// 카메라 좌표계에서의 광선의 시작점(원점)과 방향 벡터
 	XMFLOAT3 rayOrigin{ 0.0f, 0.0f, 0.0f };
-	XMFLOAT3 rayDirection{ Vector3::TransformCoord(cursor, inverseProjMatrix) };
+	XMFLOAT3 rayDirection{ Vector3::Normalize(cursor) };
 
-	// 광선을 월드 좌표계로 변경
+	// 광선 시작점을 월드 좌표계로 변경
+	// 광선의 방향 벡터는 좌표계와 상관없다.
 	rayOrigin = Vector3::TransformCoord(rayOrigin, inverseViewMatrix);
-	rayDirection = Vector3::Normalize(Vector3::TransformCoord(rayDirection, inverseViewMatrix));
 
 	GameObject* pickedObject{ NULL };
 	for (const auto& obj : m_gameObjects)

@@ -13,6 +13,7 @@ public:
 
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
 	void UpdateLocalAxis();
+	void UpdateViewMatrix() { XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_look)), XMLoadFloat3(&m_up))); }
 	virtual void UpdatePosition(FLOAT deltaTime) { };
 
 	void Move(const XMFLOAT3& shift);

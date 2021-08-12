@@ -119,15 +119,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+        g_GameFramework.OnMouseCallBack(hWnd, message, wParam, lParam);
+        break;
+    case WM_KEYUP:
+    case WM_KEYDOWN:
+        g_GameFramework.OnKeyboardCallBack(hWnd, message, wParam, lParam);
+        break;
     case WM_ACTIVATE:
         g_GameFramework.SetIsActive((BOOL)wParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
-        break;
-    case WM_LBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-        g_GameFramework.OnMouseCallBack(hWnd, message, wParam, lParam);
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);

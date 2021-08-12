@@ -90,6 +90,12 @@ namespace Vector3
         XMStoreFloat3(&result, XMVector3TransformCoord(XMLoadFloat3(&a), XMLoadFloat4x4(&b)));
         return result;
     }
+    inline XMFLOAT3 TransformNormal(const XMFLOAT3& a, const XMFLOAT4X4& b)
+    {
+        XMFLOAT3 result;
+        XMStoreFloat3(&result, XMVector3TransformNormal(XMLoadFloat3(&a), XMLoadFloat4x4(&b)));
+        return result;
+    }
 }
 
 namespace Matrix

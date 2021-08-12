@@ -16,8 +16,9 @@ public:
 	void OnUpdate();
 	void OnRender();
 	void OnDestroy();
-	void OnMouseEvent();
 	void OnKeyboardEvent();
+	void OnKeyboardCallBack(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	void OnMouseEvent();
 	void OnMouseCallBack(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	void CreateDevice(const ComPtr<IDXGIFactory4>& factory);
@@ -38,6 +39,7 @@ public:
 	UINT GetWindowWidth() const { return m_width; }
 	UINT GetWindowHeight() const { return m_height; }
 	void SetIsActive(BOOL isActive) { m_isActive = isActive; }
+	void SetDoCapture(BOOL doCapture) { m_doCapture = doCapture; }
 
 	GameObject* GetPickedGameObject(LONG x, LONG y) const;
 
@@ -87,6 +89,6 @@ private:
 	// Instancing
 	unique_ptr<Instancing>				m_instance;
 
-	// Picking
-	GameObject*							m_pickedObject;
+	// MouseCapture
+	BOOL								m_doCapture;
 };
