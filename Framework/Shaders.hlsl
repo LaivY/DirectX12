@@ -9,6 +9,8 @@ cbuffer cbCamera : register(b1)
     matrix projMatrix;
 }
 
+////////////////////////////////////////////////////////
+
 struct VSInput
 {
     float4 position : POSITION;
@@ -20,6 +22,8 @@ struct VSOutput
     float4 position : SV_POSITION;
     float4 color : COLOR;
 };
+
+////////////////////////////////////////////////////////
 
 VSOutput VSMain(VSInput input)
 {      

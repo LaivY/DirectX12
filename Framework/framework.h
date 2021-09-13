@@ -16,8 +16,8 @@ public:
 	void OnUpdate();
 	void OnRender();
 	void OnDestroy();
-	void OnMouseEvent();
-	void OnKeyboardEvent();
+	void OnMouseEvent() const;
+	void OnKeyboardEvent() const;
 
 	void CreateDevice(const ComPtr<IDXGIFactory4>& factory);
 	void CreateCommandQueue();
@@ -31,7 +31,7 @@ public:
 	void LoadPipeline();
 	void LoadAssets();
 
-	void PopulateCommandList();
+	void PopulateCommandList() const;
 	void WaitForPreviousFrame();
 
 	UINT GetWindowWidth() const { return m_width; }

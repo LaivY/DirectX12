@@ -73,49 +73,14 @@ void GameFramework::OnDestroy()
 	CloseHandle(m_fenceEvent);
 }
 
-void GameFramework::OnMouseEvent()
+void GameFramework::OnMouseEvent() const
 {
-	SetCursor(NULL);
-	RECT rect; GetWindowRect(m_hWnd, &rect);
-	POINT oldMousePosition{ rect.left + m_width / 2, rect.top + m_height / 2 };
-
-	// 움직인 마우스 좌표
-	POINT newMousePosition; GetCursorPos(&newMousePosition);
-
-	// 움직인 정도에 비례해서 회전
-	int dx = newMousePosition.x - oldMousePosition.x;
-	int dy = newMousePosition.y - oldMousePosition.y;
-	m_scene->GetPlayer()->Rotate(dy * 5.0f * m_timer.GetDeltaTime(), dx * 5.0f * m_timer.GetDeltaTime(), 0.0f);
-	SetCursorPos(oldMousePosition.x, oldMousePosition.y);
+	if (m_scene) m_scene->OnMouseEvent(m_hWnd, m_width, m_height, m_timer.GetDeltaTime());
 }
 
-void GameFramework::OnKeyboardEvent()
+void GameFramework::OnKeyboardEvent() const
 {
-	shared_ptr<Player> player{ m_scene->GetPlayer() };
-	if (GetAsyncKeyState('W') & 0x8000)
-	{
-		player->AddVelocity(Vector3::Mul(player->GetFront(), 10.0f * m_timer.GetDeltaTime()));
-	}
-	if (GetAsyncKeyState('A') & 0x8000)
-	{
-		player->AddVelocity(Vector3::Mul(player->GetRight(), 10.0f * -m_timer.GetDeltaTime()));
-	}
-	if (GetAsyncKeyState('S') & 0x8000)
-	{
-		player->AddVelocity(Vector3::Mul(player->GetFront(), 10.0f * -m_timer.GetDeltaTime()));
-	}
-	if (GetAsyncKeyState('D') & 0x8000)
-	{
-		player->AddVelocity(Vector3::Mul(player->GetRight(), 10.0f * m_timer.GetDeltaTime()));
-	}
-	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
-	{
-		player->AddVelocity(Vector3::Mul(player->GetUp(), 10.0f * m_timer.GetDeltaTime()));
-	}
-	if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
-	{
-		player->AddVelocity(Vector3::Mul(player->GetUp(), 10.0f * -m_timer.GetDeltaTime()));
-	}
+	if (m_scene) m_scene->OnKeyboardEvent(m_timer.GetDeltaTime());
 }
 
 void GameFramework::CreateDevice(const ComPtr<IDXGIFactory4>& factory)
@@ -436,7 +401,7 @@ void GameFramework::LoadAssets()
 	m_timer.Tick();
 }
 
-void GameFramework::PopulateCommandList()
+void GameFramework::PopulateCommandList() const
 {
 	DX::ThrowIfFailed(m_commandAllocator->Reset());
 	DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));

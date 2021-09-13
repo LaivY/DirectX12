@@ -8,9 +8,12 @@ class Scene
 {
 public:
 	Scene() = default;
-	~Scene() = default;
+	~Scene();
 
+	void OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime) const;
+	void OnKeyboardEvent(FLOAT deltaTime) const;
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+
 	vector<unique_ptr<GameObject>>& GetGameObjects() { return m_gameObjects; }
 	shared_ptr<Player> GetPlayer() const { return m_player; }
 	shared_ptr<Camera> GetCamera() const { return m_camera; }
