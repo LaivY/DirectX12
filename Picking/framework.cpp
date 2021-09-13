@@ -531,25 +531,27 @@ GameObject* GameFramework::GetPickedGameObject(LONG x, LONG y) const
 	XMFLOAT4X4 projMatrix{ m_camera->GetProjMatrix() };
 	XMFLOAT4X4 inverseProjMatrix{ Matrix::Inverse(projMatrix) };
 
-	// 마우스 클릭 좌표를 뷰포트에서 투영 좌표계로 변경
+	// 마우스 클릭 좌표(광선의 방향 벡터)를 스크린 좌표계에서 투영 좌표계로 변경
 	XMFLOAT3 cursor{
-		 ( ( ( 2.0f * x ) / m_viewport.Width )  - 1.0f ) / projMatrix._11,
-		-( ( ( 2.0f * y ) / m_viewport.Height ) - 1.0f ) / projMatrix._22,
+		 ( ( ( 2.0f * x ) / m_viewport.Width )  - 1.0f ), // projMatrix._11,
+		-( ( ( 2.0f * y ) / m_viewport.Height ) - 1.0f ), // projMatrix._22,
 		1.0f
 	};
 
-	// 카메라 좌표계에서의 광선의 시작점(원점)과 방향 벡터
+	// 카메라 좌표계에서의 광선의 시작점(원점)
 	XMFLOAT3 rayOrigin{ 0.0f, 0.0f, 0.0f };
-	XMFLOAT3 rayDirection{ Vector3::Normalize(cursor) };
 
-	// 광선 시작점을 월드 좌표계로 변경
-	// 광선의 방향 벡터는 좌표계와 상관없다.
+	// 광선의 방향 벡터를 투영 좌표계에서 카메라 좌표계로 변경
+	XMFLOAT3 rayDirection{ Vector3::TransformCoord(cursor, inverseProjMatrix) };
+
+	// 광선의 시작점과 방향 벡터를 카메라 좌표계에서 월드 좌표계로 변경
 	rayOrigin = Vector3::TransformCoord(rayOrigin, inverseViewMatrix);
+	rayDirection = Vector3::Normalize(Vector3::TransformCoord(rayDirection, inverseViewMatrix));
 
 	GameObject* pickedObject{ NULL };
 	for (const auto& obj : m_gameObjects)
 	{
-		// 광선과 게임오브젝트가 교차하는지 검사
+		// 월드 좌표계에서 광선과 게임오브젝트가 교차하는지 검사
 		FLOAT FLTMAX{ FLT_MAX };
 		if (obj->GetBoundingBox().Intersects(XMLoadFloat3(&rayOrigin), XMLoadFloat3(&rayDirection), FLTMAX))
 		{

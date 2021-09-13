@@ -15,7 +15,7 @@
 HINSTANCE           hInst;                          // 현재 인스턴스입니다.
 WCHAR               szTitle[MAX_LOADSTRING];        // 제목 표시줄 텍스트입니다.
 WCHAR               szWindowClass[MAX_LOADSTRING];  // 기본 창 클래스 이름입니다.
-GameFramework       g_GameFramework(1280, 720);     // 게임프레임워크
+GameFramework       g_GameFramework{ 1280, 720 };     // 게임프레임워크
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -59,10 +59,7 @@ int APIENTRY wWinMain(_In_      HINSTANCE hInstance,
                 DispatchMessage(&msg);
             }
         }
-        else
-        {
-            g_GameFramework.GameLoop();
-        }
+        else g_GameFramework.GameLoop();
     }
 
     g_GameFramework.OnDestroy();
@@ -74,7 +71,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     WNDCLASSEXW wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
-
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
