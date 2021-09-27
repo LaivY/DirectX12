@@ -10,12 +10,10 @@ public:
 
 	virtual void CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
 	virtual void CreateSrvDescriptorHeap(const ComPtr<ID3D12Device>& device);
-	virtual void CreateShaderResourceView(const ComPtr<ID3D12Device>& device, const shared_ptr<Texture>& texture);
+	virtual void CreateShaderResourceView(const ComPtr<ID3D12Device>& device, const shared_ptr<Texture>& texture = NULL);
 
 	ComPtr<ID3D12PipelineState> GetPipelineState() const { return m_pipelineState; }
 	ComPtr<ID3D12DescriptorHeap> GetSrvHeap() const { return m_srvHeap; }
-	D3D12_CPU_DESCRIPTOR_HANDLE GetSrvCpuDescriptorHandle() const { return m_srvHeap->GetCPUDescriptorHandleForHeapStart(); }
-	D3D12_GPU_DESCRIPTOR_HANDLE GetSrvGpuDescriptorHandle() const { return m_srvHeap->GetGPUDescriptorHandleForHeapStart(); }
 
 protected:
 	ComPtr<ID3D12PipelineState>		m_pipelineState;

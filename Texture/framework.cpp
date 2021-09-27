@@ -210,7 +210,7 @@ void GameFramework::CreateDepthStencilView()
 void GameFramework::CreateRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE ranges[1];
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND);
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND); // t0
 
 	CD3DX12_ROOT_PARAMETER rootParameter[3];
 	rootParameter[0].InitAsConstants(16, 0, 0); // cbGameObject : 월드 변환 행렬(16)
@@ -353,7 +353,7 @@ void GameFramework::LoadAssets()
 	// 셰이더 생성
 	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature, texture) };
 
-	// 게임오브젝트 생성	
+	// 게임오브젝트 생성
 	unique_ptr<GameObject> obj{ make_unique<GameObject>() };
 	obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 5.0f });
 	obj->SetMesh(mesh);

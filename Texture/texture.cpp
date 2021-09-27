@@ -9,7 +9,7 @@ Texture::Texture(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphics
 	DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(device.Get(), fileName.c_str(), 0,
 		D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &m_texture, ddsData, subresources, &ddsAlphaMode));
 
-	// 디폴트 힙으로 데이터 복사하기 위한 업로드 힙 생성 
+	// 디폴트 힙으로 데이터 복사하기 위한 업로드 힙 생성
 	UINT nSubresources{ (UINT)subresources.size() };
 	UINT64 nBytes{ GetRequiredIntermediateSize(m_texture.Get(), 0, nSubresources) };
 	DX::ThrowIfFailed(device->CreateCommittedResource(

@@ -1,10 +1,10 @@
 #include "shader.h"
 
-Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature, const shared_ptr<Texture>& texture)
+Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature, const shared_ptr<Texture>& texture = nullptr)
 {
 	CreatePipelineState(device, rootSignature);
 	CreateSrvDescriptorHeap(device);
-	CreateShaderResourceView(device, texture);
+	if (texture) CreateShaderResourceView(device, texture);
 }
 
 void Shader::CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature)
