@@ -300,7 +300,7 @@ void GameFramework::LoadPipeline()
 	CreateRootSignature();
 
 	// 텍스쳐 컴파일, PSO 생성
-	CreatePipelineStateObject();
+	// CreatePipelineStateObject();
 
 	// 명령할당자 생성
 	DX::ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));

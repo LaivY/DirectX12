@@ -15,14 +15,11 @@ void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) co
 	// PSO 설정
 	if (m_shader) commandList->SetPipelineState(m_shader->GetPipelineState().Get());
 
-	// 셰이더 월드 변환 행렬 최신화
-	XMFLOAT4X4 worldMatrix;
-	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_worldMatrix)));
-	commandList->SetGraphicsRoot32BitConstants(0, 16, &worldMatrix, 0);
+	// 셰이더 변수 최신화
+	UpdateShaderVariable(commandList);
 
 	// 렌더링
 	if (m_mesh) m_mesh->Render(commandList);
-	if (m_texture) m_texture->Render(commandList);
 }
 
 void GameObject::Move(const XMFLOAT3& shift)
@@ -41,6 +38,23 @@ void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 	XMStoreFloat3(&m_right, XMVector3TransformNormal(XMLoadFloat3(&m_right), rotate));
 	XMStoreFloat3(&m_up, XMVector3TransformNormal(XMLoadFloat3(&m_up), rotate));
 	XMStoreFloat3(&m_front, XMVector3TransformNormal(XMLoadFloat3(&m_front), rotate));
+}
+
+void GameObject::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+{
+	// 게임오브젝트의 월드 변환 행렬 최신화
+	XMFLOAT4X4 worldMatrix;
+	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_worldMatrix)));
+	commandList->SetGraphicsRoot32BitConstants(0, 16, &worldMatrix, 0);
+
+	if (m_shader)
+	{
+		ID3D12DescriptorHeap* ppHeaps[] = { m_shader->GetSrvHeap().Get() };
+		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+		// GameFramework::CreateRootSignature에서 rootParameter[2]가 서술자 테이블임
+		commandList->SetGraphicsRootDescriptorTable(2, m_shader->GetSrvHeap()->GetGPUDescriptorHandleForHeapStart());
+	}
 }
 
 void GameObject::SetPosition(const XMFLOAT3& position)

@@ -1,6 +1,13 @@
 #include "shader.h"
 
-Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature)
+Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature, const shared_ptr<Texture>& texture)
+{
+	CreatePipelineState(device, rootSignature);
+	CreateSrvDescriptorHeap(device);
+	CreateShaderResourceView(device, texture);
+}
+
+void Shader::CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature)
 {
 	ComPtr<ID3DBlob> vertexShader, pixelShader;
 
@@ -36,4 +43,19 @@ Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignat
 	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	psoDesc.SampleDesc.Count = 1;
 	DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+}
+
+void Shader::CreateSrvDescriptorHeap(const ComPtr<ID3D12Device>& device)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
+	srvHeapDesc.NumDescriptors = 1; // SRV 1°³
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap));
+}
+
+void Shader::CreateShaderResourceView(const ComPtr<ID3D12Device>& device, const shared_ptr<Texture>& texture)
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{ texture->GetShaderResourceViewDesc() };
+	device->CreateShaderResourceView(texture->GetTexture().Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
 }

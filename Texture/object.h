@@ -14,6 +14,7 @@ public:
 	virtual void Update() { };
 	virtual void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+	virtual void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 
 	void SetPosition(const XMFLOAT3& position);
 	void SetMesh(const shared_ptr<Mesh>& Mesh);

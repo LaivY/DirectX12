@@ -347,11 +347,11 @@ void GameFramework::LoadAssets()
 	CubeMesh cube{ m_device, m_commandList, 0.5f, 0.5f, 0.5f };
 	shared_ptr<Mesh> mesh{ make_shared<Mesh>(cube) };
 
-	// 셰이더 생성
-	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature) };
-
 	// 텍스쳐 생성
 	shared_ptr<Texture> texture{ make_shared<Texture>(m_device, m_commandList, TEXT("DDSTexture.dds")) };
+
+	// 셰이더 생성
+	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature, texture) };
 
 	// 게임오브젝트 생성	
 	unique_ptr<GameObject> obj{ make_unique<GameObject>() };

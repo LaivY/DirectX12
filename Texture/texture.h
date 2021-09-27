@@ -8,13 +8,13 @@ public:
 	Texture(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const wstring& fileName);
 	~Texture() = default;
 
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList);
-	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE srvGpuDescriptorHandle);
 	void ReleaseUploadBuffer();
 
-private:
-	ComPtr<ID3D12Resource>			m_texture;
-	ComPtr<ID3D12Resource>			m_textureUploadBuffer;
+	ComPtr<ID3D12Resource> GetTexture() const { return m_texture; }
+	D3D12_SHADER_RESOURCE_VIEW_DESC GetShaderResourceViewDesc() const;
 
-	ComPtr<ID3D12DescriptorHeap>	m_srvHeap;
+private:
+	ComPtr<ID3D12Resource> m_texture;
+	ComPtr<ID3D12Resource> m_textureUploadBuffer;
 };
