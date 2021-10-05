@@ -350,7 +350,7 @@ void GameFramework::LoadAssets()
 	// 텍스쳐 생성
 	shared_ptr<Texture> texture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/rock.dds")) };
 	shared_ptr<Texture> _texture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/ceil.dds")) };
-	shared_ptr<Texture> __texture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/floor.dds")) };
+	shared_ptr<Texture> __texture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/terrain.dds")) };
 
 	// 셰이더 생성, 텍스쳐 설정
 	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature) };
@@ -362,7 +362,7 @@ void GameFramework::LoadAssets()
 
 	// 지형 생성
 	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 50, 50, XMFLOAT3{ 1.0f, 1.0f, 1.0f })
+		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 257, 257, XMFLOAT3{ 0.1f, 0.1f, 0.1f })
 	};
 	m_scene->GetTerrain().push_back(move(terrain));
 

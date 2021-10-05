@@ -1,6 +1,7 @@
 #include "terrain.h"
 
-HeightMapImage::HeightMapImage(const wstring& fileName, INT width, INT length, XMFLOAT3 scale) : m_width{ width }, m_length{ length }, m_scale{ scale }
+HeightMapImage::HeightMapImage(const wstring& fileName, INT width, INT length, XMFLOAT3 scale)
+	: m_width{ width }, m_length{ length }, m_scale{ scale }, m_pixels{ new BYTE[width * length] }
 {
 	unique_ptr<BYTE[]> buffer{ new BYTE[m_width * m_length] };
 	HANDLE hFile{ CreateFile(fileName.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL) };
@@ -11,11 +12,9 @@ HeightMapImage::HeightMapImage(const wstring& fileName, INT width, INT length, X
 	CloseHandle(hFile);
 
 	// 높이맵 이미지는 좌상단이 (0, 0)이고 우리가 원하는 좌표계는 좌하단이 (0, 0)이므로 상하대칭 시켜서 저장한다.
-	BYTE* pixels{ new BYTE[m_width * m_length] };
 	for (int y = 0; y < m_length; ++y)
 		for (int x = 0; x < m_width; ++x)
-			pixels[x + (m_length - y - 1) * m_width] = buffer[x + (y * m_width)];
-	m_pixels = make_unique<BYTE[]>(*pixels);
+			m_pixels[x + (y * m_width)] = buffer[x + ((m_length - y - 1) * m_width)];
 }
 
 XMFLOAT3 HeightMapImage::GetNormal(INT x, INT z) const
@@ -52,10 +51,10 @@ FLOAT HeightMapImage::GetHeight(FLOAT x, FLOAT z) const
 	float fx{ x - ix };	// x의 소수 부분
 	float fz{ z - iz };	// z의 소수 부분
 
-	float LT{ (float)m_pixels[ix + ((iz + 1) * m_width)] };			// 좌상단 높이
-	float RT{ (float)m_pixels[(ix + 1) + ((iz + 1) * m_width)] };	// 우상단 높이
-	float LB{ (float)m_pixels[ix + (iz * m_width)] };				// 좌하단 높이
-	float RB{ (float)m_pixels[(ix + 1) + (iz * m_width)] };			// 우하단 높이
+	float LT{ (float)m_pixels.get()[ix + ((iz + 1) * m_width)] };			// 좌상단 높이
+	float RT{ (float)m_pixels.get()[(ix + 1) + ((iz + 1) * m_width)] };	// 우상단 높이
+	float LB{ (float)m_pixels.get()[ix + (iz * m_width)] };				// 좌하단 높이
+	float RB{ (float)m_pixels.get()[(ix + 1) + (iz * m_width)] };			// 우하단 높이
 
 	// 사각형의 네 점을 보간하여 최종 높이 반환
 	float topHeight{ LT * (1 - fx) + RT * fx };		// 보간한 상단 높이
@@ -75,8 +74,7 @@ HeightMapGridMesh::HeightMapGridMesh(const ComPtr<ID3D12Device>& device, const C
 		for (int x = xStart; x < xStart + width; ++x)
 			vertices.emplace_back(
 				XMFLOAT3{ x * m_scale.x, GetHeight(heightMapImage, x, z), z * m_scale.z },
-				XMFLOAT2{ (float)x / (float)heightMapImage->GetWidth(), (float)z / (float)heightMapImage->GetLength()}
-			);
+				XMFLOAT2{ (float)x / (xStart + width), 1.0f - (float)z / (zStart + length) });
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
 
 	// 인덱스 데이터 설정, 인덱스 버퍼 생성
@@ -125,7 +123,7 @@ HeightMapTerrain::HeightMapTerrain(const ComPtr<ID3D12Device>& device, const Com
 	: m_width{ width }, m_length{ length }, m_scale{ scale }
 {
 	// 높이맵이미지 로딩
-	m_heightMapImage = make_shared<HeightMapImage>(fileName, m_width, m_length, m_scale);
+	m_heightMapImage = make_unique<HeightMapImage>(fileName, m_width, m_length, m_scale);
 
 	// 가로, 세로 블록의 개수
 	int widthBlockCount{ m_width / blockWidth };
@@ -135,13 +133,13 @@ HeightMapTerrain::HeightMapTerrain(const ComPtr<ID3D12Device>& device, const Com
 	for (int z = 0; z < lengthBlockCount; ++z)
 		for (int x = 0; x < widthBlockCount; ++x)
 		{
-			int xStart{ x * blockWidth };
-			int zStart{ z * blockLength };
+			int xStart{ x * (blockWidth - 1) };
+			int zStart{ z * (blockLength - 1) };
 			unique_ptr<GameObject> block{ make_unique<GameObject>() };
-			shared_ptr<HeightMapGridMesh> gridMesh{
+			shared_ptr<HeightMapGridMesh> mesh{
 				make_shared<HeightMapGridMesh>(device, commandList, m_heightMapImage.get(), xStart, zStart, blockWidth, blockLength, m_scale)
 			};
-			block->SetMesh(gridMesh);
+			block->SetMesh(mesh);
 			block->SetShader(shader);
 			block->SetTexture(texture);
 			m_blocks.push_back(move(block));

@@ -51,7 +51,7 @@ public:
 	INT GetImageLength() const { return m_heightMapImage->GetLength(); }
 
 private:
-	shared_ptr<HeightMapImage>		m_heightMapImage;	// 높이맵 이미지
+	unique_ptr<HeightMapImage>		m_heightMapImage;	// 높이맵 이미지
 	vector<unique_ptr<GameObject>>	m_blocks;			// 블록들
 	INT								m_width;			// 가로
 	INT								m_length;			// 세로

@@ -2,8 +2,8 @@
 #include "stdafx.h"
 #include "player.h"
 
-#define MAX_ROLL +20
-#define MIN_ROLL -10
+#define MAX_ROLL +60
+#define MIN_ROLL -80
 
 class Camera
 {
