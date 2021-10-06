@@ -1,13 +1,13 @@
 #include "terrain.h"
+#include <fstream>
 
 HeightMapImage::HeightMapImage(const wstring& fileName, INT width, INT length, XMFLOAT3 scale)
 	: m_width{ width }, m_length{ length }, m_scale{ scale }, m_pixels{ new BYTE[width * length] }
 {
+	// 파일 읽기
 	unique_ptr<BYTE[]> buffer{ new BYTE[m_width * m_length] };
 	HANDLE hFile{ CreateFile(fileName.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL) };
 	DWORD bytesRead;
-
-	// 파일 읽기
 	ReadFile(hFile, buffer.get(), m_width * m_length, &bytesRead, NULL);
 	CloseHandle(hFile);
 
@@ -51,10 +51,11 @@ FLOAT HeightMapImage::GetHeight(FLOAT x, FLOAT z) const
 	float fx{ x - ix };	// x의 소수 부분
 	float fz{ z - iz };	// z의 소수 부분
 
-	float LT{ (float)m_pixels.get()[ix + ((iz + 1) * m_width)] };			// 좌상단 높이
-	float RT{ (float)m_pixels.get()[(ix + 1) + ((iz + 1) * m_width)] };	// 우상단 높이
-	float LB{ (float)m_pixels.get()[ix + (iz * m_width)] };				// 좌하단 높이
-	float RB{ (float)m_pixels.get()[(ix + 1) + (iz * m_width)] };			// 우하단 높이
+	BYTE* pixels{ m_pixels.get() };
+	float LT{ (float)pixels[ix + ((iz + 1) * m_width)] };		// 좌상단 높이
+	float RT{ (float)pixels[(ix + 1) + ((iz + 1) * m_width)] };	// 우상단 높이
+	float LB{ (float)pixels[ix + (iz * m_width)] };				// 좌하단 높이
+	float RB{ (float)pixels[(ix + 1) + (iz * m_width)] };		// 우하단 높이
 
 	// 사각형의 네 점을 보간하여 최종 높이 반환
 	float topHeight{ LT * (1 - fx) + RT * fx };		// 보간한 상단 높이
@@ -70,41 +71,36 @@ HeightMapGridMesh::HeightMapGridMesh(const ComPtr<ID3D12Device>& device, const C
 {
 	// 정점 데이터 설정, 정점 버퍼 생성
 	vector<TextureVertex> vertices;
-	for (int z = zStart; z < zStart + length; ++z)
-		for (int x = xStart; x < xStart + width; ++x)
+	for (int z = zStart; z < zStart + m_length; ++z)
+		for (int x = xStart; x < xStart + m_width; ++x)
 			vertices.emplace_back(
-				XMFLOAT3{ x * m_scale.x, GetHeight(heightMapImage, x, z), z * m_scale.z },
-				XMFLOAT2{ (float)x / (xStart + width), 1.0f - (float)z / (zStart + length) });
+				XMFLOAT3{ x * m_scale.x, heightMapImage->GetHeight(x, z) * m_scale.y, z * m_scale.z },
+				XMFLOAT2{ (float)x / (float)heightMapImage->GetWidth(), 1.0f - ((float)z / (float)heightMapImage->GetLength()) });
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
 
 	// 인덱스 데이터 설정, 인덱스 버퍼 생성
 	vector<UINT> indices;
-	for (int z = 0; z < length; ++z)
+	for (int z = 0; z < m_length - 1; ++z) // 마지막 번 째 줄은 할 필요 없음
 	{
-		// 홀수 번째 줄 (z = 0, 2, 4, 6, ...)
-		// 인덱스 나열 순서는 왼쪽에서 오른쪽
+		// 홀수 번째 줄 (z = 0, 2, 4, 6, ...) 인덱스 나열 순서는 왼쪽 -> 오른쪽
 		if (z % 2 == 0)
-		{
-			for (int x = 0; x < width; ++x)
+			for (int x = 0; x < m_width; ++x)
 			{
-				// x = 0 이고 첫번째 줄이 아닐때 (x, z)를 추가
-				if (x == 0 && z > 0) indices.push_back(x + z * width);
-				indices.push_back(x + z * width);			// (x, z)
-				indices.push_back(x + z * width + width);	// (x, z+1)
+				// 첫번째 줄이 아니고 줄이 바뀔 때 (x, z)를 추가
+				if (x == 0 && z > 0) indices.push_back(x + (z * m_width));
+				indices.push_back(x + (z * m_width));			// (x, z)
+				indices.push_back(x + (z * m_width) + m_width);	// (x, z+1)
 			}
-		}
 
-		// 짝수 번째 줄 (z = 1, 3, 5, 7, ...)
+		// 짝수 번째 줄 (z = 1, 3, 5, 7, ...) 인덱스 나열 순서는 왼쪽 <- 오른쪽
 		else
-		{
-			for (int x = width - 1; x >= 0; --x)
+			for (int x = m_width - 1; x >= 0; --x)
 			{
-				// 줄이 바뀌었을 때 (x, z)를 추가
-				if (x == width - 1) indices.push_back(x + z * width);
-				indices.push_back(x + z * width);			// (x, z)
-				indices.push_back(x + z * width + width);	// (x, z+1)
+				// 줄이 바뀔 때 (x, z)를 추가
+				if (x == m_width - 1) indices.push_back(x + (z * m_width));
+				indices.push_back(x + (z * m_width));			// (x, z)
+				indices.push_back(x + (z * m_width) + m_width);	// (x, z+1)
 			}
-		}
 	}
 	CreateIndexBuffer(device, commandList, indices.data(), indices.size());
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;

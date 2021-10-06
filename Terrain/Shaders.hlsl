@@ -41,6 +41,6 @@ VSOutput VSMain(VSInput input)
 }
 
 float4 PSMain(VSOutput input) : SV_TARGET
-{   
+{
     return g_texture.Sample(g_sampler, input.uv);
 }

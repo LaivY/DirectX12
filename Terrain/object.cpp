@@ -48,13 +48,13 @@ void GameObject::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& c
 	commandList->SetGraphicsRoot32BitConstants(0, 16, &worldMatrix, 0);
 
 	// 텍스쳐 설정
-	if (m_shader && m_texture)
+	if (m_texture)
 	{
-		ID3D12DescriptorHeap* ppHeaps[] = { m_shader->GetSrvHeap().Get() };
+		ID3D12DescriptorHeap* ppHeaps[] = { m_texture->GetSrvHeap().Get() };
 		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 		// GameFramework::CreateRootSignature에서 rootParameter[2]가 SRV 서술자 테이블임
-		commandList->SetGraphicsRootDescriptorTable(2, m_shader->GetSrvHeap()->GetGPUDescriptorHandleForHeapStart());
+		commandList->SetGraphicsRootDescriptorTable(2, m_texture->GetSrvHeap()->GetGPUDescriptorHandleForHeapStart());
 	}
 }
 

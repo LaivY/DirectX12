@@ -354,15 +354,12 @@ void GameFramework::LoadAssets()
 
 	// 셰이더 생성, 텍스쳐 설정
 	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature) };
-	shader->CreateShaderResourceView(m_device, texture);
 	shared_ptr<Shader> _shader{ make_shared<Shader>(m_device, m_rootSignature) };
-	_shader->CreateShaderResourceView(m_device, _texture);
 	shared_ptr<Shader> __shader{ make_shared<Shader>(m_device, m_rootSignature) };
-	__shader->CreateShaderResourceView(m_device, __texture);
 
 	// 지형 생성
 	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 257, 257, XMFLOAT3{ 0.1f, 0.1f, 0.1f })
+		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 257, 257, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
 	};
 	m_scene->GetTerrain().push_back(move(terrain));
 

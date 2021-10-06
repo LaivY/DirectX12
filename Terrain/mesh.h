@@ -21,6 +21,17 @@ private:
 	XMFLOAT2 m_uv;
 };
 
+class Texture2Vertex : public Vertex
+{
+public:
+	Texture2Vertex(const XMFLOAT3& position, const XMFLOAT2& uv1, const XMFLOAT2& uv2) : Vertex{ position }, m_uv1{ uv1 }, m_uv2{ uv2 } { };
+	~Texture2Vertex() = default;
+
+private:
+	XMFLOAT2 m_uv1;
+	XMFLOAT2 m_uv2;
+};
+
 class Mesh
 {
 public:

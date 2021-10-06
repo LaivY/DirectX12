@@ -46,9 +46,6 @@ public:
 	~HeightMapTerrain() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
-	FLOAT GetHeight(FLOAT x, FLOAT z) const { return m_heightMapImage->GetHeight(x / m_scale.x, z / m_scale.z) * m_scale.y; };
-	INT GetImageWidth() const { return m_heightMapImage->GetWidth(); }
-	INT GetImageLength() const { return m_heightMapImage->GetLength(); }
 
 private:
 	unique_ptr<HeightMapImage>		m_heightMapImage;	// 높이맵 이미지
