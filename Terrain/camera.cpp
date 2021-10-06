@@ -46,36 +46,36 @@ void Camera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
 	if (roll != 0.0f)
 	{
-		// roll의 경우 -89 ~ +89도
-		XMMATRIX rotate{ XMMatrixIdentity() };
-		if (m_roll + roll > MAX_ROLL)
-		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MAX_ROLL - m_roll));
-			m_roll = MAX_ROLL;
-		}
-		else if (m_roll + roll < MIN_ROLL)
-		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MIN_ROLL - m_roll));
-			m_roll = MIN_ROLL;
-		}
-		else
-		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(roll));
-			m_roll += roll;
-		}
-		XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
+		// z축(roll)으로는 회전할 수 없음
 	}
 	if (pitch != 0.0f)
 	{
-		// pitch의 경우 제한 없음
-		m_pitch += pitch;
-
-		XMMATRIX rotate{ XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(pitch)) };
+		// x축(pitch)의 경우 MIN_PITCH ~ MAX_PITCH
+		XMMATRIX rotate{ XMMatrixIdentity() };
+		if (m_pitch + pitch > MAX_PITCH)
+		{
+			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MAX_PITCH - m_pitch));
+			m_pitch = MAX_PITCH;
+		}
+		else if (m_pitch + pitch < MIN_PITCH)
+		{
+			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MIN_PITCH - m_pitch));
+			m_pitch = MIN_PITCH;
+		}
+		else
+		{
+			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(pitch));
+			m_pitch += pitch;
+		}
 		XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
 	}
 	if (yaw != 0.0f)
 	{
-		// z축으로는 회전할 수 없음
+		// y축(yaw)의 경우 제한 없음
+		m_yaw += yaw;
+
+		XMMATRIX rotate{ XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(yaw)) };
+		XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
 	}
 	UpdateLocalAxis();
 }
@@ -110,19 +110,19 @@ void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 	if (roll != 0.0f)
 	{
 		m_roll += roll;
-		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetRight()), XMConvertToRadians(roll));
+		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetFront()), XMConvertToRadians(roll));
 		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 	}
 	if (pitch != 0.0f)
 	{
 		m_pitch += pitch;
-		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetUp()), XMConvertToRadians(pitch));
+		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetRight()), XMConvertToRadians(pitch));
 		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 	}
 	if (yaw != 0.0f)
 	{
 		m_yaw += yaw;
-		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetFront()), XMConvertToRadians(yaw));
+		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetUp()), XMConvertToRadians(yaw));
 		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 	}
 

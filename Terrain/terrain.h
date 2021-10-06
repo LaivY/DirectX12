@@ -31,11 +31,6 @@ public:
 	~HeightMapGridMesh() = default;
 
 	FLOAT GetHeight(HeightMapImage* heightMapImage, INT x, INT z) const;
-
-private:
-	INT			m_width;	// 가로
-	INT			m_length;	// 세로
-	XMFLOAT3	m_scale;	// 확대 비율
 };
 
 class HeightMapTerrain
@@ -46,6 +41,10 @@ public:
 	~HeightMapTerrain() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+	void Move(const XMFLOAT3& shift);
+	void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+	void SetPosition(const XMFLOAT3& position);
+	XMFLOAT3 GetPosition() const { return m_blocks.front()->GetPosition(); }
 
 private:
 	unique_ptr<HeightMapImage>		m_heightMapImage;	// 높이맵 이미지

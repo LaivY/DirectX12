@@ -27,7 +27,7 @@ void GameObject::Move(const XMFLOAT3& shift)
 void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
 	// È¸Àü
-	XMMATRIX rotate{ XMMatrixRotationRollPitchYaw(XMConvertToRadians(roll), XMConvertToRadians(pitch), XMConvertToRadians(yaw)) };
+	XMMATRIX rotate{ XMMatrixRotationRollPitchYaw(XMConvertToRadians(pitch), XMConvertToRadians(yaw), XMConvertToRadians(roll)) };
 	XMMATRIX worldMatrix{ rotate * XMLoadFloat4x4(&m_worldMatrix) };
 	XMStoreFloat4x4(&m_worldMatrix, worldMatrix);
 

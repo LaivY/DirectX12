@@ -359,8 +359,9 @@ void GameFramework::LoadAssets()
 
 	// 지형 생성
 	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 257, 257, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
+		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 25, 25, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
 	};
+	terrain->Rotate(0.0f, 0.0f, 45.0f);
 	m_scene->GetTerrain().push_back(move(terrain));
 
 	// 게임오브젝트 생성

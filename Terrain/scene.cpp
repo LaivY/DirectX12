@@ -26,7 +26,7 @@ void Scene::OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime) co
 	// 움직인 정도에 비례해서 회전
 	int dx = newMousePosition.x - oldMousePosition.x;
 	int dy = newMousePosition.y - oldMousePosition.y;
-	GetPlayer()->Rotate(dy * deltaTime * 5.0f, dx * deltaTime * 5.0f , 0.0f);
+	GetPlayer()->Rotate(0.0f, dy * deltaTime * 5.0f, dx * deltaTime * 5.0f);
 
 	// 마우스를 화면 가운데로 이동
 	SetCursorPos(oldMousePosition.x, oldMousePosition.y);

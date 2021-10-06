@@ -9,20 +9,20 @@ Player::Player() : GameObject{}, m_velocity{ 0.0f, 0.0f, 0.0f }, m_maxVelocity{ 
 void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
 	// 회전각 제한
-	if (m_roll + roll > MAX_ROLL)
-		roll = MAX_ROLL - m_roll;
-	else if (m_roll + roll < MIN_ROLL)
-		roll = MIN_ROLL - m_roll;
+	if (m_pitch + pitch > MAX_PITCH)
+		pitch = MAX_PITCH - m_pitch;
+	else if (m_pitch + pitch < MIN_PITCH)
+		pitch = MIN_PITCH - m_pitch;
 
 	// 회전각 합산
 	m_roll += roll; m_pitch += pitch; m_yaw += yaw;
 
 	// 카메라는 x,y축으로 회전할 수 있다.
 	// GameObject::Rotate에서 플레이어의 로컬 x,y,z축을 변경하므로 먼저 호출해야한다.
-	m_camera->Rotate(roll, pitch, 0.0f);
+	m_camera->Rotate(0.0f, pitch, yaw);
 
 	// 플레이어는 y축으로만 회전할 수 있다.
-	GameObject::Rotate(0.0f, pitch, 0.0f);
+	GameObject::Rotate(0.0f, 0.0f, yaw);
 }
 
 void Player::ApplyFriction(FLOAT deltaTime)

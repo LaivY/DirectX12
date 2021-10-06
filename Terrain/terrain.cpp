@@ -67,39 +67,38 @@ FLOAT HeightMapImage::GetHeight(FLOAT x, FLOAT z) const
 
 HeightMapGridMesh::HeightMapGridMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
 	HeightMapImage* heightMapImage, INT xStart, INT zStart, INT width, INT length, XMFLOAT3 scale)
-	: m_width{ width }, m_length{ length }, m_scale{ scale }
 {
 	// 정점 데이터 설정, 정점 버퍼 생성
 	vector<TextureVertex> vertices;
-	for (int z = zStart; z < zStart + m_length; ++z)
-		for (int x = xStart; x < xStart + m_width; ++x)
+	for (int z = zStart; z < zStart + length; ++z)
+		for (int x = xStart; x < xStart + width; ++x)
 			vertices.emplace_back(
-				XMFLOAT3{ x * m_scale.x, heightMapImage->GetHeight(x, z) * m_scale.y, z * m_scale.z },
+				XMFLOAT3{ x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z },
 				XMFLOAT2{ (float)x / (float)heightMapImage->GetWidth(), 1.0f - ((float)z / (float)heightMapImage->GetLength()) });
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
 
 	// 인덱스 데이터 설정, 인덱스 버퍼 생성
 	vector<UINT> indices;
-	for (int z = 0; z < m_length - 1; ++z) // 마지막 번 째 줄은 할 필요 없음
+	for (int z = 0; z < length - 1; ++z) // 마지막 번 째 줄은 할 필요 없음
 	{
 		// 홀수 번째 줄 (z = 0, 2, 4, 6, ...) 인덱스 나열 순서는 왼쪽 -> 오른쪽
 		if (z % 2 == 0)
-			for (int x = 0; x < m_width; ++x)
+			for (int x = 0; x < width; ++x)
 			{
 				// 첫번째 줄이 아니고 줄이 바뀔 때 (x, z)를 추가
-				if (x == 0 && z > 0) indices.push_back(x + (z * m_width));
-				indices.push_back(x + (z * m_width));			// (x, z)
-				indices.push_back(x + (z * m_width) + m_width);	// (x, z+1)
+				if (x == 0 && z > 0) indices.push_back(x + (z * width));
+				indices.push_back(x + (z * width));			// (x, z)
+				indices.push_back(x + (z * width) + width);	// (x, z+1)
 			}
 
 		// 짝수 번째 줄 (z = 1, 3, 5, 7, ...) 인덱스 나열 순서는 왼쪽 <- 오른쪽
 		else
-			for (int x = m_width - 1; x >= 0; --x)
+			for (int x = width - 1; x >= 0; --x)
 			{
 				// 줄이 바뀔 때 (x, z)를 추가
-				if (x == m_width - 1) indices.push_back(x + (z * m_width));
-				indices.push_back(x + (z * m_width));			// (x, z)
-				indices.push_back(x + (z * m_width) + m_width);	// (x, z+1)
+				if (x == width - 1) indices.push_back(x + (z * width));
+				indices.push_back(x + (z * width));			// (x, z)
+				indices.push_back(x + (z * width) + width);	// (x, z+1)
 			}
 	}
 	CreateIndexBuffer(device, commandList, indices.data(), indices.size());
@@ -144,6 +143,25 @@ HeightMapTerrain::HeightMapTerrain(const ComPtr<ID3D12Device>& device, const Com
 
 void HeightMapTerrain::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
-	for (const auto& obj : m_blocks)
-		obj->Render(commandList);
+	for (const auto& block : m_blocks)
+		block->Render(commandList);
+}
+
+void HeightMapTerrain::Move(const XMFLOAT3& shift)
+{
+	for (auto& block : m_blocks)
+		block->Move(shift);
+}
+
+void HeightMapTerrain::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
+{
+	for (auto& block : m_blocks)
+		block->Rotate(roll, pitch, yaw);
+}
+
+void HeightMapTerrain::SetPosition(const XMFLOAT3& position)
+{
+	// 지형의 위치 설정은 모든 블록들의 위치를 조정한다는 것임
+	for (auto& block : m_blocks)
+		block->SetPosition(position);
 }
