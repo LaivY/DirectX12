@@ -65,9 +65,9 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 	// 카메라 셰이더 변수(뷰, 투영 변환 행렬) 최신화
 	if (m_camera) m_camera->UpdateShaderVariable(commandList);
 
-	// 지형 렌더링
-	for (const auto& terrain : m_terrain)
-		terrain->Render(commandList);
+	// 스카이박스 렌더링
+	// 스카이박스는 깊이버퍼에 영향을 미치지 않는다(SkyboxShader).
+	if (m_skybox) m_skybox->Render(commandList);
 
 	// 플레이어 렌더링
 	if (m_player) m_player->Render(commandList);
@@ -75,6 +75,16 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 	// 게임오브젝트 렌더링
 	for (const auto& obj : m_gameObjects)
 		obj->Render(commandList);
+
+	// 지형 렌더링
+	for (const auto& terrain : m_terrain)
+		terrain->Render(commandList);	
+}
+
+void Scene::SetSkybox(unique_ptr<Skybox>& skybox)
+{
+	if (m_skybox) m_skybox.reset();
+	m_skybox = move(skybox);
 }
 
 void Scene::SetPlayer(const shared_ptr<Player>& player)

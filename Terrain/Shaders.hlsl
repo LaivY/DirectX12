@@ -35,7 +35,7 @@ VSOutput VSMain(VSInput input)
     VSOutput result;
     result.position = mul(input.position, worldMatrix);
     result.position = mul(result.position, viewMatrix);
-    result.position = mul(result.position, projMatrix);
+    result.position = mul(result.position, projMatrix);    
     result.uv = input.uv;
     return result;
 }

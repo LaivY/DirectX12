@@ -43,14 +43,16 @@ void GameFramework::OnUpdate()
 {
 	shared_ptr<Camera> camera{ m_scene->GetCamera() };
 	shared_ptr<Player> player{ m_scene->GetPlayer() };
+	Skybox* skybox{ m_scene->GetSkybox() };
 
 	if (camera)
 	{
 		camera->UpdatePosition(m_timer.GetDeltaTime());
+		if (skybox) skybox->Update(camera->GetEye());
 	}
 	if (player)
 	{
-		player->Move(m_scene->GetPlayer()->GetVelocity());
+		player->Move(player->GetVelocity());
 		player->ApplyFriction(m_timer.GetDeltaTime());
 	}
 }
@@ -361,8 +363,27 @@ void GameFramework::LoadAssets()
 	unique_ptr<HeightMapTerrain> terrain{
 		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 25, 25, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
 	};
-	terrain->Rotate(0.0f, 0.0f, 45.0f);
+	terrain->SetPosition(XMFLOAT3{ -40.0f, -10.0f, -20.0f });
 	m_scene->GetTerrain().push_back(move(terrain));
+
+	// 스카이박스 생성
+	shared_ptr<RectMesh> rectMesh{ make_shared<RectMesh>(m_device, m_commandList, 20.0f, 20.0f) };
+	shared_ptr<SkyboxShader> skyboxShader{ make_shared<SkyboxShader>(m_device, m_rootSignature) };
+	shared_ptr<Texture> frontTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxFront.dds")) };
+	shared_ptr<Texture> leftTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxLeft.dds")) };
+	shared_ptr<Texture> rightTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxRight.dds")) };
+	shared_ptr<Texture> backTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxBack.dds")) };
+	shared_ptr<Texture> topTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxTop.dds")) };
+	shared_ptr<Texture> botTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxBot.dds")) };
+	unique_ptr<Skybox> skybox{ make_unique<Skybox>(rectMesh, skyboxShader, frontTexture, leftTexture, rightTexture, backTexture, topTexture, botTexture, XMFLOAT3{ 0.0f, 0.0f, 0.0f }, 10.0f) };
+	m_scene->SetSkybox(skybox);
+
+	// 텍스쳐 렌더링용 사각형 생성
+	//unique_ptr<GameObject> rect{ make_unique<GameObject>() };
+	//rect->SetMesh(rectMesh);
+	//rect->SetShader(shader);
+	//rect->SetTexture(texture);
+	//m_scene->GetGameObjects().push_back(move(rect));
 
 	// 게임오브젝트 생성
 	unique_ptr<GameObject> obj{ make_unique<GameObject>() };
@@ -386,6 +407,7 @@ void GameFramework::LoadAssets()
 	camera->SetUp(XMFLOAT3{ 0.0f, 1.0f, 0.0f });
 	camera->SetPlayer(m_scene->GetPlayer());
 
+	// 카메라 투영 행렬 설정
 	XMFLOAT4X4 projMatrix;
 	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 0.1f, 1000.0f));
 	camera->SetProjMatrix(projMatrix);

@@ -65,3 +65,10 @@ public:
 	CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height);
 	~CubeMesh() = default;
 };
+
+class RectMesh : public Mesh
+{
+public:
+	RectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT height);
+	~RectMesh() = default;
+};

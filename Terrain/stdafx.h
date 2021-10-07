@@ -81,6 +81,46 @@ namespace Vector3
         XMStoreFloat3(&result, v);
         return result.x;
     }
+    inline XMFLOAT3 TransformCoord(const XMFLOAT3& a, const XMFLOAT4X4& b)
+    {
+        XMFLOAT3 result;
+        XMStoreFloat3(&result, XMVector3TransformCoord(XMLoadFloat3(&a), XMLoadFloat4x4(&b)));
+        return result;
+    }
+    inline XMFLOAT3 TransformNormal(const XMFLOAT3& a, const XMFLOAT4X4& b)
+    {
+        XMFLOAT3 result;
+        XMStoreFloat3(&result, XMVector3TransformNormal(XMLoadFloat3(&a), XMLoadFloat4x4(&b)));
+        return result;
+    }
+}
+
+namespace Matrix
+{
+    inline XMFLOAT4X4 Mul(const XMFLOAT4X4& a, const XMFLOAT4X4& b)
+    {
+        XMFLOAT4X4 result;
+        XMMATRIX x{ XMLoadFloat4x4(&a) };
+        XMMATRIX y{ XMLoadFloat4x4(&b) };
+        XMStoreFloat4x4(&result, x * y);
+        return result;
+    }
+
+    inline XMFLOAT4X4 Transpose(const XMFLOAT4X4& a)
+    {
+        XMFLOAT4X4 result;
+        XMMATRIX m{ XMMatrixTranspose(XMLoadFloat4x4(&a)) };
+        XMStoreFloat4x4(&result, m);
+        return result;
+    }
+
+    inline XMFLOAT4X4 Inverse(const XMFLOAT4X4& a)
+    {
+        XMFLOAT4X4 result;
+        XMMATRIX m{ XMMatrixInverse(NULL, XMLoadFloat4x4(&a)) };
+        XMStoreFloat4x4(&result, m);
+        return result;
+    }
 }
 
 ComPtr<ID3D12Resource> CreateBufferResource(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const void* data, UINT sizePerData, UINT dataCount,

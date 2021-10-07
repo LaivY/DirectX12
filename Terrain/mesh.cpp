@@ -121,3 +121,20 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
 }
+
+RectMesh::RectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT height)
+{
+	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	vector<TextureVertex> vertices;
+	vertices.emplace_back(XMFLOAT3{ -width / 2.0f, +height / 2.0f, 0.0f }, XMFLOAT2{ 0.0f, 0.0f }); // LT
+	vertices.emplace_back(XMFLOAT3{ +width / 2.0f, +height / 2.0f, 0.0f }, XMFLOAT2{ 1.0f, 0.0f }); // RT
+	vertices.emplace_back(XMFLOAT3{ +width / 2.0f, -height / 2.0f, 0.0f }, XMFLOAT2{ 1.0f, 1.0f }); // RB
+	vertices.emplace_back(XMFLOAT3{ -width / 2.0f, -height / 2.0f, 0.0f }, XMFLOAT2{ 0.0f, 1.0f }); // LB
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+
+	vector<UINT> indices;
+	indices.push_back(0); indices.push_back(1); indices.push_back(2);
+	indices.push_back(0); indices.push_back(2); indices.push_back(3);
+	CreateIndexBuffer(device, commandList, indices.data(), indices.size());
+}
