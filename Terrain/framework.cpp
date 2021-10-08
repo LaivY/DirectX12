@@ -48,7 +48,7 @@ void GameFramework::OnUpdate()
 	if (camera)
 	{
 		camera->UpdatePosition(m_timer.GetDeltaTime());
-		if (skybox) skybox->Update(camera->GetEye());
+		if (skybox) skybox->SetPosition(camera->GetEye());
 	}
 	if (player)
 	{
@@ -346,58 +346,40 @@ void GameFramework::LoadAssets()
 	m_scene = make_unique<Scene>();
 
 	// 메쉬 생성
-	CubeMesh cube{ m_device, m_commandList, 0.5f, 0.5f, 0.5f };
-	shared_ptr<Mesh> mesh{ make_shared<Mesh>(cube) };
+	shared_ptr<CubeMesh> cubeMesh{ make_shared<CubeMesh>(m_device, m_commandList, 0.5f, 0.5f, 0.5f) };
 
 	// 텍스쳐 생성
-	shared_ptr<Texture> texture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/rock.dds")) };
-	shared_ptr<Texture> _texture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/ceil.dds")) };
-	shared_ptr<Texture> __texture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/terrain.dds")) };
+	shared_ptr<Texture> rockTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/rock.dds")) };
+	shared_ptr<Texture> ceilTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/ceil.dds")) };
+	shared_ptr<Texture> terrainTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/terrain.dds")) };
 
 	// 셰이더 생성, 텍스쳐 설정
 	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature) };
-	shared_ptr<Shader> _shader{ make_shared<Shader>(m_device, m_rootSignature) };
-	shared_ptr<Shader> __shader{ make_shared<Shader>(m_device, m_rootSignature) };
 
 	// 지형 생성
 	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), __shader, __texture, 257, 257, 25, 25, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
+		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), shader, terrainTexture, 257, 257, 25, 25, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
 	};
 	terrain->SetPosition(XMFLOAT3{ -40.0f, -10.0f, -20.0f });
 	m_scene->GetTerrain().push_back(move(terrain));
 
 	// 스카이박스 생성
-	shared_ptr<RectMesh> rectMesh{ make_shared<RectMesh>(m_device, m_commandList, 20.0f, 20.0f) };
-	shared_ptr<SkyboxShader> skyboxShader{ make_shared<SkyboxShader>(m_device, m_rootSignature) };
-	shared_ptr<Texture> frontTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxFront.dds")) };
-	shared_ptr<Texture> leftTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxLeft.dds")) };
-	shared_ptr<Texture> rightTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxRight.dds")) };
-	shared_ptr<Texture> backTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxBack.dds")) };
-	shared_ptr<Texture> topTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxTop.dds")) };
-	shared_ptr<Texture> botTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/SkyboxBot.dds")) };
-	unique_ptr<Skybox> skybox{ make_unique<Skybox>(rectMesh, skyboxShader, frontTexture, leftTexture, rightTexture, backTexture, topTexture, botTexture, XMFLOAT3{ 0.0f, 0.0f, 0.0f }, 10.0f) };
+	unique_ptr<Skybox> skybox{ make_unique<Skybox>(m_device, m_commandList, m_rootSignature) };
 	m_scene->SetSkybox(skybox);
-
-	// 텍스쳐 렌더링용 사각형 생성
-	//unique_ptr<GameObject> rect{ make_unique<GameObject>() };
-	//rect->SetMesh(rectMesh);
-	//rect->SetShader(shader);
-	//rect->SetTexture(texture);
-	//m_scene->GetGameObjects().push_back(move(rect));
 
 	// 게임오브젝트 생성
 	unique_ptr<GameObject> obj{ make_unique<GameObject>() };
 	obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 5.0f });
-	obj->SetMesh(mesh);
+	obj->SetMesh(cubeMesh);
 	obj->SetShader(shader);
-	obj->SetTexture(texture);
+	obj->SetTexture(rockTexture);
 	m_scene->GetGameObjects().push_back(move(obj));
 
 	// 플레이어 생성
 	shared_ptr<Player> player{ make_shared<Player>() };
-	player->SetMesh(mesh);
-	player->SetShader(_shader);
-	player->SetTexture(_texture);
+	player->SetMesh(cubeMesh);
+	player->SetShader(shader);
+	player->SetTexture(ceilTexture);
 	m_scene->SetPlayer(player);
 
 	// 카메라 생성

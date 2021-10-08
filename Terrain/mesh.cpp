@@ -59,6 +59,7 @@ void Mesh::ReleaseUploadBuffer()
 
 CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height)
 {
+	m_nIndices = 0;
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	// 큐브 가로, 세로, 높이
@@ -122,19 +123,87 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
 }
 
-RectMesh::RectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT height)
+TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height, XMFLOAT3 position)
 {
+	m_nIndices = 0;
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	vector<TextureVertex> vertices;
-	vertices.emplace_back(XMFLOAT3{ -width / 2.0f, +height / 2.0f, 0.0f }, XMFLOAT2{ 0.0f, 0.0f }); // LT
-	vertices.emplace_back(XMFLOAT3{ +width / 2.0f, +height / 2.0f, 0.0f }, XMFLOAT2{ 1.0f, 0.0f }); // RT
-	vertices.emplace_back(XMFLOAT3{ +width / 2.0f, -height / 2.0f, 0.0f }, XMFLOAT2{ 1.0f, 1.0f }); // RB
-	vertices.emplace_back(XMFLOAT3{ -width / 2.0f, -height / 2.0f, 0.0f }, XMFLOAT2{ 0.0f, 1.0f }); // LB
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+	FLOAT hx{ position.x + width / 2.0f }, hy{ position.y + height / 2.0f }, hz{ position.z + length / 2.0f };
+	
+	if (width == 0.0f)
+	{
+		// 분기하는 이유는 위치에 따라 삼각형 와인딩 순서가 달라지기 때문에
+		// YZ평면
+		if (position.x > 0.0f)
+		{
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 0.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
 
-	vector<UINT> indices;
-	indices.push_back(0); indices.push_back(1); indices.push_back(2);
-	indices.push_back(0); indices.push_back(2); indices.push_back(3);
-	CreateIndexBuffer(device, commandList, indices.data(), indices.size());
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 3
+		}
+		else
+		{
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
+
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, -hz }, XMFLOAT2{ 0.0f, 1.0f }); // 2
+		}
+	}
+	else if (length == 0.0f)
+	{
+		// XY평면
+		if (position.z > 0.0f)
+		{
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+			vertices.emplace_back(XMFLOAT3{ -hx, -hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 3
+		}
+		else
+		{
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ -hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
+
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ -hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
+			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 2
+		}
+	}
+	else if (height == 0.0f)
+	{
+		// XZ평면
+		if (position.y > 0.0f)
+		{
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 0.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 3
+		}
+		else
+		{
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, -hz }, XMFLOAT2{ 0.0f, 1.0f }); // 0
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 3
+
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 1
+			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 3
+			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 2
+		}
+	}
+
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
 }

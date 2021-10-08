@@ -1,44 +1,33 @@
 #include "skybox.h"
 
-Skybox::Skybox(const shared_ptr<RectMesh>& frontRectMesh, const shared_ptr<Shader>& shader,
-	const shared_ptr<Texture>& frontTexture, const shared_ptr<Texture>& leftTexture, const shared_ptr<Texture>& rightTexture,
-	const shared_ptr<Texture>& backTexture, const shared_ptr<Texture>& topTexture, const shared_ptr<Texture>& botTexture, const XMFLOAT3& position, FLOAT distance)
-	: m_faces{ new GameObject[6] }, m_distance{ distance }
+Skybox::Skybox(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature) : m_faces{ new GameObject[6] }
 {
-	for (int i = 0; i < 6; ++i)
-	{
-		m_faces[i].SetMesh(frontRectMesh);
-		m_faces[i].SetShader(shader);
-	}
+	// 메쉬 생성
+	shared_ptr<TextureRectMesh> frontMesh{ make_shared<TextureRectMesh>(device, commandList, 20.0f, 0.0f, 20.0f, XMFLOAT3{ 0.0f, 0.0f, 10.0f }) };
+	shared_ptr<TextureRectMesh> leftMesh{ make_shared<TextureRectMesh>(device, commandList, 0.0f, 20.0f, 20.0f, XMFLOAT3{ -10.0f, 0.0f, 0.0f }) };
+	shared_ptr<TextureRectMesh> rightMesh{ make_shared<TextureRectMesh>(device, commandList, 0.0f, 20.0f, 20.0f, XMFLOAT3{ 10.0f, 0.0f, 0.0f }) };
+	shared_ptr<TextureRectMesh> backMesh{ make_shared<TextureRectMesh>(device, commandList, 20.0f, 0.0f, 20.0f, XMFLOAT3{ 0.0f, 0.0f, -10.0f }) };
+	shared_ptr<TextureRectMesh> topMesh{ make_shared<TextureRectMesh>(device, commandList, 20.0f, 20.0f, 0.0f, XMFLOAT3{ 0.0f, 10.0f, 0.0f }) };
+	shared_ptr<TextureRectMesh> botMesh{ make_shared<TextureRectMesh>(device, commandList, 20.0f, 20.0f, 0.0f, XMFLOAT3{ 0.0f, -10.0f, 0.0f }) };
 
-	// 앞(+z축)
-	m_faces[0].SetTexture(frontTexture);
-	m_faces[0].SetPosition(Vector3::Add(position, XMFLOAT3{ 0.0f, 0.0f, distance }));
+	// 셰이더 생성
+	shared_ptr<SkyboxShader> skyboxShader{ make_shared<SkyboxShader>(device, rootSignature) };
 
-	// 왼쪽(-x축)
-	m_faces[1].SetTexture(leftTexture);
-	m_faces[1].Rotate(0.0f, 0.0f, -90.0f);
-	m_faces[1].SetPosition(Vector3::Add(position, XMFLOAT3{ -distance, 0.0f, 0.0f }));
+	// 텍스쳐 생성
+	shared_ptr<Texture> frontTexture{ make_shared<Texture>(device, commandList, TEXT("resource/SkyboxFront.dds")) };
+	shared_ptr<Texture> leftTexture{ make_shared<Texture>(device, commandList, TEXT("resource/SkyboxLeft.dds")) };
+	shared_ptr<Texture> rightTexture{ make_shared<Texture>(device, commandList, TEXT("resource/SkyboxRight.dds")) };
+	shared_ptr<Texture> backTexture{ make_shared<Texture>(device, commandList, TEXT("resource/SkyboxBack.dds")) };
+	shared_ptr<Texture> topTexture{ make_shared<Texture>(device, commandList, TEXT("resource/SkyboxTop.dds")) };
+	shared_ptr<Texture> botTexture{ make_shared<Texture>(device, commandList, TEXT("resource/SkyboxBot.dds")) };
 
-	// 오른쪽(+x축)
-	m_faces[2].SetTexture(rightTexture);
-	m_faces[2].Rotate(0.0f, 0.0f, +90.0f);
-	m_faces[2].SetPosition(Vector3::Add(position, XMFLOAT3{ distance, 0.0f, 0.0f }));
-
-	// 뒤(-z축)
-	m_faces[3].SetTexture(backTexture);
-	m_faces[3].Rotate(0.0f, 0.0f, 180.0f);
-	m_faces[3].SetPosition(Vector3::Add(position, XMFLOAT3{ 0.0f, 0.0f, -distance }));
-
-	// 위(+y축)
-	m_faces[4].SetTexture(topTexture);
-	m_faces[4].Rotate(0.0f, -90.0f, 0.0f);
-	m_faces[4].SetPosition(Vector3::Add(position, XMFLOAT3{ 0.0f, distance, 0.0f }));
-
-	// 아래(-y축)
-	m_faces[5].SetTexture(botTexture);
-	m_faces[5].Rotate(0.0f, 90.0f, 0.0f);
-	m_faces[5].SetPosition(Vector3::Add(position, XMFLOAT3{ 0.0f, -distance, 0.0f }));
+	// 면 생성
+	m_faces[0].SetMesh(frontMesh);	m_faces[0].SetShader(skyboxShader); m_faces[0].SetTexture(frontTexture);	// 앞
+	m_faces[1].SetMesh(leftMesh);	m_faces[1].SetShader(skyboxShader); m_faces[1].SetTexture(leftTexture);		// 왼쪽
+	m_faces[2].SetMesh(rightMesh);	m_faces[2].SetShader(skyboxShader); m_faces[2].SetTexture(rightTexture);	// 오른쪽
+	m_faces[3].SetMesh(backMesh);	m_faces[3].SetShader(skyboxShader); m_faces[3].SetTexture(backTexture);		// 뒤
+	m_faces[4].SetMesh(topMesh);	m_faces[4].SetShader(skyboxShader); m_faces[4].SetTexture(topTexture);		// 위
+	m_faces[5].SetMesh(botMesh);	m_faces[5].SetShader(skyboxShader); m_faces[5].SetTexture(botTexture);		// 아래
 }
 
 void Skybox::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
@@ -47,12 +36,8 @@ void Skybox::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 		m_faces[i].Render(commandList);
 }
 
-void Skybox::Update(const XMFLOAT3& cameraPosition)
+void Skybox::SetPosition(XMFLOAT3 position)
 {
-	m_faces[0].SetPosition(Vector3::Add(cameraPosition, XMFLOAT3{ 0.0f, 0.0f, m_distance }));
-	m_faces[1].SetPosition(Vector3::Add(cameraPosition, XMFLOAT3{ -m_distance, 0.0f, 0.0f }));
-	m_faces[2].SetPosition(Vector3::Add(cameraPosition, XMFLOAT3{ m_distance, 0.0f, 0.0f }));
-	m_faces[3].SetPosition(Vector3::Add(cameraPosition, XMFLOAT3{ 0.0f, 0.0f, -m_distance }));
-	m_faces[4].SetPosition(Vector3::Add(cameraPosition, XMFLOAT3{ 0.0f, m_distance, 0.0f }));
-	m_faces[5].SetPosition(Vector3::Add(cameraPosition, XMFLOAT3{ 0.0f, -m_distance, 0.0f }));
+	for (int i = 0; i < 6; ++i)
+		m_faces[i].SetPosition(position);
 }

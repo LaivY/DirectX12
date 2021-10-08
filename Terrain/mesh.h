@@ -66,9 +66,9 @@ public:
 	~CubeMesh() = default;
 };
 
-class RectMesh : public Mesh
+class TextureRectMesh : public Mesh
 {
 public:
-	RectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT height);
-	~RectMesh() = default;
+	TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height, XMFLOAT3 position);
+	~TextureRectMesh() = default;
 };

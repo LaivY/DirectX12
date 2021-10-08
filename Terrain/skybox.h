@@ -5,15 +5,12 @@
 class Skybox
 {
 public:
-	Skybox(const shared_ptr<RectMesh>& frontRectMesh, const shared_ptr<Shader>& shader,
-		const shared_ptr<Texture>& frontTexture, const shared_ptr<Texture>& leftTexture, const shared_ptr<Texture>& rightTexture,
-		const shared_ptr<Texture>& backTexture, const shared_ptr<Texture>& topTexture, const shared_ptr<Texture>& botTexture, const XMFLOAT3& position, FLOAT distance);
+	Skybox(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature);
 	~Skybox() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
-	void Update(const XMFLOAT3& cameraPosition);
+	void SetPosition(XMFLOAT3 position);
 
 private:
-	unique_ptr<GameObject[]>	m_faces;
-	FLOAT						m_distance;
+	unique_ptr<GameObject[]> m_faces;
 };
