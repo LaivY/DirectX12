@@ -7,13 +7,17 @@ GameObject::GameObject() : m_right{ 1.0f, 0.0f, 0.0f }, m_up{ 0.0f, 1.0f, 0.0f }
 
 GameObject::~GameObject()
 {
-	m_mesh->ReleaseUploadBuffer();
+	if (m_mesh) m_mesh->ReleaseUploadBuffer();
 }
 
 void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
+	// PSO 설정
+	if (m_shader) commandList->SetPipelineState(m_shader->GetPipelineState().Get());
+
 	// 셰이더 변수 최신화
 	UpdateShaderVariable(commandList);
+	if (m_texture) m_texture->UpdateShaderVariable(commandList);
 
 	// 렌더링
 	if (m_mesh) m_mesh->Render(commandList);
@@ -39,23 +43,10 @@ void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 
 void GameObject::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
-	// PSO 설정
-	if (m_shader) commandList->SetPipelineState(m_shader->GetPipelineState().Get());
-
 	// 게임오브젝트의 월드 변환 행렬 최신화
 	XMFLOAT4X4 worldMatrix;
 	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_worldMatrix)));
 	commandList->SetGraphicsRoot32BitConstants(0, 16, &worldMatrix, 0);
-
-	// 텍스쳐 설정
-	if (m_texture)
-	{
-		ID3D12DescriptorHeap* ppHeaps[] = { m_texture->GetSrvHeap().Get() };
-		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
-		// GameFramework::CreateRootSignature에서 rootParameter[2]가 SRV 서술자 테이블임
-		commandList->SetGraphicsRootDescriptorTable(2, m_texture->GetSrvHeap()->GetGPUDescriptorHandleForHeapStart());
-	}
 }
 
 void GameObject::SetPosition(const XMFLOAT3& position)

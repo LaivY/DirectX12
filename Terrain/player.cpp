@@ -6,6 +6,15 @@ Player::Player() : GameObject{}, m_velocity{ 0.0f, 0.0f, 0.0f }, m_maxVelocity{ 
 
 }
 
+void Player::Update(FLOAT deltaTime)
+{
+	// 이동
+	Move(m_velocity);
+
+	// 마찰력 적용
+	m_velocity = Vector3::Mul(m_velocity, 1 / m_friction * deltaTime);
+}
+
 void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
 	// 회전각 제한
@@ -23,11 +32,6 @@ void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 
 	// 플레이어는 y축으로만 회전할 수 있다.
 	GameObject::Rotate(0.0f, 0.0f, yaw);
-}
-
-void Player::ApplyFriction(FLOAT deltaTime)
-{
-	m_velocity = Vector3::Mul(m_velocity, 1 / m_friction * deltaTime);
 }
 
 void Player::AddVelocity(const XMFLOAT3& increase)

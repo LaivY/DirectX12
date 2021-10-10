@@ -1,5 +1,4 @@
 #include "terrain.h"
-#include <fstream>
 
 HeightMapImage::HeightMapImage(const wstring& fileName, INT width, INT length, XMFLOAT3 scale)
 	: m_width{ width }, m_length{ length }, m_scale{ scale }, m_pixels{ new BYTE[width * length] }
@@ -114,7 +113,7 @@ FLOAT HeightMapGridMesh::GetHeight(HeightMapImage* heightMapImage, INT x, INT z)
 // --------------------------------------
 
 HeightMapTerrain::HeightMapTerrain(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
-	const wstring& fileName, const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale)
+	const wstring& fileName, const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, const shared_ptr<Texture>& detailTexture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale)
 	: m_width{ width }, m_length{ length }, m_scale{ scale }
 {
 	// 높이맵이미지 로딩

@@ -1,4 +1,5 @@
 #pragma once
+#include <fstream>
 #include "stdafx.h"
 #include "object.h"
 #include "mesh.h"
@@ -36,13 +37,15 @@ public:
 class HeightMapTerrain
 {
 public:
-	HeightMapTerrain(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
-		const wstring& fileName, const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale);
+	HeightMapTerrain(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const wstring& fileName,
+		const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, const shared_ptr<Texture>& detailTexture,
+		INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale);
 	~HeightMapTerrain() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void Move(const XMFLOAT3& shift);
 	void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+
 	void SetPosition(const XMFLOAT3& position);
 	XMFLOAT3 GetPosition() const { return m_blocks.front()->GetPosition(); }
 

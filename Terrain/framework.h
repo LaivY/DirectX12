@@ -13,7 +13,7 @@ public:
 
 	void GameLoop();
 	void OnInit(HINSTANCE hInstance, HWND hWnd);
-	void OnUpdate();
+	void OnUpdate(FLOAT deltaTime);
 	void OnRender();
 	void OnDestroy();
 	void OnMouseEvent() const;
@@ -27,17 +27,16 @@ public:
 	void CreateDepthStencilView();
 	void CreateRootSignature();
 	void CreatePipelineStateObject();
-
 	void LoadPipeline();
 	void LoadAssets();
 
 	void PopulateCommandList() const;
 	void WaitForPreviousFrame();
 
+	void SetIsActive(BOOL isActive) { m_isActive = isActive; }
 	UINT GetWindowWidth() const { return m_width; }
 	UINT GetWindowHeight() const { return m_height; }
-	void SetIsActive(BOOL isActive) { m_isActive = isActive; }
-
+	
 private:
 	static const UINT					FrameCount = 2;
 

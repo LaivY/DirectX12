@@ -11,7 +11,7 @@ public:
 	~GameObject();
 
 	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
-	virtual void Update() { };
+	virtual void Update(FLOAT deltaTime) { };
 	virtual void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 	virtual void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;

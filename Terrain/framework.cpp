@@ -26,7 +26,7 @@ void GameFramework::GameLoop()
 		OnMouseEvent();
 		OnKeyboardEvent();
 	}
-	OnUpdate();
+	OnUpdate(m_timer.GetDeltaTime());
 	OnRender();
 }
 
@@ -39,22 +39,16 @@ void GameFramework::OnInit(HINSTANCE hInstance, HWND hWnd)
 	LoadAssets();
 }
 
-void GameFramework::OnUpdate()
+void GameFramework::OnUpdate(FLOAT deltaTime)
 {
 	shared_ptr<Camera> camera{ m_scene->GetCamera() };
-	shared_ptr<Player> player{ m_scene->GetPlayer() };
-	Skybox* skybox{ m_scene->GetSkybox() };
+	if (camera) camera->Update(deltaTime);
 
-	if (camera)
-	{
-		camera->UpdatePosition(m_timer.GetDeltaTime());
-		if (skybox) skybox->SetPosition(camera->GetEye());
-	}
-	if (player)
-	{
-		player->Move(player->GetVelocity());
-		player->ApplyFriction(m_timer.GetDeltaTime());
-	}
+	Skybox* skybox{ m_scene->GetSkybox() };
+	if (skybox) skybox->Update();
+
+	shared_ptr<Player> player{ m_scene->GetPlayer() };
+	if (player) player->Update(deltaTime);
 }
 
 void GameFramework::OnRender()
@@ -212,7 +206,7 @@ void GameFramework::CreateDepthStencilView()
 void GameFramework::CreateRootSignature()
 {
 	CD3DX12_DESCRIPTOR_RANGE ranges[1];
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND); // t0
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND); // Texture2D g_texture(t0)
 
 	CD3DX12_ROOT_PARAMETER rootParameter[3];
 	rootParameter[0].InitAsConstants(16, 0, 0); // cbGameObject : 월드 변환 행렬(16)
@@ -353,19 +347,8 @@ void GameFramework::LoadAssets()
 	shared_ptr<Texture> ceilTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/ceil.dds")) };
 	shared_ptr<Texture> terrainTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/terrain.dds")) };
 
-	// 셰이더 생성, 텍스쳐 설정
+	// 기본 셰이더 생성
 	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature) };
-
-	// 지형 생성
-	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), shader, terrainTexture, 257, 257, 25, 25, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
-	};
-	terrain->SetPosition(XMFLOAT3{ -40.0f, -10.0f, -20.0f });
-	m_scene->GetTerrain().push_back(move(terrain));
-
-	// 스카이박스 생성
-	unique_ptr<Skybox> skybox{ make_unique<Skybox>(m_device, m_commandList, m_rootSignature) };
-	m_scene->SetSkybox(skybox);
 
 	// 게임오브젝트 생성
 	unique_ptr<GameObject> obj{ make_unique<GameObject>() };
@@ -396,7 +379,21 @@ void GameFramework::LoadAssets()
 	m_scene->SetCamera(camera);
 
 	// 플레이어 카메라 설정
-	m_scene->GetPlayer()->SetCamera(m_scene->GetCamera());
+	player->SetCamera(camera);
+
+	// 지형 생성
+	shared_ptr<TerrainShader> terrainShader{ make_shared<TerrainShader>(m_device, m_rootSignature) };
+	unique_ptr<HeightMapTerrain> terrain{
+		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"),
+		terrainShader, terrainTexture, nullptr, 257, 257, 25, 25, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
+	};
+	terrain->SetPosition(XMFLOAT3{ -40.0f, -10.0f, -20.0f });
+	m_scene->GetTerrain().push_back(move(terrain));
+
+	// 스카이박스 생성
+	unique_ptr<Skybox> skybox{ make_unique<Skybox>(m_device, m_commandList, m_rootSignature) };
+	skybox->SetCamera(camera);
+	m_scene->SetSkybox(skybox);
 
 	// 명령 제출
 	m_commandList->Close();

@@ -13,8 +13,7 @@ public:
 
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
 	void UpdateLocalAxis();
-	virtual void UpdatePosition(FLOAT deltaTime) { };
-
+	virtual void Update(FLOAT deltaTime) { };
 	void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
@@ -53,8 +52,6 @@ protected:
 	FLOAT				m_pitch;		// y축 회전각
 	FLOAT				m_yaw;			// z축 회전각
 
-	FLOAT				m_delay;		// 움직임 딜레이 (0.0 ~ 1.0)
-
 	shared_ptr<Player>	m_player;		// 플레이어
 };
 
@@ -64,7 +61,7 @@ public:
 	ThirdPersonCamera();
 	~ThirdPersonCamera() = default;
 
-	virtual void UpdatePosition(FLOAT deltaTime);
+	virtual void Update(FLOAT deltaTime);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
 	XMFLOAT3 GetOffset() const { return m_offset; }
@@ -72,6 +69,6 @@ public:
 	void SetDelay(FLOAT delay) { m_delay = delay; }
 
 private:
-	XMFLOAT3	m_offset;
-	FLOAT		m_delay;
+	XMFLOAT3	m_offset;	// 플레이어로부터 떨어져있는 위치
+	FLOAT		m_delay;	// 움직임 딜레이 (0.0 ~ 1.0)
 };

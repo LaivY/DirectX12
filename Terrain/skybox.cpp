@@ -36,6 +36,17 @@ void Skybox::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 		m_faces[i].Render(commandList);
 }
 
+void Skybox::Update()
+{
+	if (m_camera) SetPosition(m_camera->GetEye());
+}
+
+void Skybox::SetCamera(const shared_ptr<Camera>& camera)
+{
+	if (m_camera) m_camera.reset();
+	m_camera = camera;
+}
+
 void Skybox::SetPosition(XMFLOAT3 position)
 {
 	for (int i = 0; i < 6; ++i)

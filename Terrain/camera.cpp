@@ -3,7 +3,7 @@
 Camera::Camera() :
 	m_eye{ 0.0f, 0.0f, 0.0f }, m_look{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
 	m_u{ 1.0f, 0.0f, 0.0f }, m_v{ 0.0f, 1.0f, 0.0f }, m_n{ 0.0f, 0.0f, 1.0f },
-	m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_delay{ 0.0f }
+	m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }
 {
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&m_projMatrix, XMMatrixIdentity());
@@ -89,16 +89,16 @@ void Camera::SetPlayer(const shared_ptr<Player>& player)
 
 // --------------------------------------
 
-ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_offset{ 0.0f, 1.0f, -5.0f }, m_delay{ 0.1f }
+ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_offset{ 0.0f, 1.0f, -5.0f }, m_delay{ 0.01f }
 {
 
 }
 
-void ThirdPersonCamera::UpdatePosition(FLOAT deltaTime)
+void ThirdPersonCamera::Update(FLOAT deltaTime)
 {
 	XMFLOAT3 destination{ Vector3::Add(m_player->GetPosition(), m_offset) };
 	XMFLOAT3 direction{ Vector3::Sub(destination, GetEye()) };
-	XMFLOAT3 shift{ Vector3::Mul(direction, deltaTime * 1 / m_delay) };
+	XMFLOAT3 shift{ Vector3::Mul(direction, fmax((1.0f - m_delay) * deltaTime * 10.0f, 0.01f)) };
 	SetEye(Vector3::Add(GetEye(), shift));
 }
 

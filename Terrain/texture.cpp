@@ -34,6 +34,11 @@ Texture::Texture(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphics
 	CreateShaderResourceView(device);
 }
 
+void Texture::LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const wstring& fileName)
+{
+
+}
+
 void Texture::CreateSrvDescriptorHeap(const ComPtr<ID3D12Device>& device)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
@@ -51,6 +56,15 @@ void Texture::CreateShaderResourceView(const ComPtr<ID3D12Device>& device)
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = -1;
 	device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void Texture::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList)
+{
+	ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	// GameFramework::CreateRootSignature에서 rootParameter[2]가 SRV 서술자 테이블임
+	commandList->SetGraphicsRootDescriptorTable(2, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void Texture::ReleaseUploadBuffer()

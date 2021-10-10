@@ -8,8 +8,10 @@ public:
 	Texture(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const wstring& fileName);
 	~Texture() = default;
 
+	void LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const wstring& fileName);
 	void CreateSrvDescriptorHeap(const ComPtr<ID3D12Device>& device);
 	void CreateShaderResourceView(const ComPtr<ID3D12Device>& device);
+	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
 	void ReleaseUploadBuffer();
 
 	ComPtr<ID3D12DescriptorHeap> GetSrvHeap() const { return m_srvHeap; }
