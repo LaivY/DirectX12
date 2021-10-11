@@ -11,30 +11,25 @@ public:
 	Camera();
 	~Camera() = default;
 
-	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
-	void UpdateLocalAxis();
-	virtual void Update(FLOAT deltaTime) { };
+	virtual void Update(FLOAT deltaTime);
 	void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void UpdateLocalAxis();
 
-	XMFLOAT4X4 GetViewMatrix() const { return m_viewMatrix; }
-	XMFLOAT4X4 GetProjMatrix() const { return m_projMatrix; }
 	void SetViewMatrix(const XMFLOAT4X4& viewMatrix) { m_viewMatrix = viewMatrix; }
 	void SetProjMatrix(const XMFLOAT4X4& projMatrix) { m_projMatrix = projMatrix; }
-
-	XMFLOAT3 GetEye() const { return m_eye; }
-	XMFLOAT3 GetAt() const { return m_look; }
-	XMFLOAT3 GetUp() const { return m_up; }
 	void SetEye(const XMFLOAT3& eye) { m_eye = eye; UpdateLocalAxis(); }
 	void SetAt(const XMFLOAT3& at) { m_look = at; UpdateLocalAxis(); }
 	void SetUp(const XMFLOAT3& up) { m_up = up; UpdateLocalAxis(); }
-
-	XMFLOAT3 GetU() const { return m_u; }
-	XMFLOAT3 GetV() const { return m_v; }
-	XMFLOAT3 GetN() const { return m_n; }
-
-	shared_ptr<Player> GetPlayer() const { return m_player; }
 	void SetPlayer(const shared_ptr<Player>& player);
+
+	XMFLOAT4X4 GetViewMatrix() const { return m_viewMatrix; }
+	XMFLOAT4X4 GetProjMatrix() const { return m_projMatrix; }
+	XMFLOAT3 GetEye() const { return m_eye; }
+	XMFLOAT3 GetAt() const { return m_look; }
+	XMFLOAT3 GetUp() const { return m_up; }
+	shared_ptr<Player> GetPlayer() const { return m_player; }
 
 protected:
 	XMFLOAT4X4			m_viewMatrix;	// ºäº¯È¯ Çà·Ä

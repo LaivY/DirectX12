@@ -2,18 +2,21 @@
 
 Camera::Camera() :
 	m_eye{ 0.0f, 0.0f, 0.0f }, m_look{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
-	m_u{ 1.0f, 0.0f, 0.0f }, m_v{ 0.0f, 1.0f, 0.0f }, m_n{ 0.0f, 0.0f, 1.0f },
+	m_u{ 1.0f, 0.0f, 0.0f },  m_n{ 0.0f, 0.0f, 1.0f },
 	m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }
 {
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&m_projMatrix, XMMatrixIdentity());
 }
 
-void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList)
+void Camera::Update(FLOAT deltaTime)
 {
 	// 카메라 뷰 변환 행렬 최신화
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_look)), XMLoadFloat3(&m_up)));
-	
+}
+
+void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList)
+{
 	// DIRECTX는 행우선(row-major), HLSL는 열우선(column-major)
 	// 행렬이 셰이더로 넘어갈 때 자동으로 전치 행렬로 변환된다.
 	// 그래서 셰이더에 전치 행렬을 넘겨주면 DIRECTX의 곱셈 순서와 동일하게 계산할 수 있다.
@@ -96,6 +99,7 @@ ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_offset{ 0.0f, 1.0f, -5.0f }
 
 void ThirdPersonCamera::Update(FLOAT deltaTime)
 {
+	Camera::Update(deltaTime);
 	XMFLOAT3 destination{ Vector3::Add(m_player->GetPosition(), m_offset) };
 	XMFLOAT3 direction{ Vector3::Sub(destination, GetEye()) };
 	XMFLOAT3 shift{ Vector3::Mul(direction, fmax((1.0f - m_delay) * deltaTime * 10.0f, 0.01f)) };

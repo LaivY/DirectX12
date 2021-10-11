@@ -60,8 +60,8 @@ void TerrainShader::CreatePipelineState(const ComPtr<ID3D12Device>& device, cons
 	UINT compileFlags = 0;
 #endif
 
-	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, NULL, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
-	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, NULL, "PSMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
+	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, NULL, "VSTerrainMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
+	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, NULL, "PSTerrainMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
 	// 정점 셰이더 레이아웃 설정
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]

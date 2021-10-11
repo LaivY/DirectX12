@@ -94,6 +94,9 @@ void GameFramework::CreateDevice(const ComPtr<IDXGIFactory4>& factory)
 		factory->EnumWarpAdapter(IID_PPV_ARGS(&adapter));
 		DX::ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)));
 	}
+
+	// 서술자힙 크기
+	g_cbvSrvDescriptorIncrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void GameFramework::CreateCommandQueue()
@@ -205,13 +208,15 @@ void GameFramework::CreateDepthStencilView()
 
 void GameFramework::CreateRootSignature()
 {
-	CD3DX12_DESCRIPTOR_RANGE ranges[1];
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND); // Texture2D g_texture(t0)
+	CD3DX12_DESCRIPTOR_RANGE ranges[2];
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND); // Texture2D g_texture		 : t0
+	ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND); // Texture2D g_detailTexture : t1
 
-	CD3DX12_ROOT_PARAMETER rootParameter[3];
-	rootParameter[0].InitAsConstants(16, 0, 0); // cbGameObject : 월드 변환 행렬(16)
+	CD3DX12_ROOT_PARAMETER rootParameter[4];
+	rootParameter[0].InitAsConstants(16, 0, 0); // cbGameObject	: 월드 변환 행렬(16)
 	rootParameter[1].InitAsConstants(32, 1, 0); // cbCamera		: 뷰 변환 행렬(16) + 투영 변환 행렬(16)
-	rootParameter[2].InitAsDescriptorTable(_countof(ranges), &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameter[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParameter[3].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	CD3DX12_STATIC_SAMPLER_DESC samplerDesc{};
 	samplerDesc.Init(
@@ -340,12 +345,15 @@ void GameFramework::LoadAssets()
 	m_scene = make_unique<Scene>();
 
 	// 메쉬 생성
-	shared_ptr<CubeMesh> cubeMesh{ make_shared<CubeMesh>(m_device, m_commandList, 0.5f, 0.5f, 0.5f) };
+	shared_ptr<CubeMesh> mesh{ make_shared<CubeMesh>(m_device, m_commandList, 0.5f, 0.5f, 0.5f) };
 
 	// 텍스쳐 생성
-	shared_ptr<Texture> rockTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/rock.dds")) };
-	shared_ptr<Texture> ceilTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/ceil.dds")) };
-	shared_ptr<Texture> terrainTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/terrain.dds")) };
+	shared_ptr<Texture> rockTexture{ make_shared<Texture>() };
+	rockTexture->LoadTextureFile(m_device, m_commandList, TEXT("resource/Rock.dds"), 2);
+	rockTexture->CreateSrvDescriptorHeap(m_device);
+	rockTexture->CreateShaderResourceView(m_device);
+	//shared_ptr<Texture> ceilTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/ceil.dds")) };
+	//shared_ptr<Texture> terrainTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/terrain.dds")) };
 
 	// 기본 셰이더 생성
 	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature) };
@@ -353,16 +361,16 @@ void GameFramework::LoadAssets()
 	// 게임오브젝트 생성
 	unique_ptr<GameObject> obj{ make_unique<GameObject>() };
 	obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 5.0f });
-	obj->SetMesh(cubeMesh);
+	obj->SetMesh(mesh);
 	obj->SetShader(shader);
 	obj->SetTexture(rockTexture);
 	m_scene->GetGameObjects().push_back(move(obj));
 
 	// 플레이어 생성
 	shared_ptr<Player> player{ make_shared<Player>() };
-	player->SetMesh(cubeMesh);
+	player->SetMesh(mesh);
 	player->SetShader(shader);
-	player->SetTexture(ceilTexture);
+	player->SetTexture(rockTexture);
 	m_scene->SetPlayer(player);
 
 	// 카메라 생성
@@ -374,20 +382,25 @@ void GameFramework::LoadAssets()
 
 	// 카메라 투영 행렬 설정
 	XMFLOAT4X4 projMatrix;
-	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 0.1f, 1000.0f));
+	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 0.1f, 5000.0f));
 	camera->SetProjMatrix(projMatrix);
+	
+	// 씬, 플레이어 카메라 설정
 	m_scene->SetCamera(camera);
-
-	// 플레이어 카메라 설정
 	player->SetCamera(camera);
 
 	// 지형 생성
 	shared_ptr<TerrainShader> terrainShader{ make_shared<TerrainShader>(m_device, m_rootSignature) };
+	shared_ptr<Texture> terrainTexture{ make_shared<Texture>() };
+	terrainTexture->LoadTextureFile(m_device, m_commandList, TEXT("resource/BaseTerrain.dds"), 2); // BaseTexture
+	terrainTexture->LoadTextureFile(m_device, m_commandList, TEXT("resource/DetailTerrain.dds"), 3); // DetailTexture
+	terrainTexture->CreateSrvDescriptorHeap(m_device);
+	terrainTexture->CreateShaderResourceView(m_device);
+
 	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"),
-		terrainShader, terrainTexture, nullptr, 257, 257, 25, 25, XMFLOAT3{ 0.5f, 0.1f, 0.5f })
+		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), terrainShader, terrainTexture, 257, 257, 257, 257, XMFLOAT3{ 8.0f, 2.0f, 8.0f })
 	};
-	terrain->SetPosition(XMFLOAT3{ -40.0f, -10.0f, -20.0f });
+	terrain->SetPosition(XMFLOAT3{ -257.0f * 4.0f, -300.0f, -257.0f * 4.0f });
 	m_scene->GetTerrain().push_back(move(terrain));
 
 	// 스카이박스 생성
@@ -445,7 +458,7 @@ void GameFramework::PopulateCommandList() const
 
 void GameFramework::WaitForPreviousFrame()
 {
-	const UINT64 fence = m_fenceValue;
+	const UINT64 fence{ m_fenceValue };
 	DX::ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
 	++m_fenceValue;
 

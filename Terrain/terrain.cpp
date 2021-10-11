@@ -67,14 +67,17 @@ FLOAT HeightMapImage::GetHeight(FLOAT x, FLOAT z) const
 HeightMapGridMesh::HeightMapGridMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
 	HeightMapImage* heightMapImage, INT xStart, INT zStart, INT width, INT length, XMFLOAT3 scale)
 {
+	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+
 	// 정점 데이터 설정, 정점 버퍼 생성
-	vector<TextureVertex> vertices;
+	vector<Texture2Vertex> vertices;
 	for (int z = zStart; z < zStart + length; ++z)
 		for (int x = xStart; x < xStart + width; ++x)
 			vertices.emplace_back(
 				XMFLOAT3{ x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z },
-				XMFLOAT2{ (float)x / (float)heightMapImage->GetWidth(), 1.0f - ((float)z / (float)heightMapImage->GetLength()) });
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+				XMFLOAT2{ (float)x / (float)heightMapImage->GetWidth(), 1.0f - ((float)z / (float)heightMapImage->GetLength()) },
+				XMFLOAT2{ (float)x / (float)scale.x * 1.5f, (float)z / (float)scale.z * 1.5f });
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Texture2Vertex), vertices.size());
 
 	// 인덱스 데이터 설정, 인덱스 버퍼 생성
 	vector<UINT> indices;
@@ -101,7 +104,6 @@ HeightMapGridMesh::HeightMapGridMesh(const ComPtr<ID3D12Device>& device, const C
 			}
 	}
 	CreateIndexBuffer(device, commandList, indices.data(), indices.size());
-	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 }
 
 FLOAT HeightMapGridMesh::GetHeight(HeightMapImage* heightMapImage, INT x, INT z) const
@@ -113,7 +115,7 @@ FLOAT HeightMapGridMesh::GetHeight(HeightMapImage* heightMapImage, INT x, INT z)
 // --------------------------------------
 
 HeightMapTerrain::HeightMapTerrain(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
-	const wstring& fileName, const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, const shared_ptr<Texture>& detailTexture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale)
+	const wstring& fileName, const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale)
 	: m_width{ width }, m_length{ length }, m_scale{ scale }
 {
 	// 높이맵이미지 로딩

@@ -38,8 +38,7 @@ class HeightMapTerrain
 {
 public:
 	HeightMapTerrain(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const wstring& fileName,
-		const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, const shared_ptr<Texture>& detailTexture,
-		INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale);
+		const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale);
 	~HeightMapTerrain() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;

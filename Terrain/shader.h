@@ -13,7 +13,7 @@ public:
 	ComPtr<ID3D12PipelineState> GetPipelineState() const { return m_pipelineState; }
 
 protected:
-	ComPtr<ID3D12PipelineState>		m_pipelineState;
+	ComPtr<ID3D12PipelineState> m_pipelineState;
 };
 
 class TerrainShader : public Shader
