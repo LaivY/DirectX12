@@ -16,6 +16,8 @@ public:
 	void OnKeyboardEvent(FLOAT deltaTime) const;
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 
+	void AddGameObject(unique_ptr<GameObject> gameObject);
+	void AddTerrain(unique_ptr<HeightMapTerrain> terrain);
 	void SetSkybox(unique_ptr<Skybox>& skybox);
 	void SetPlayer(const shared_ptr<Player>& player);
 	void SetCamera(const shared_ptr<Camera>& camera);
@@ -23,8 +25,6 @@ public:
 	Skybox* GetSkybox() const { return m_skybox.get(); }
 	shared_ptr<Player> GetPlayer() const { return m_player; }
 	shared_ptr<Camera> GetCamera() const { return m_camera; }
-	vector<unique_ptr<GameObject>>& GetGameObjects() { return m_gameObjects; }
-	vector<unique_ptr<HeightMapTerrain>>& GetTerrain() { return m_terrain; }
 
 private:
 	vector<unique_ptr<GameObject>>			m_gameObjects;

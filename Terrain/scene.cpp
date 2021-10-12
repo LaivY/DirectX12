@@ -81,6 +81,16 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 		terrain->Render(commandList);
 }
 
+void Scene::AddGameObject(unique_ptr<GameObject> gameObject)
+{
+	m_gameObjects.push_back(move(gameObject));
+}
+
+void Scene::AddTerrain(unique_ptr<HeightMapTerrain> terrain)
+{
+	m_terrain.push_back(move(terrain));
+}
+
 void Scene::SetSkybox(unique_ptr<Skybox>& skybox)
 {
 	if (m_skybox) m_skybox.reset();
