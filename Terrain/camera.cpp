@@ -30,14 +30,9 @@ void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comma
 
 void Camera::UpdateLocalAxis()
 {
-	// 로컬 z축
-	m_n = Vector3::Normalize(m_look);
-
-	// 로컬 x축
-	m_u = Vector3::Normalize(Vector3::Cross(m_up, m_n));
-
-	// 로컬 y축
-	m_v = Vector3::Cross(m_n, m_u);
+	m_n = Vector3::Normalize(m_look);					 // 로컬 z축
+	m_u = Vector3::Normalize(Vector3::Cross(m_up, m_n)); // 로컬 x축
+	m_v = Vector3::Cross(m_n, m_u);						 // 로컬 y축
 }
 
 void Camera::Move(const XMFLOAT3& shift)
@@ -47,6 +42,7 @@ void Camera::Move(const XMFLOAT3& shift)
 
 void Camera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
+	XMMATRIX rotate{ XMMatrixIdentity() };
 	if (roll != 0.0f)
 	{
 		// z축(roll)으로는 회전할 수 없음
@@ -54,32 +50,29 @@ void Camera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 	if (pitch != 0.0f)
 	{
 		// x축(pitch)의 경우 MIN_PITCH ~ MAX_PITCH
-		XMMATRIX rotate{ XMMatrixIdentity() };
 		if (m_pitch + pitch > MAX_PITCH)
 		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MAX_PITCH - m_pitch));
+			rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MAX_PITCH - m_pitch));
 			m_pitch = MAX_PITCH;
 		}
 		else if (m_pitch + pitch < MIN_PITCH)
 		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MIN_PITCH - m_pitch));
+			rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MIN_PITCH - m_pitch));
 			m_pitch = MIN_PITCH;
 		}
 		else
 		{
-			rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(pitch));
+			rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(pitch));
 			m_pitch += pitch;
 		}
-		XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
 	}
 	if (yaw != 0.0f)
 	{
 		// y축(yaw)의 경우 제한 없음
+		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(yaw));
 		m_yaw += yaw;
-
-		XMMATRIX rotate{ XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(yaw)) };
-		XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
 	}
+	XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
 	UpdateLocalAxis();
 }
 
@@ -99,38 +92,38 @@ ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_offset{ 0.0f, 1.0f, -5.0f }
 
 void ThirdPersonCamera::Update(FLOAT deltaTime)
 {
-	Camera::Update(deltaTime);
 	XMFLOAT3 destination{ Vector3::Add(m_player->GetPosition(), m_offset) };
 	XMFLOAT3 direction{ Vector3::Sub(destination, GetEye()) };
 	XMFLOAT3 shift{ Vector3::Mul(direction, fmax((1.0f - m_delay) * deltaTime * 10.0f, 0.01f)) };
 	SetEye(Vector3::Add(GetEye(), shift));
+	Camera::Update(deltaTime);
 }
 
 void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
 	XMMATRIX rotate{ XMMatrixIdentity() };
-
-	// 회전
 	if (roll != 0.0f)
 	{
+		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetFront()), XMConvertToRadians(roll));
 		m_roll += roll;
-		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetFront()), XMConvertToRadians(roll));
-		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 	}
 	if (pitch != 0.0f)
 	{
+		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetRight()), XMConvertToRadians(pitch));
 		m_pitch += pitch;
-		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetRight()), XMConvertToRadians(pitch));
-		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 	}
 	if (yaw != 0.0f)
 	{
+		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetUp()), XMConvertToRadians(yaw));
 		m_yaw += yaw;
-		rotate = XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetUp()), XMConvertToRadians(yaw));
-		XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 	}
+	XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 
 	// 항상 플레이어를 바라보도록 설정
 	XMFLOAT3 look{ Vector3::Sub(m_player->GetPosition(), m_eye) };
-	if (Vector3::Length(look)) m_look = look;
+	if (Vector3::Length(look))
+	{
+		m_look = look;
+		UpdateLocalAxis();
+	}
 }

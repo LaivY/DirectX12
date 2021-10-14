@@ -20,8 +20,8 @@ public:
 	void SetViewMatrix(const XMFLOAT4X4& viewMatrix) { m_viewMatrix = viewMatrix; }
 	void SetProjMatrix(const XMFLOAT4X4& projMatrix) { m_projMatrix = projMatrix; }
 	void SetEye(const XMFLOAT3& eye) { m_eye = eye; UpdateLocalAxis(); }
-	void SetAt(const XMFLOAT3& at) { m_look = at; UpdateLocalAxis(); }
-	void SetUp(const XMFLOAT3& up) { m_up = up; UpdateLocalAxis(); }
+	void SetAt(const XMFLOAT3& at) { m_look = at;	UpdateLocalAxis(); }
+	void SetUp(const XMFLOAT3& up) { m_up = up;		UpdateLocalAxis(); }
 	void SetPlayer(const shared_ptr<Player>& player);
 
 	XMFLOAT4X4 GetViewMatrix() const { return m_viewMatrix; }

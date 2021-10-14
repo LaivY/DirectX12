@@ -166,3 +166,20 @@ void HeightMapTerrain::SetPosition(const XMFLOAT3& position)
 	for (auto& block : m_blocks)
 		block->SetPosition(position);
 }
+
+FLOAT HeightMapTerrain::GetHeight(FLOAT x, FLOAT z) const
+{
+	// 파라미터로 들어온 (x, z)는 플레이어의 위치이다.
+	// (x, z)를 대응하는 이미지 좌표로 바꿔줘야한다.
+
+	// 지형의 시작점 반영
+	XMFLOAT3 pos{ GetPosition() };
+	x -= pos.x;
+	z -= pos.z;	
+
+	// 지형의 스케일 반영
+	x /= m_scale.x;
+	z /= m_scale.z;
+	
+	return pos.y + m_heightMapImage->GetHeight(x, z) * m_scale.y;
+}

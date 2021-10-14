@@ -41,17 +41,7 @@ void GameFramework::OnInit(HINSTANCE hInstance, HWND hWnd)
 
 void GameFramework::OnUpdate(FLOAT deltaTime)
 {
-	shared_ptr<Camera> camera{ m_scene->GetCamera() };
-	if (camera) camera->Update(deltaTime);
-
-	Skybox* skybox{ m_scene->GetSkybox() };
-	if (skybox) skybox->Update();
-
-	for (auto& object : m_scene->GetGameObjects())
-		object->Update(deltaTime);
-
-	shared_ptr<Player> player{ m_scene->GetPlayer() };
-	if (player) player->Update(deltaTime);
+	if (m_scene) m_scene->OnUpdate(deltaTime);
 }
 
 void GameFramework::OnRender()
@@ -344,82 +334,9 @@ void GameFramework::LoadAssets()
 	// 명령을 추가할 것이기 때문에 Reset
 	m_commandList->Reset(m_commandAllocator.Get(), NULL);
 
-	// 씬 생성
+	// 씬 생성, 초기화
 	m_scene = make_unique<Scene>();
-
-	// 카메라 생성
-	shared_ptr<ThirdPersonCamera> camera{ make_shared<ThirdPersonCamera>() };
-	camera->SetEye(XMFLOAT3{ 0.0f, 0.0f, 0.0f });
-	camera->SetAt(XMFLOAT3{ 0.0f, 0.0f, 1.0f });
-	camera->SetUp(XMFLOAT3{ 0.0f, 1.0f, 0.0f });
-
-	// 카메라 투영 행렬 설정
-	XMFLOAT4X4 projMatrix;
-	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, m_aspectRatio, 0.1f, 5000.0f));
-	camera->SetProjMatrix(projMatrix);
-
-	// 메쉬 생성
-	shared_ptr<CubeMesh> mesh{ make_shared<CubeMesh>(m_device, m_commandList, 0.5f, 0.5f, 0.5f) };
-	shared_ptr<TextureRectMesh> textureRectMesh{ make_shared<TextureRectMesh>(m_device, m_commandList, 5.0f, 0.0f, 5.0f, XMFLOAT3{ 0.0f, 0.0f, 0.0f }) };
-
-	// 텍스쳐 생성
-	shared_ptr<Texture> rockTexture{ make_shared<Texture>() };
-	rockTexture->LoadTextureFile(m_device, m_commandList, TEXT("resource/Rock.dds"), 2);
-	rockTexture->CreateSrvDescriptorHeap(m_device);
-	rockTexture->CreateShaderResourceView(m_device);
-	//shared_ptr<Texture> ceilTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/ceil.dds")) };
-	//shared_ptr<Texture> terrainTexture{ make_shared<Texture>(m_device, m_commandList, TEXT("resource/terrain.dds")) };
-
-	// 기본 셰이더 생성
-	shared_ptr<Shader> shader{ make_shared<Shader>(m_device, m_rootSignature) };
-
-	// 빌보드 객체 생성
-	unique_ptr<BillboardObject> obj{ make_unique<BillboardObject>(camera) };
-	obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 5.0f });
-	obj->SetMesh(textureRectMesh);
-	obj->SetShader(shader);
-	obj->SetTexture(rockTexture);
-	m_scene->AddGameObject(move(obj));
-
-	unique_ptr<BillboardObject> obj2{ make_unique<BillboardObject>(camera) };
-	obj2->SetPosition(XMFLOAT3{ 5.0f, 0.0f, 0.0f });
-	obj2->SetMesh(textureRectMesh);
-	obj2->SetShader(shader);
-	obj2->SetTexture(rockTexture);
-	m_scene->AddGameObject(move(obj2));
-
-	// 플레이어 생성
-	shared_ptr<Player> player{ make_shared<Player>() };
-	player->SetMesh(mesh);
-	player->SetShader(shader);
-	player->SetTexture(rockTexture);
-
-	// 씬, 카메라 플레이어 설정
-	m_scene->SetPlayer(player);
-	camera->SetPlayer(m_scene->GetPlayer());
-
-	// 씬, 플레이어 카메라 설정
-	m_scene->SetCamera(camera);
-	player->SetCamera(camera);
-
-	// 지형 생성
-	shared_ptr<TerrainShader> terrainShader{ make_shared<TerrainShader>(m_device, m_rootSignature) };
-	shared_ptr<Texture> terrainTexture{ make_shared<Texture>() };
-	terrainTexture->LoadTextureFile(m_device, m_commandList, TEXT("resource/BaseTerrain.dds"), 2); // BaseTexture
-	terrainTexture->LoadTextureFile(m_device, m_commandList, TEXT("resource/DetailTerrain.dds"), 3); // DetailTexture
-	terrainTexture->CreateSrvDescriptorHeap(m_device);
-	terrainTexture->CreateShaderResourceView(m_device);
-
-	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(m_device, m_commandList, TEXT("resource/heightMap.raw"), terrainShader, terrainTexture, 257, 257, 257, 257, XMFLOAT3{ 8.0f, 2.0f, 8.0f })
-	};
-	terrain->SetPosition(XMFLOAT3{ -257.0f * 4.0f, -300.0f, -257.0f * 4.0f });
-	m_scene->AddTerrain(move(terrain));
-
-	// 스카이박스 생성
-	unique_ptr<Skybox> skybox{ make_unique<Skybox>(m_device, m_commandList, m_rootSignature) };
-	skybox->SetCamera(camera);
-	m_scene->SetSkybox(skybox);
+	m_scene->OnInit(m_device, m_commandList, m_rootSignature, m_aspectRatio);
 
 	// 명령 제출
 	m_commandList->Close();
@@ -430,8 +347,7 @@ void GameFramework::LoadAssets()
 	WaitForPreviousFrame();
 
 	// 디폴트 버퍼로의 복사가 완료됐으므로 업로드 버퍼를 해제한다.
-	for (const auto& obj : m_scene->GetGameObjects())
-		obj->ReleaseUploadBuffer();
+	m_scene->ReleaseUploadBuffer();
 
 	// 타이머 초기화
 	m_timer.Tick();

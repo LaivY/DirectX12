@@ -46,12 +46,17 @@ public:
 	void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 
 	void SetPosition(const XMFLOAT3& position);
+
 	XMFLOAT3 GetPosition() const { return m_blocks.front()->GetPosition(); }
+	FLOAT GetHeight(FLOAT x, FLOAT z) const;
+	INT GetWidth() const { return m_width; }
+	INT GetLength() const { return m_length; }
+	XMFLOAT3 GetScale() const { return m_scale; }
 
 private:
 	unique_ptr<HeightMapImage>		m_heightMapImage;	// 높이맵 이미지
 	vector<unique_ptr<GameObject>>	m_blocks;			// 블록들
-	INT								m_width;			// 가로
-	INT								m_length;			// 세로
+	INT								m_width;			// 이미지의 가로 길이
+	INT								m_length;			// 이미지의 세로 길이
 	XMFLOAT3						m_scale;			// 확대 비율
 };

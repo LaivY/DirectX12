@@ -1,7 +1,7 @@
 #include "player.h"
 #include "camera.h"
 
-Player::Player() : GameObject{}, m_velocity{ 0.0f, 0.0f, 0.0f }, m_maxVelocity{ 10.0f }, m_friction{ 1.1f }
+Player::Player() : GameObject{}, m_velocity{ 0.0f, 0.0f, 0.0f }, m_maxVelocity{ 10.0f }, m_friction{ 1.1f }, m_terrain{ nullptr }
 {
 
 }
@@ -11,8 +11,19 @@ void Player::Update(FLOAT deltaTime)
 	// 이동
 	Move(m_velocity);
 
+	// 플레이어가 지형 위를 이동하도록
+	if (m_terrain)
+	{
+		XMFLOAT3 pos{ GetPosition() };
+		FLOAT height{ m_terrain->GetHeight(pos.x, pos.z) };
+		SetPosition(XMFLOAT3{ pos.x, height + 0.5f, pos.z });
+	}
+
 	// 마찰력 적용
 	m_velocity = Vector3::Mul(m_velocity, 1 / m_friction * deltaTime);
+
+	// 중력 적용
+	m_velocity.y -= 2.0f * deltaTime;
 }
 
 void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)

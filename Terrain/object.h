@@ -13,7 +13,7 @@ public:
 	~GameObject();
 
 	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
-	virtual void Update(FLOAT deltaTime) { m_roll += 0.1f; }
+	virtual void Update(FLOAT deltaTime) { }
 	virtual void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 	virtual void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
@@ -56,5 +56,5 @@ public:
 	void SetCamera(const shared_ptr<Camera>& camera);
 
 private:
-	shared_ptr<Camera>	m_camera;			// 기준이 되는 카메라
+	shared_ptr<Camera>	m_camera; // 기준이 되는 카메라
 };
