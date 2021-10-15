@@ -11,19 +11,21 @@ void Player::Update(FLOAT deltaTime)
 	// 이동
 	Move(m_velocity);
 
-	// 플레이어가 지형 위를 이동하도록
+	// 플레이어가 어떤 지형 위에 있다면
 	if (m_terrain)
 	{
+		// 플레이어가 지형 위를 이동하도록
 		XMFLOAT3 pos{ GetPosition() };
 		FLOAT height{ m_terrain->GetHeight(pos.x, pos.z) };
 		SetPosition(XMFLOAT3{ pos.x, height + 0.5f, pos.z });
+
+		// 플레이어가 서있는 곳의 노말을 저장
+		XMFLOAT3 normal{ m_terrain->GetNormal(pos.x, pos.z) };
+		m_normal = normal;
 	}
 
 	// 마찰력 적용
 	m_velocity = Vector3::Mul(m_velocity, 1 / m_friction * deltaTime);
-
-	// 중력 적용
-	m_velocity.y -= 2.0f * deltaTime;
 }
 
 void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
@@ -43,6 +45,32 @@ void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 
 	// 플레이어는 y축으로만 회전할 수 있다.
 	GameObject::Rotate(0.0f, 0.0f, yaw);
+}
+
+void Player::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+{
+	XMFLOAT4X4 worldMatrix{ m_worldMatrix };
+	
+	float theta{ acosf(Vector3::Dot(m_up, m_normal)) };
+	if (XMConvertToDegrees(theta))
+	{
+		// +z축을 보고있을 때의 right벡터
+		XMFLOAT3 right{ Vector3::Cross(m_up, m_normal) };
+
+		// +z축과 m_front의 사이각
+		//float _theta{ acosf(Vector3::Dot(XMFLOAT3{ 0.0f, 0.0f, 1.0f }, m_front)) };
+		//if (m_front.x < 0) _theta *= -1;
+
+		//XMFLOAT4X4 _rotate;
+		//XMStoreFloat4x4(&_rotate, XMMatrixRotationAxis(XMLoadFloat3(&m_normal), _theta));
+		//right = Vector3::TransformNormal(right, _rotate);
+
+		XMFLOAT4X4 rotate;
+		XMStoreFloat4x4(&rotate, XMMatrixRotationAxis(XMLoadFloat3(&right), theta));
+		worldMatrix = Matrix::Mul(rotate, worldMatrix);
+	}
+
+	commandList->SetGraphicsRoot32BitConstants(0, 16, &Matrix::Transpose(worldMatrix), 0);
 }
 
 void Player::AddVelocity(const XMFLOAT3& increase)

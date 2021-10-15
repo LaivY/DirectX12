@@ -45,8 +45,8 @@ FLOAT HeightMapImage::GetHeight(FLOAT x, FLOAT z) const
 	if (x < 0 || x >= m_width || z < 0 || z >= m_length)
 		return 0.0f;
 
-	int ix{ (int)x };	// x의 정수 부분
-	int iz{ (int)z };	// z의 정수 부분
+	int ix{ static_cast<int>(x) };	// x의 정수 부분
+	int iz{ static_cast<int>(z) };	// z의 정수 부분
 	float fx{ x - ix };	// x의 소수 부분
 	float fz{ z - iz };	// z의 소수 부분
 
@@ -182,4 +182,28 @@ FLOAT HeightMapTerrain::GetHeight(FLOAT x, FLOAT z) const
 	z /= m_scale.z;
 	
 	return pos.y + m_heightMapImage->GetHeight(x, z) * m_scale.y;
+}
+
+XMFLOAT3 HeightMapTerrain::GetNormal(FLOAT x, FLOAT z) const
+{
+	// 파라미터로 들어온 (x, z)는 플레이어의 위치이다.
+
+	XMFLOAT3 pos{ GetPosition() };
+	x -= pos.x; x /= m_scale.x;
+	z -= pos.z; z /= m_scale.z;
+
+	// (x, z) 주변의 노멀 4개를 보간해서 계산
+	int ix{ static_cast<int>(x) };
+	int iz{ static_cast<int>(z) };
+	float fx{ x - ix };
+	float fz{ z - iz };
+
+	XMFLOAT3 LT{ m_heightMapImage->GetNormal(ix, iz + 1) };
+	XMFLOAT3 LB{ m_heightMapImage->GetNormal(ix, iz) };
+	XMFLOAT3 RT{ m_heightMapImage->GetNormal(ix + 1, iz + 1) };
+	XMFLOAT3 RB{ m_heightMapImage->GetNormal(ix + 1, iz) };
+
+	XMFLOAT3 bot{ Vector3::Add(Vector3::Mul(LB, 1.0f - fx), Vector3::Mul(RB, fx)) };
+	XMFLOAT3 top{ Vector3::Add(Vector3::Mul(LT, 1.0f - fx), Vector3::Mul(RT, fx)) };
+	return Vector3::Normalize(Vector3::Add(Vector3::Mul(bot, 1.0f - fz), Vector3::Mul(top, fz)));
 }

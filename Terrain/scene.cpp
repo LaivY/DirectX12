@@ -1,18 +1,10 @@
 #include "scene.h"
 
-Scene::Scene()
-{
-
-}
-
-Scene::~Scene()
-{
-	m_player.reset();
-	m_camera.reset();
-}
-
 void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio)
 {
+	// 여기서 생성하는 개체들은 명령을 제출하기 때문에 명령이 완료되기 전까지 메모리 위에 존재해야함
+	// -> 스마트포인터로 어느 오브젝트에서도 사용하지 않는 메쉬, 텍스쳐를 만들면 이 함수를 벗어나면 해제되므로 오류가 발생함
+
 	// 카메라 생성
 	shared_ptr<ThirdPersonCamera> camera{ make_shared<ThirdPersonCamera>() };
 	camera->SetEye(XMFLOAT3{ 0.0f, 0.0f, 0.0f });
@@ -21,12 +13,11 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 
 	// 카메라 투영 행렬 설정
 	XMFLOAT4X4 projMatrix;
-	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, aspectRatio, 0.1f, 5000.0f));
+	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, aspectRatio, 0.1f, 3000.0f));
 	camera->SetProjMatrix(projMatrix);
 
 	// 메쉬 생성
 	shared_ptr<CubeMesh> mesh{ make_shared<CubeMesh>(device, commandList, 0.5f, 0.5f, 0.5f) };
-	shared_ptr<TextureRectMesh> textureRectMesh{ make_shared<TextureRectMesh>(device, commandList, 5.0f, 0.0f, 5.0f, XMFLOAT3{ 0.0f, 0.0f, 0.0f }) };
 
 	// 텍스쳐 생성
 	shared_ptr<Texture> rockTexture{ make_shared<Texture>() };
@@ -38,6 +29,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	shared_ptr<Shader> shader{ make_shared<Shader>(device, rootSignature) };
 
 	// 빌보드 객체 생성
+	//shared_ptr<TextureRectMesh> textureRectMesh{ make_shared<TextureRectMesh>(device, commandList, 10.0f, 0.0f, 10.0f, XMFLOAT3{}) };
 	//unique_ptr<BillboardObject> obj{ make_unique<BillboardObject>(camera) };
 	//obj->SetPosition(XMFLOAT3{ 0.0f, 0.0f, 5.0f });
 	//obj->SetMesh(textureRectMesh);
@@ -68,9 +60,9 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	terrainTexture->CreateShaderResourceView(device);
 
 	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(device, commandList, TEXT("resource/heightMap.raw"), terrainShader, terrainTexture, 257, 257, 257, 257, XMFLOAT3{ 1.0f, 0.25f, 1.0f })
+		make_unique<HeightMapTerrain>(device, commandList, TEXT("resource/heightMap.raw"), terrainShader, terrainTexture, 257, 257, 257, 257, XMFLOAT3{ 1.0f, 0.2f, 1.0f })
 	};
-	//terrain->SetPosition(XMFLOAT3{ 0.0f, -300.0f, 0.0f });
+	terrain->SetPosition(XMFLOAT3{ 0.0f, -300.0f, 0.0f });
 	m_terrains.push_back(move(terrain));
 
 	// 스카이박스 생성
@@ -81,9 +73,6 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 
 void Scene::OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime) const
 {
-	// 커서 숨기기
-	SetCursor(NULL); 
-
 	// 화면 가운데 좌표 계산
 	RECT rect; GetWindowRect(hWnd, &rect);
 	POINT oldMousePosition{ rect.left + width / 2, rect.top + height / 2 };
@@ -94,7 +83,8 @@ void Scene::OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime) co
 	// 움직인 정도에 비례해서 회전
 	int dx = newMousePosition.x - oldMousePosition.x;
 	int dy = newMousePosition.y - oldMousePosition.y;
-	GetPlayer()->Rotate(0.0f, dy * deltaTime * 5.0f, dx * deltaTime * 5.0f);
+	float sensitive{ 5.0f };
+	if (m_player) m_player->Rotate(0.0f, dy * sensitive * deltaTime, dx * sensitive * deltaTime);
 
 	// 마우스를 화면 가운데로 이동
 	SetCursorPos(oldMousePosition.x, oldMousePosition.y);
@@ -192,16 +182,6 @@ void Scene::ReleaseUploadBuffer()
 {
 	for (const auto& gameObject : m_gameObjects)
 		gameObject->ReleaseUploadBuffer();
-}
-
-void Scene::AddGameObject(unique_ptr<GameObject> gameObject)
-{
-	m_gameObjects.push_back(move(gameObject));
-}
-
-void Scene::AddTerrain(unique_ptr<HeightMapTerrain> terrain)
-{
-	m_terrains.push_back(move(terrain));
 }
 
 void Scene::SetSkybox(unique_ptr<Skybox>& skybox)

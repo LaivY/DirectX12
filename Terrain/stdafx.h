@@ -93,6 +93,10 @@ namespace Vector3
         XMStoreFloat3(&result, XMVector3TransformNormal(XMLoadFloat3(&a), XMLoadFloat4x4(&b)));
         return result;
     }
+    inline void Print(const XMFLOAT3& a)
+    {
+        cout << a.x << ", " << a.y << ", " << a.z << endl;
+    }
 }
 
 namespace Matrix

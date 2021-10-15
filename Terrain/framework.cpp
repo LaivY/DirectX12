@@ -41,6 +41,7 @@ void GameFramework::OnInit(HINSTANCE hInstance, HWND hWnd)
 
 void GameFramework::OnUpdate(FLOAT deltaTime)
 {
+	Update(deltaTime);
 	if (m_scene) m_scene->OnUpdate(deltaTime);
 }
 
@@ -70,6 +71,14 @@ void GameFramework::OnMouseEvent() const
 void GameFramework::OnKeyboardEvent() const
 {
 	if (m_scene) m_scene->OnKeyboardEvent(m_timer.GetDeltaTime());
+}
+
+void GameFramework::Update(FLOAT deltaTime)
+{
+	wstring title{ TEXT("DirectX12 (") };
+	title += to_wstring(static_cast<int>(m_timer.GetFPS()));
+	title += TEXT("FPS)");
+	SetWindowText(m_hWnd, title.c_str());
 }
 
 void GameFramework::CreateDevice(const ComPtr<IDXGIFactory4>& factory)
@@ -236,44 +245,6 @@ void GameFramework::CreateRootSignature()
 	DX::ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 }
 
-void GameFramework::CreatePipelineStateObject()
-{
-	ComPtr<ID3DBlob> vertexShader, pixelShader;
-
-#if defined(_DEBUG)
-	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-	UINT compileFlags = 0;
-#endif
-
-	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, NULL, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
-	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, NULL, "PSMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
-
-	// 정점 셰이더 레이아웃 설정
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
-	// PSO 생성
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
-	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	psoDesc.SampleDesc.Count = 1;
-	DX::ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
-}
-
 void GameFramework::LoadPipeline()
 {
 	// 팩토리 생성
@@ -310,14 +281,11 @@ void GameFramework::LoadPipeline()
 	// 루트시그니쳐 생성
 	CreateRootSignature();
 
-	// 텍스쳐 컴파일, PSO 생성
-	//CreatePipelineStateObject();
-
 	// 명령할당자 생성
 	DX::ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
 
 	// 명령리스트 생성
-	DX::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_commandList)));
+	DX::ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 	DX::ThrowIfFailed(m_commandList->Close());
 
 	// 펜스 생성
@@ -356,7 +324,7 @@ void GameFramework::LoadAssets()
 void GameFramework::PopulateCommandList() const
 {
 	DX::ThrowIfFailed(m_commandAllocator->Reset());
-	DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get()));
+	DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
 	// Set necessary state
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -397,4 +365,13 @@ void GameFramework::WaitForPreviousFrame()
 		WaitForSingleObject(m_fenceEvent, INFINITE);
 	}
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+}
+
+void GameFramework::SetIsActive(BOOL isActive)
+{
+	m_isActive = isActive;
+	if (m_isActive)
+		ShowCursor(FALSE);
+	else
+		ShowCursor(TRUE);
 }

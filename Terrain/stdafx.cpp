@@ -38,8 +38,6 @@ ComPtr<ID3D12Resource> CreateBufferResource(const ComPtr<ID3D12Device>& device, 
 
 		// 버퍼 리소스 베리어 설정
 		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, resourceState));
-
-		// 리턴
 		return buffer;
 	}
 
@@ -64,11 +62,7 @@ ComPtr<ID3D12Resource> CreateBufferResource(const ComPtr<ID3D12Device>& device, 
 
 		// 리소스 베리어 설정
 		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, resourceState));
-
-		// 리턴
 		return buffer;
 	}
-
-	// 오류
 	return NULL;
 }

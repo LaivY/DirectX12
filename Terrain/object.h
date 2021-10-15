@@ -41,6 +41,8 @@ protected:
 	FLOAT					m_pitch;			// y축 회전각
 	FLOAT					m_yaw;				// z축 회전각
 
+	XMFLOAT3				m_normal;			// 현재 위치의 지형의 노멀 벡터	(임시)
+
 	shared_ptr<Mesh>		m_mesh;				// 메쉬
 	shared_ptr<Shader>		m_shader;			// 셰이더
 	shared_ptr<Texture>		m_texture;			// 텍스쳐

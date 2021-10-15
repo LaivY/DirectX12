@@ -2,7 +2,7 @@
 
 void Texture::LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const wstring& fileName, UINT rootParameterIndex)
 {
-	ComPtr<ID3D12Resource> texture;
+	ComPtr<ID3D12Resource> textureBuffer;
 	ComPtr<ID3D12Resource> textureUploadBuffer;
 
 	// DDS 텍스쳐 로딩
@@ -10,11 +10,11 @@ void Texture::LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<I
 	vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DDS_ALPHA_MODE ddsAlphaMode{ DDS_ALPHA_MODE_UNKNOWN };
 	DX::ThrowIfFailed(DirectX::LoadDDSTextureFromFileEx(device.Get(), fileName.c_str(), 0,
-		D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &texture, ddsData, subresources, &ddsAlphaMode));
+		D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &textureBuffer, ddsData, subresources, &ddsAlphaMode));
 
 	// 디폴트 힙으로 데이터 복사하기 위한 업로드 힙 생성
 	UINT nSubresources{ (UINT)subresources.size() };
-	UINT64 nBytes{ GetRequiredIntermediateSize(texture.Get(), 0, nSubresources) };
+	UINT64 nBytes{ GetRequiredIntermediateSize(textureBuffer.Get(), 0, nSubresources) };
 	DX::ThrowIfFailed(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
@@ -24,14 +24,14 @@ void Texture::LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<I
 		IID_PPV_ARGS(&textureUploadBuffer)
 	));
 
-	// subresources에 있는 데이터를 m_textureBuffer로 복사
-	UpdateSubresources(commandList.Get(), texture.Get(), textureUploadBuffer.Get(), 0, 0, nSubresources, subresources.data());
+	// subresources에 있는 데이터를 textureBuffer로 복사
+	UpdateSubresources(commandList.Get(), textureBuffer.Get(), textureUploadBuffer.Get(), 0, 0, nSubresources, subresources.data());
 
 	// 리소스 베리어 설정
-	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 
 	// 저장
-	m_textures.push_back(make_pair(texture, rootParameterIndex));
+	m_textures.push_back(make_pair(textureBuffer, rootParameterIndex));
 	m_textureUploadBuffers.push_back(textureUploadBuffer);
 }
 

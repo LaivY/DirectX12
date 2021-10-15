@@ -114,7 +114,9 @@ void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 	}
 	if (yaw != 0.0f)
 	{
-		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetUp()), XMConvertToRadians(yaw));
+		XMFLOAT3 up{ 0.0f, 1.0f, 0.0f };
+		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&up), XMConvertToRadians(yaw));
+		//rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetUp()), XMConvertToRadians(yaw));
 		m_yaw += yaw;
 	}
 	XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));

@@ -9,19 +9,18 @@
 class Scene
 {
 public:
-	Scene();
-	~Scene();
+	Scene() = default;
+	~Scene() = default;
 
 	void OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio);
 	void OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime) const;
 	void OnKeyboardEvent(FLOAT deltaTime) const;
 	void OnUpdate(FLOAT deltaTime);
+
 	void Update(FLOAT deltaTime);
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void ReleaseUploadBuffer();
 
-	void AddGameObject(unique_ptr<GameObject> gameObject);
-	void AddTerrain(unique_ptr<HeightMapTerrain> terrain);
 	void SetSkybox(unique_ptr<Skybox>& skybox);
 	void SetPlayer(const shared_ptr<Player>& player);
 	void SetCamera(const shared_ptr<Camera>& camera);

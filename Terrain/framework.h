@@ -19,6 +19,8 @@ public:
 	void OnMouseEvent() const;
 	void OnKeyboardEvent() const;
 
+	void Update(FLOAT deltaTime);
+
 	void CreateDevice(const ComPtr<IDXGIFactory4>& factory);
 	void CreateCommandQueue();
 	void CreateSwapChain(const ComPtr<IDXGIFactory4>& factory);
@@ -26,14 +28,14 @@ public:
 	void CreateRenderTargetView();
 	void CreateDepthStencilView();
 	void CreateRootSignature();
-	void CreatePipelineStateObject();
 	void LoadPipeline();
 	void LoadAssets();
 
 	void PopulateCommandList() const;
 	void WaitForPreviousFrame();
 
-	void SetIsActive(BOOL isActive) { m_isActive = isActive; }
+	void SetIsActive(BOOL isActive);
+
 	UINT GetWindowWidth() const { return m_width; }
 	UINT GetWindowHeight() const { return m_height; }
 	
@@ -46,7 +48,6 @@ private:
 	UINT								m_width;
 	UINT								m_height;
 	FLOAT								m_aspectRatio;
-	POINT								m_mousePosition;
 	BOOL								m_isActive;
 
 	// Pipeline
@@ -64,7 +65,6 @@ private:
 	ComPtr<ID3D12Resource>				m_depthStencil;
 	ComPtr<ID3D12DescriptorHeap>		m_dsvHeap;
 	ComPtr<ID3D12RootSignature>			m_rootSignature;
-	ComPtr<ID3D12PipelineState>			m_pipelineState;
 
 	// Synchronization
 	ComPtr<ID3D12Fence>					m_fence;

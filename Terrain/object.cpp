@@ -1,7 +1,7 @@
 #include "object.h"
 #include "camera.h"
 
-GameObject::GameObject() : m_right{ 1.0f, 0.0f, 0.0f }, m_up{ 0.0f, 1.0f, 0.0f }, m_front{ 0.0f, 0.0f, 1.0f }, m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }
+GameObject::GameObject() : m_right{ 1.0f, 0.0f, 0.0f }, m_up{ 0.0f, 1.0f, 0.0f }, m_front{ 0.0f, 0.0f, 1.0f }, m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_normal{ 0.0f, 1.0f, 0.0f }
 {
 	XMStoreFloat4x4(&m_worldMatrix, XMMatrixIdentity());
 }
@@ -101,6 +101,7 @@ void BillboardObject::Update(FLOAT deltaTime)
 	XMFLOAT3 up{ GetUp() };
 	XMFLOAT3 look{ Vector3::Normalize(Vector3::Sub(target, pos)) };
 	XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(up, look)) };
+
 	m_worldMatrix._11 = right.x;	m_worldMatrix._12 = right.y;	m_worldMatrix._13 = right.z;
 	m_worldMatrix._21 = up.x;		m_worldMatrix._22 = up.y;		m_worldMatrix._23 = up.z;
 	m_worldMatrix._31 = look.x;		m_worldMatrix._32 = look.y;		m_worldMatrix._33 = look.z;

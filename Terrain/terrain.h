@@ -49,6 +49,7 @@ public:
 
 	XMFLOAT3 GetPosition() const { return m_blocks.front()->GetPosition(); }
 	FLOAT GetHeight(FLOAT x, FLOAT z) const;
+	XMFLOAT3 GetNormal(FLOAT x, FLOAT z) const;
 	INT GetWidth() const { return m_width; }
 	INT GetLength() const { return m_length; }
 	XMFLOAT3 GetScale() const { return m_scale; }
