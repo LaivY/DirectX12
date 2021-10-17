@@ -75,9 +75,7 @@ void GameFramework::OnKeyboardEvent() const
 
 void GameFramework::Update(FLOAT deltaTime)
 {
-	wstring title{ TEXT("DirectX12 (") };
-	title += to_wstring(static_cast<int>(m_timer.GetFPS()));
-	title += TEXT("FPS)");
+	wstring title{ TEXT("DirectX12 (") + to_wstring(static_cast<int>(m_timer.GetFPS())) + TEXT("FPS)") };
 	SetWindowText(m_hWnd, title.c_str());
 }
 

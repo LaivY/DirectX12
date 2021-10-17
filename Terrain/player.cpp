@@ -50,24 +50,32 @@ void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 void Player::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
 	XMFLOAT4X4 worldMatrix{ m_worldMatrix };
-	
+
+	// +y축과 지형의 normal벡터 사이각 계산
 	float theta{ acosf(Vector3::Dot(m_up, m_normal)) };
-	if (XMConvertToDegrees(theta))
+
+	// +y축과 m_normal이 다를 때
+	if (theta)
 	{
-		// +z축을 보고있을 때의 right벡터
-		XMFLOAT3 right{ Vector3::Cross(m_up, m_normal) };
+		// +z축을 보고있을 때의 right벡터 계산
+		XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(m_up, m_normal)) };
+		if (m_normal.z < 0)
+		{
+			right = Vector3::Mul(right, -1);
+			theta *= -1;
+		}
 
-		// +z축과 m_front의 사이각
-		//float _theta{ acosf(Vector3::Dot(XMFLOAT3{ 0.0f, 0.0f, 1.0f }, m_front)) };
-		//if (m_front.x < 0) _theta *= -1;
+		// 자전하기 위해 위치 정보 삭제
+		worldMatrix._41 = 0.0f; worldMatrix._42 = 0.0f; worldMatrix._43 = 0.0f;
 
-		//XMFLOAT4X4 _rotate;
-		//XMStoreFloat4x4(&_rotate, XMMatrixRotationAxis(XMLoadFloat3(&m_normal), _theta));
-		//right = Vector3::TransformNormal(right, _rotate);
-
+		// 지형의 각도에 맞게 회전
 		XMFLOAT4X4 rotate;
-		XMStoreFloat4x4(&rotate, XMMatrixRotationAxis(XMLoadFloat3(&right), theta));
-		worldMatrix = Matrix::Mul(rotate, worldMatrix);
+		XMStoreFloat4x4(&rotate, XMMatrixRotationNormal(XMLoadFloat3(&right), theta));
+		worldMatrix = Matrix::Mul(worldMatrix, rotate);
+
+		// 위치 정보 복구
+		XMFLOAT3 pos{ GetPosition() };
+		worldMatrix._41 = pos.x; worldMatrix._42 = pos.y; worldMatrix._43 = pos.z;
 	}
 
 	commandList->SetGraphicsRoot32BitConstants(0, 16, &Matrix::Transpose(worldMatrix), 0);

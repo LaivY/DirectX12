@@ -16,8 +16,8 @@
 #include <exception>
 #include <vector>
 #include <wrl.h>
-using Microsoft::WRL::ComPtr;
 using namespace std;
+using Microsoft::WRL::ComPtr;
 
 // DIRECT3D 12
 #pragma comment(lib, "d3d12.lib")
@@ -93,9 +93,10 @@ namespace Vector3
         XMStoreFloat3(&result, XMVector3TransformNormal(XMLoadFloat3(&a), XMLoadFloat4x4(&b)));
         return result;
     }
-    inline void Print(const XMFLOAT3& a)
+    inline void Print(const XMFLOAT3& a, BOOL newLine=TRUE)
     {
-        cout << a.x << ", " << a.y << ", " << a.z << endl;
+        cout << a.x << ", " << a.y << ", " << a.z;
+        if (newLine) cout << endl;
     }
 }
 

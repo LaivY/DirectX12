@@ -9,6 +9,7 @@ GameObject::GameObject() : m_right{ 1.0f, 0.0f, 0.0f }, m_up{ 0.0f, 1.0f, 0.0f }
 GameObject::~GameObject()
 {
 	if (m_mesh) m_mesh->ReleaseUploadBuffer();
+	if (m_texture) m_texture->ReleaseUploadBuffer();
 }
 
 void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const

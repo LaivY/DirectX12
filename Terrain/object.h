@@ -37,9 +37,9 @@ protected:
 	XMFLOAT3				m_up;				// 로컬 y축
 	XMFLOAT3				m_front;			// 로컬 z축
 
-	FLOAT					m_roll;				// x축 회전각
-	FLOAT					m_pitch;			// y축 회전각
-	FLOAT					m_yaw;				// z축 회전각
+	FLOAT					m_roll;				// z축 회전각
+	FLOAT					m_pitch;			// x축 회전각
+	FLOAT					m_yaw;				// y축 회전각
 
 	XMFLOAT3				m_normal;			// 현재 위치의 지형의 노멀 벡터	(임시)
 
