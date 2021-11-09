@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Texture", "Texture\Texture.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Terrain", "Terrain\Terrain.vcxproj", "{4CF9EDA6-3739-4B89-AFD0-AB53BF82E263}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tessellation", "Tessellation\Tessellation.vcxproj", "{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{4CF9EDA6-3739-4B89-AFD0-AB53BF82E263}.Release|x64.Build.0 = Release|x64
 		{4CF9EDA6-3739-4B89-AFD0-AB53BF82E263}.Release|x86.ActiveCfg = Release|Win32
 		{4CF9EDA6-3739-4B89-AFD0-AB53BF82E263}.Release|x86.Build.0 = Release|Win32
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Debug|x64.ActiveCfg = Debug|x64
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Debug|x64.Build.0 = Debug|x64
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Debug|x86.ActiveCfg = Debug|Win32
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Debug|x86.Build.0 = Debug|Win32
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Release|x64.ActiveCfg = Release|x64
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Release|x64.Build.0 = Release|x64
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Release|x86.ActiveCfg = Release|Win32
+		{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
