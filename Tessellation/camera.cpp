@@ -26,6 +26,7 @@ void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comma
 
 	commandList->SetGraphicsRoot32BitConstants(1, 16, &transViewMatrix, 0);
 	commandList->SetGraphicsRoot32BitConstants(1, 16, &transProjMatrix, 16);
+	commandList->SetGraphicsRoot32BitConstants(1, 3, &GetEye(), 32);
 }
 
 void Camera::UpdateLocalAxis()

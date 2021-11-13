@@ -126,5 +126,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders.hlsl" />
+    <FxCompile Include="header.hlsl" />
   </ItemGroup>
 </Project>

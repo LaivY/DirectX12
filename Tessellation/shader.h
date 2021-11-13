@@ -6,7 +6,7 @@ class Shader
 {
 public:
 	Shader() = default;
-	Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
+	Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature) { CreatePipelineState(device, rootSignature); }
 	~Shader() = default;
 
 	virtual void CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
@@ -19,17 +19,26 @@ protected:
 class TerrainShader : public Shader
 {
 public:
-	TerrainShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
+	TerrainShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature) { CreatePipelineState(device, rootSignature); }
 	~TerrainShader() = default;
 
 	virtual void CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
 };
 
-class WireTerrainShader : public Shader
+class TerrainTessShader : public Shader
 {
 public:
-	WireTerrainShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
-	~WireTerrainShader() = default;
+	TerrainTessShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature) { CreatePipelineState(device, rootSignature); }
+	~TerrainTessShader() = default;
+
+	virtual void CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
+};
+
+class TerrainTessWireShader : public Shader
+{
+public:
+	TerrainTessWireShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature) { CreatePipelineState(device, rootSignature); }
+	~TerrainTessWireShader() = default;
 
 	virtual void CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
 };
@@ -37,7 +46,7 @@ public:
 class SkyboxShader : public Shader
 {
 public:
-	SkyboxShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
+	SkyboxShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature) { CreatePipelineState(device, rootSignature); }
 	~SkyboxShader() = default;
 
 	virtual void CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);

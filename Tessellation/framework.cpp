@@ -222,7 +222,7 @@ void GameFramework::CreateRootSignature()
 
 	CD3DX12_ROOT_PARAMETER rootParameter[4];
 	rootParameter[0].InitAsConstants(16, 0, 0); // cbGameObject	: 월드 변환 행렬(16)
-	rootParameter[1].InitAsConstants(32, 1, 0); // cbCamera		: 뷰 변환 행렬(16) + 투영 변환 행렬(16)
+	rootParameter[1].InitAsConstants(35, 1, 0); // cbCamera		: 뷰 변환 행렬(16) + 투영 변환 행렬(16) + 카메라 위치(3)
 	rootParameter[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameter[3].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
 

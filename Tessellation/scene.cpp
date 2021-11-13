@@ -40,20 +40,21 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager = make_unique<ResourceManager>();
 
 	// 메쉬 생성
-	shared_ptr<CubeMesh> cubeMesh{ make_shared<CubeMesh>(device, commandList, 0.5f, 0.5f, 0.5f) };
+	auto cubeMesh{ make_shared<CubeMesh>(device, commandList, 0.5f, 0.5f, 0.5f) };
 
 	// 셰이더 생성
-	shared_ptr<Shader> shader{ make_shared<Shader>(device, rootSignature) };
-	shared_ptr<TerrainShader> terrainShader{ make_shared<TerrainShader>(device, rootSignature) };
-	shared_ptr<WireTerrainShader> wireTerrainShader{ make_shared<WireTerrainShader>(device, rootSignature) };
-
+	auto shader{ make_shared<Shader>(device, rootSignature) };
+	auto terrainShader{ make_shared<TerrainShader>(device, rootSignature) };
+	auto terrainTessShader{ make_shared<TerrainTessShader>(device, rootSignature) };
+	auto terrainTessWire{ make_shared<TerrainTessWireShader>(device, rootSignature) };
+	
 	// 텍스쳐 생성
-	shared_ptr<Texture> rockTexture{ make_shared<Texture>() };
+	auto rockTexture{ make_shared<Texture>() };
 	rockTexture->LoadTextureFile(device, commandList, 2, TEXT("resource/rock.dds"));
 	rockTexture->CreateSrvDescriptorHeap(device);
 	rockTexture->CreateShaderResourceView(device);
 
-	shared_ptr<Texture> terrainTexture{ make_shared<Texture>() };
+	auto terrainTexture{ make_shared<Texture>() };
 	terrainTexture->LoadTextureFile(device, commandList, 2, TEXT("resource/BaseTerrain.dds")); // BaseTexture
 	terrainTexture->LoadTextureFile(device, commandList, 3, TEXT("resource/DetailTerrain.dds")); // DetailTexture
 	terrainTexture->CreateSrvDescriptorHeap(device);
@@ -63,21 +64,22 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddMesh("CUBE", cubeMesh);
 	m_resourceManager->AddShader("TEXTURE", shader);
 	m_resourceManager->AddShader("TERRAIN", terrainShader);
-	m_resourceManager->AddShader("WIRETERRAIN", wireTerrainShader);
+	m_resourceManager->AddShader("TERRAINTESSWIRE", terrainTessWire);
+	m_resourceManager->AddShader("TERRAINTESS", terrainTessShader);
 	m_resourceManager->AddTexture("ROCK", rockTexture);
 	m_resourceManager->AddTexture("TERRAIN", terrainTexture);
 
 	// 카메라 생성
-	shared_ptr<ThirdPersonCamera> camera{ make_shared<ThirdPersonCamera>() };
+	auto camera{ make_shared<ThirdPersonCamera>() };
 	SetCamera(camera);
 
 	// 카메라 투영 행렬 설정
 	XMFLOAT4X4 projMatrix;
-	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, aspectRatio, 0.1f, 3000.0f));
+	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, aspectRatio, 1.0f, 5000.0f));
 	camera->SetProjMatrix(projMatrix);
 
 	// 플레이어 생성
-	shared_ptr<Player> player{ make_shared<Player>() };
+	auto player{ make_shared<Player>() };
 	player->SetMesh(m_resourceManager->GetMesh("CUBE"));
 	player->SetShader(m_resourceManager->GetShader("TEXTURE"));
 	player->SetTexture(m_resourceManager->GetTexture("ROCK"));
@@ -88,23 +90,18 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	player->SetCamera(camera);
 
 	// 스카이박스 생성
-	unique_ptr<Skybox> skybox{ make_unique<Skybox>(device, commandList, rootSignature) };
+	auto skybox{ make_unique<Skybox>(device, commandList, rootSignature) };
 	skybox->SetCamera(camera);
 	SetSkybox(skybox);
 
 	// 지형 생성
-	unique_ptr<HeightMapTerrain> terrain{
-		make_unique<HeightMapTerrain>(
-			device, commandList,
-			TEXT("resource/heightMap.raw"),				// 파일 이름
-			m_resourceManager->GetShader("TERRAIN"),	// 셰이더
-			m_resourceManager->GetTexture("TERRAIN"),	// 텍스쳐
-			257, 257,									// 지형의 가로, 세로
-			257, 257,									// 블록의 가로, 세로
-			XMFLOAT3{ 1.0f, 0.2f, 1.0f }				// 스케일
-			)
+	// 한 블록 당 25개의 정점으로 이루어져있으므로 블록 너비, 길이는 4의 배수여야한다.
+	XMFLOAT3 terrainScale{ 1.0f, 0.2f, 1.0f };
+	auto terrain{ 
+		make_unique<HeightMapTerrain>(device, commandList, TEXT("resource/heightMap.raw"),
+			m_resourceManager->GetShader("TERRAINTESS"), m_resourceManager->GetTexture("TERRAIN"), 257, 257, 12, 12, terrainScale)
 	};
-	terrain->SetPosition(XMFLOAT3{ 0.0f, -300.0f, 0.0f });
+	terrain->SetPosition(XMFLOAT3{ -257.0f * terrainScale.x / 2.0f, -100.0f, -257.0f * terrainScale.z / 2.0f });
 	m_terrains.push_back(move(terrain));
 }
 
@@ -163,15 +160,22 @@ void Scene::OnKeyboardEvent(FLOAT deltaTime)
 void Scene::OnKeyboardEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	// 지형 와이어프레임 ON, OFF
+	// 
 	static bool drawAsWireframe{ false };
 	if (wParam == 'q' || wParam == 'Q')
 	{
+		drawAsWireframe = !drawAsWireframe;
 		for (auto& terrain : m_terrains)
 			if (drawAsWireframe)
-				terrain->SetShader(m_resourceManager->GetShader("WIRETERRAIN"));
+				terrain->SetShader(m_resourceManager->GetShader("TERRAINTESSWIRE"));
 			else
-				terrain->SetShader(m_resourceManager->GetShader("TERRAIN"));
-		drawAsWireframe = !drawAsWireframe;
+				terrain->SetShader(m_resourceManager->GetShader("TERRAINTESS"));
+	}
+
+	// 종료
+	else if (wParam == VK_ESCAPE)
+	{
+		exit(0);
 	}
 }
 

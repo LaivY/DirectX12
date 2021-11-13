@@ -30,8 +30,14 @@ public:
 	HeightMapGridMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, 
 		HeightMapImage* heightMapImage, INT xStart, INT zStart, INT width, INT length, XMFLOAT3 scale);
 	~HeightMapGridMesh() = default;
+};
 
-	FLOAT GetHeight(HeightMapImage* heightMapImage, INT x, INT z) const;
+class HeightMapGridTessMesh : public Mesh
+{
+public:
+	HeightMapGridTessMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
+		HeightMapImage* heightMapImage, INT xStart, INT zStart, INT width, INT length, XMFLOAT3 scale);
+	~HeightMapGridTessMesh() = default;
 };
 
 class HeightMapTerrain
