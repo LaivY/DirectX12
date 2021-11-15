@@ -58,7 +58,7 @@ VSTerrainOutput VSTerrainTessMain(VSTerrainInput input)
 float CalculateTessFactor(float3 f3Position)
 {   
     float fDistToCamera = distance(f3Position, cameraPosition);
-    float s = saturate(fDistToCamera / 100.0f);
+    float s = saturate(fDistToCamera / 75.0f);
     return lerp(64.0f, 3.0f, s);
 }
 
