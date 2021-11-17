@@ -125,16 +125,15 @@ HeightMapGridTessMesh::HeightMapGridTessMesh(const ComPtr<ID3D12Device>& device,
 	float heightMapImageWidth{ static_cast<float>(heightMapImage->GetWidth()) };
 	float heightMapImageLength{ static_cast<float>(heightMapImage->GetLength()) };
 
+	// (-x, +z)(=좌측상단)에서부터 (+x, -z)(=우측하단)까지
 	vector<Texture2Vertex> vertices;
-
-	// (-x, +z)에서부터 (+x, -z)까지
 	for (int z = zStart + length; z >= zStart; z -= lengthStride)
 		for (int x = xStart; x <= xStart + width; x += widthStride)
 			vertices.emplace_back(
 				XMFLOAT3{ x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z },
 				XMFLOAT2{ (float)x / heightMapImageWidth, 1.0f - ((float)z / heightMapImageLength) },
 				XMFLOAT2{ (float)x / scale.x * 1.5f, (float)z / scale.z * 1.5f }
-	);
+			);
 
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Texture2Vertex), vertices.size());
 }
@@ -142,24 +141,24 @@ HeightMapGridTessMesh::HeightMapGridTessMesh(const ComPtr<ID3D12Device>& device,
 
 HeightMapTerrain::HeightMapTerrain(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
 	const wstring& fileName, const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale)
-	: m_width{ width }, m_length{ length }, m_scale{ scale }
+	: m_width{ width }, m_length{ length }, m_blockWidth{ blockWidth }, m_blockLength{ blockLength }, m_scale{ scale }
 {
 	// 높이맵이미지 로딩
 	m_heightMapImage = make_unique<HeightMapImage>(fileName, m_width, m_length, m_scale);
 
 	// 가로, 세로 블록의 개수
-	int widthBlockCount{ m_width / blockWidth };
-	int lengthBlockCount{ m_length / blockLength };
+	int widthBlockCount{ m_width / m_blockWidth };
+	int lengthBlockCount{ m_length / m_blockLength };
 
 	// 블록 생성
 	for (int z = 0; z < lengthBlockCount; ++z)
 		for (int x = 0; x < widthBlockCount; ++x)
 		{
-			int xStart{ x * blockWidth };
-			int zStart{ z * blockLength };
+			int xStart{ x * m_blockWidth };
+			int zStart{ z * m_blockLength };
 			unique_ptr<GameObject> block{ make_unique<GameObject>() };
 			shared_ptr<HeightMapGridTessMesh> mesh{
-				make_shared<HeightMapGridTessMesh>(device, commandList, m_heightMapImage.get(), xStart, zStart, blockWidth, blockLength, m_scale)
+				make_shared<HeightMapGridTessMesh>(device, commandList, m_heightMapImage.get(), xStart, zStart, m_blockWidth, m_blockLength, m_scale)
 			};
 			block->SetMesh(mesh);
 			block->SetShader(shader);
@@ -217,8 +216,6 @@ FLOAT HeightMapTerrain::GetHeight(FLOAT x, FLOAT z) const
 
 XMFLOAT3 HeightMapTerrain::GetNormal(FLOAT x, FLOAT z) const
 {
-	// 파라미터로 들어온 (x, z)는 플레이어의 위치이다.
-
 	XMFLOAT3 pos{ GetPosition() };
 	x -= pos.x; x /= m_scale.x;
 	z -= pos.z; z /= m_scale.z;
@@ -237,4 +234,13 @@ XMFLOAT3 HeightMapTerrain::GetNormal(FLOAT x, FLOAT z) const
 	XMFLOAT3 bot{ Vector3::Add(Vector3::Mul(LB, 1.0f - fx), Vector3::Mul(RB, fx)) };
 	XMFLOAT3 top{ Vector3::Add(Vector3::Mul(LT, 1.0f - fx), Vector3::Mul(RT, fx)) };
 	return Vector3::Normalize(Vector3::Add(Vector3::Mul(bot, 1.0f - fz), Vector3::Mul(top, fz)));
+}
+
+XMFLOAT3 HeightMapTerrain::GetBlockPosition(FLOAT x, FLOAT z)
+{
+	// (x, z) 좌표를 포함하는 블록의 좌측하단 좌표를 반환한다. y값은 항상 0이다.
+	XMFLOAT3 pos{ GetPosition() };
+	int bx{ static_cast<int>((x - pos.x) / m_blockWidth) };
+	int bz{ static_cast<int>((z - pos.z) / m_blockLength) };
+	return { pos.x + bx * m_blockWidth, 0.0f, pos.z + bz * m_blockLength };
 }

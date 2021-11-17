@@ -13,6 +13,7 @@
 #include <tchar.h>
 #include <wrl.h>
 #include <algorithm>
+#include <array>
 #include <exception>
 #include <iostream>
 #include <map>

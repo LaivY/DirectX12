@@ -47,7 +47,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto terrainShader{ make_shared<TerrainShader>(device, rootSignature) };
 	auto terrainTessShader{ make_shared<TerrainTessShader>(device, rootSignature) };
 	auto terrainTessWire{ make_shared<TerrainTessWireShader>(device, rootSignature) };
-	
+
 	// 텍스쳐 생성
 	auto rockTexture{ make_shared<Texture>() };
 	rockTexture->LoadTextureFile(device, commandList, 2, TEXT("resource/rock.dds"));
@@ -101,7 +101,8 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 		make_unique<HeightMapTerrain>(device, commandList, TEXT("resource/heightMap.raw"),
 			m_resourceManager->GetShader("TERRAINTESS"), m_resourceManager->GetTexture("TERRAIN"), 257, 257, 12, 12, terrainScale)
 	};
-	terrain->SetPosition(XMFLOAT3{ -257.0f * terrainScale.x / 2.0f, -100.0f, -257.0f * terrainScale.z / 2.0f });
+	//terrain->SetPosition(XMFLOAT3{ -257.0f * terrainScale.x / 2.0f, -100.0f, -257.0f * terrainScale.z / 2.0f });
+	terrain->SetPosition({ 0.0f, 0.0f, 0.0f });
 	m_terrains.push_back(move(terrain));
 }
 

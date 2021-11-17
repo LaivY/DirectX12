@@ -55,10 +55,13 @@ public:
 	void SetShader(const shared_ptr<Shader>& shader);
 
 	XMFLOAT3 GetPosition() const { return m_blocks.front()->GetPosition(); }
+	XMFLOAT3 GetBlockPosition(FLOAT x, FLOAT z);
 	FLOAT GetHeight(FLOAT x, FLOAT z) const;
 	XMFLOAT3 GetNormal(FLOAT x, FLOAT z) const;
 	INT GetWidth() const { return m_width; }
 	INT GetLength() const { return m_length; }
+	INT GetBlockWidth() const { return m_blockWidth; }
+	INT GetBlockLength() const { return m_blockLength; }
 	XMFLOAT3 GetScale() const { return m_scale; }
 
 private:
@@ -66,5 +69,7 @@ private:
 	vector<unique_ptr<GameObject>>	m_blocks;			// 블록들
 	INT								m_width;			// 이미지의 가로 길이
 	INT								m_length;			// 이미지의 세로 길이
+	INT								m_blockWidth;		// 블록의 가로 길이
+	INT								m_blockLength;		// 블록의 세로 길이
 	XMFLOAT3						m_scale;			// 확대 비율
 };

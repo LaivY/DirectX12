@@ -14,14 +14,12 @@ void Player::Update(FLOAT deltaTime)
 	// 플레이어가 어떤 지형 위에 있다면
 	if (m_terrain)
 	{
-		// 플레이어가 지형 위를 이동하도록
-		XMFLOAT3 pos{ GetPosition() };
-		FLOAT height{ m_terrain->GetHeight(pos.x, pos.z) };
-		SetPosition(XMFLOAT3{ pos.x, height + 0.5f, pos.z });
+		// 플레이어가 지형 위에 있도록 설정
+		SetPlayerOnTerrain();
 
 		// 플레이어가 서있는 곳의 노말을 저장
-		XMFLOAT3 normal{ m_terrain->GetNormal(pos.x, pos.z) };
-		m_normal = normal;
+		XMFLOAT3 pos{ GetPosition() };
+		m_normal = m_terrain->GetNormal(pos.x, pos.z);
 	}
 
 	// 마찰력 적용
@@ -51,19 +49,10 @@ void Player::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comma
 {
 	XMFLOAT4X4 worldMatrix{ m_worldMatrix };
 
-	// +y축과 지형의 normal벡터 사이각 계산
-	float theta{ acosf(Vector3::Dot(m_up, m_normal)) };
-
-	// +y축과 m_normal이 다를 때
-	if (theta)
+	if (float theta{ acosf(Vector3::Dot(m_up, m_normal)) })
 	{
-		// +z축을 보고있을 때의 right벡터 계산
+		// 로컬 x축
 		XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(m_up, m_normal)) };
-		if (m_normal.z < 0)
-		{
-			right = Vector3::Mul(right, -1);
-			theta *= -1;
-		}
 
 		// 자전하기 위해 위치 정보 삭제
 		worldMatrix._41 = 0.0f; worldMatrix._42 = 0.0f; worldMatrix._43 = 0.0f;
@@ -79,6 +68,81 @@ void Player::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comma
 	}
 
 	commandList->SetGraphicsRoot32BitConstants(0, 16, &Matrix::Transpose(worldMatrix), 0);
+}
+
+void Player::SetPlayerOnTerrain()
+{
+	/*
+	1. 플레이어가 위치한 블록의 좌측하단 좌표를 구한다.
+	2. 해당 좌표를 이용하여 블록 메쉬의 정점 25개를 구한다.
+	3. 정점 25개를 이용하여 4차 베지어 곡면을 구한다.
+	4. 플레이어의 위치 t를 구해서 베지어 곡면 상의 높이를 구한다.
+	*/
+
+	XMFLOAT3 pos{ GetPosition() };
+	XMFLOAT3 LB{ m_terrain->GetBlockPosition(pos.x, pos.z) };
+
+	int width{ m_terrain->GetWidth() };
+	int length{ m_terrain->GetLength() };
+	int blockWidth{ m_terrain->GetBlockWidth() };
+	int blockLength{ m_terrain->GetBlockLength() };
+	XMFLOAT3 scale{ m_terrain->GetScale() };
+
+	auto CubicBezierSum = [](const array<XMFLOAT3, 25>& patch, XMFLOAT2 t) {
+
+		// 4차 베지어 곡선 계수
+		array<float, 5> uB, vB;
+		float txInv{ 1.0f - t.x };
+		uB[0] = txInv * txInv * txInv * txInv;
+		uB[1] = 4.0f * t.x * txInv * txInv * txInv;
+		uB[2] = 6.0f * t.x * t.x * txInv * txInv;
+		uB[3] = 4.0f * t.x * t.x * t.x * txInv;
+		uB[4] = t.x * t.x * t.x * t.x;
+
+		float tyInv{ 1.0f - t.y };
+		vB[0] = tyInv * tyInv * tyInv * tyInv;
+		vB[1] = 4.0f * t.y * tyInv * tyInv * tyInv;
+		vB[2] = 6.0f * t.y * t.y * tyInv * tyInv;
+		vB[3] = 4.0f * t.y * t.y * t.y * tyInv;
+		vB[4] = t.y * t.y * t.y * t.y;
+
+		// 4차 베지에 곡면 계산
+		XMFLOAT3 sum{ 0.0f, 0.0f, 0.0f };
+		for (int i = 0; i < 5; ++i)
+		{
+			XMFLOAT3 subSum{ 0.0f, 0.0f, 0.0f };
+			for (int j = 0; j < 5; ++j)
+			{
+				XMFLOAT3 temp{ Vector3::Mul(patch[(i * 5) + j], uB[j]) };
+				subSum = Vector3::Add(subSum, temp);
+			}
+			subSum = Vector3::Mul(subSum, vB[i]);
+			sum = Vector3::Add(sum, subSum);
+		}
+		return sum;
+	};
+
+	// 베지에 평면 제어점 25개
+	array<XMFLOAT3, 25> vertices;
+	for (int i = 0, z = 4; z >= 0; --z)
+	{
+		for (int x = 0; x < 5; ++x)
+		{
+			vertices[i].x = (LB.x + x * blockWidth / 4) * scale.x;
+			vertices[i].z = (LB.z + z * blockLength / 4) * scale.z;
+			vertices[i].y = m_terrain->GetHeight(vertices[i].x, vertices[i].z);
+			++i;
+		}
+	}
+
+	// 플레이어의 위치 t
+	XMFLOAT2 uv{ (pos.x - LB.x) / blockWidth, 1.0f - (pos.z - LB.z) / blockLength };
+	XMFLOAT3 temp{ CubicBezierSum(vertices, uv) };
+
+	// 플레이어를 노말 방향으로 0.5만큼 움직임
+	temp = Vector3::Add(temp, Vector3::Mul(m_normal, 0.5f));
+
+	SetPosition(XMFLOAT3{ pos.x, temp.y, pos.z });
 }
 
 void Player::AddVelocity(const XMFLOAT3& increase)
