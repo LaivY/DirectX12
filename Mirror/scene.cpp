@@ -295,6 +295,30 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 	// 파티클 렌더링
 	for (const auto& particle : m_particles)
 		particle->Render(commandList);
+
+	if (m_player)
+	{
+		// 임시 거울 테스트 - 플레이어 렌더링
+		XMVECTOR mirror{ XMVectorSet(0.0f, 0.0f, -1.0f, 10.0f) };
+		XMFLOAT4X4 reflectMatrix;
+		XMStoreFloat4x4(&reflectMatrix, XMMatrixReflect(mirror));
+
+		XMFLOAT4X4 originWorldMatrix{ m_player->m_worldMatrix };
+		m_player->m_worldMatrix = Matrix::Mul(m_player->m_worldMatrix, reflectMatrix);
+
+		if (m_player->m_shader) commandList->SetPipelineState(m_player->m_shader->GetPipelineState().Get());
+
+		m_player->UpdateShaderVariable(commandList);
+
+		if (m_player->m_texture)
+		{
+			if (m_player->m_textureInfo) m_player->m_texture->SetTextureInfo(m_player->m_textureInfo.get());
+			m_player->m_texture->UpdateShaderVariable(commandList);
+		}
+		if (m_player->m_mesh) m_player->m_mesh->Render(commandList);
+
+		m_player->m_worldMatrix = originWorldMatrix;
+	}
 }
 
 void Scene::ReleaseUploadBuffer()

@@ -41,6 +41,7 @@ public:
 	bool isDeleted() const { return m_isDeleted; }
 
 protected:
+public:
 	GameObjectType			m_type;				// 게임오브젝트 종류 특정짓기 위한 타입
 	bool					m_isDeleted;		// true일 경우 다음 프레임에 삭제됨
 
