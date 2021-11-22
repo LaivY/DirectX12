@@ -17,12 +17,13 @@ public:
 	GameObject();
 	~GameObject() = default;
 
-	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const shared_ptr<Shader>& shader=nullptr) const;
 	virtual void Update(FLOAT deltaTime);
 	virtual void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 	virtual void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 
+	void SetWorldMatrix(const XMFLOAT4X4& worldMatrix) { m_worldMatrix = worldMatrix; }
 	void SetPosition(const XMFLOAT3& position);
 	void SetMesh(const shared_ptr<Mesh>& Mesh);
 	void SetShader(const shared_ptr<Shader>& shader);
@@ -31,6 +32,8 @@ public:
 	void SetTerrain(HeightMapTerrain* terrain) { m_terrain = terrain; }
 
 	GameObjectType GetType() const { return m_type; }
+	bool isDeleted() const { return m_isDeleted; }
+	XMFLOAT4X4 GetWorldMatrix() const { return m_worldMatrix; }
 	XMFLOAT3 GetPosition() const;
 	XMFLOAT3 GetRight() const { return m_right; }
 	XMFLOAT3 GetUp() const { return m_up; }
@@ -38,7 +41,6 @@ public:
 	HeightMapTerrain* GetTerrain() const { return m_terrain; }
 	XMFLOAT3 GetNormal() const { return m_normal; }
 	XMFLOAT3 GetLook() const { return m_look; }
-	bool isDeleted() const { return m_isDeleted; }
 
 protected:
 public:

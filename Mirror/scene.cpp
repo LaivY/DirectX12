@@ -43,13 +43,16 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto cubeMesh{ make_shared<CubeMesh>(device, commandList, 0.5f, 0.5f, 0.5f) };
 	auto bulletMesh{ make_shared<CubeMesh>(device, commandList, 0.1f, 0.1f, 0.1f) };
 	auto explosionMesh{ make_shared<TextureRectMesh>(device, commandList, 5.0f, 0.0f, 5.0f, XMFLOAT3{}) };
-
+	auto mirrorMesh{ make_shared<TextureRectMesh>(device, commandList, 10.0f, 0.0f, 10.0f, XMFLOAT3{ 0.0f, 0.0f, 0.1f }) };
+	
 	// 셰이더 생성
 	auto shader{ make_shared<Shader>(device, rootSignature) };
 	auto terrainShader{ make_shared<TerrainShader>(device, rootSignature) };
 	auto terrainTessShader{ make_shared<TerrainTessShader>(device, rootSignature) };
 	auto terrainTessWireShader{ make_shared<TerrainTessWireShader>(device, rootSignature) };
 	auto blendingShader{ make_shared<BlendingShader>(device, rootSignature) };
+	auto stencilShader{ make_shared<StencilShader>(device, rootSignature) };
+	auto mirrorShader{ make_shared<MirrorShader>(device, rootSignature) };
 
 	// 텍스쳐 생성
 	auto rockTexture{ make_shared<Texture>() };
@@ -69,18 +72,27 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	explosionTexture->CreateSrvDescriptorHeap(device);
 	explosionTexture->CreateShaderResourceView(device);
 
+	auto mirrorTexture{ make_shared<Texture>() };
+	mirrorTexture->LoadTextureFile(device, commandList, 2, PATH("Pink.dds"));
+	mirrorTexture->CreateSrvDescriptorHeap(device);
+	mirrorTexture->CreateShaderResourceView(device);
+
 	// 리소스매니저에 리소스 추가
 	m_resourceManager->AddMesh("CUBE", cubeMesh);
 	m_resourceManager->AddMesh("BULLET", bulletMesh);
 	m_resourceManager->AddMesh("EXPLOSION", explosionMesh);
+	m_resourceManager->AddMesh("MIRROR", mirrorMesh);
 	m_resourceManager->AddShader("TEXTURE", shader);
 	m_resourceManager->AddShader("TERRAIN", terrainShader);
 	m_resourceManager->AddShader("TERRAINTESSWIRE", terrainTessWireShader);
 	m_resourceManager->AddShader("TERRAINTESS", terrainTessShader);
 	m_resourceManager->AddShader("BLENDING", blendingShader);
+	m_resourceManager->AddShader("STENCIL", stencilShader);
+	m_resourceManager->AddShader("MIRROR", mirrorShader);
 	m_resourceManager->AddTexture("ROCK", rockTexture);
 	m_resourceManager->AddTexture("TERRAIN", terrainTexture);
 	m_resourceManager->AddTexture("EXPLOSION", explosionTexture);
+	m_resourceManager->AddTexture("MIRROR", mirrorTexture);
 
 	// 카메라 생성
 	auto camera{ make_shared<ThirdPersonCamera>() };
@@ -114,6 +126,14 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 												m_resourceManager->GetTexture("TERRAIN"), 257, 257, 12, 12, terrainScale) };
 	terrain->SetPosition({ 0.0f, 0.0f, 0.0f });
 	m_terrains.push_back(move(terrain));
+
+	// 거울 생성
+	auto mirror{ make_unique<GameObject>() };
+	mirror->SetPosition(XMFLOAT3{ 30.0f, 27.0f, 15.0f });
+	mirror->SetMesh(m_resourceManager->GetMesh("MIRROR"));
+	mirror->SetShader(m_resourceManager->GetShader("BLENDING"));
+	mirror->SetTexture(m_resourceManager->GetTexture("MIRROR"));
+	m_mirror = move(mirror);
 }
 
 void Scene::OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime)
@@ -272,7 +292,7 @@ void Scene::UpdateObjectsTerrain()
 	}
 }
 
-void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
 	// 카메라 셰이더 변수(뷰, 투영 변환 행렬) 최신화
 	if (m_camera) m_camera->UpdateShaderVariable(commandList);
@@ -296,28 +316,32 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 	for (const auto& particle : m_particles)
 		particle->Render(commandList);
 
-	if (m_player)
+	if (m_mirror && m_player)
 	{
-		// 임시 거울 테스트 - 플레이어 렌더링
-		XMVECTOR mirror{ XMVectorSet(0.0f, 0.0f, -1.0f, 10.0f) };
+		// 스텐실 버퍼 초기화
+		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
+
+		// 스텐실 참조값 설정
+		commandList->OMSetStencilRef(1);
+
+		// 거울 위치를 스텐실 버퍼에 표시
+		m_mirror->Render(commandList, m_resourceManager->GetShader("STENCIL"));
+
+		// 거울에 비친 상 렌더링
+		XMVECTOR mirrorPlane{ XMVectorSet(0.0f, 0.0f, -1.0f, m_mirror->GetPosition().z) };
 		XMFLOAT4X4 reflectMatrix;
-		XMStoreFloat4x4(&reflectMatrix, XMMatrixReflect(mirror));
+		XMStoreFloat4x4(&reflectMatrix, XMMatrixReflect(mirrorPlane));
 
-		XMFLOAT4X4 originWorldMatrix{ m_player->m_worldMatrix };
-		m_player->m_worldMatrix = Matrix::Mul(m_player->m_worldMatrix, reflectMatrix);
+		XMFLOAT4X4 originWorldMatrix{ m_player->GetWorldMatrix() };
+		m_player->SetWorldMatrix(Matrix::Mul(m_player->m_worldMatrix, reflectMatrix));
+		m_player->Render(commandList, m_resourceManager->GetShader("MIRROR"));
+		m_player->SetWorldMatrix(originWorldMatrix);
 
-		if (m_player->m_shader) commandList->SetPipelineState(m_player->m_shader->GetPipelineState().Get());
+		// 스텐실 참조값 초기화
+		commandList->OMSetStencilRef(0);
 
-		m_player->UpdateShaderVariable(commandList);
-
-		if (m_player->m_texture)
-		{
-			if (m_player->m_textureInfo) m_player->m_texture->SetTextureInfo(m_player->m_textureInfo.get());
-			m_player->m_texture->UpdateShaderVariable(commandList);
-		}
-		if (m_player->m_mesh) m_player->m_mesh->Render(commandList);
-
-		m_player->m_worldMatrix = originWorldMatrix;
+		// 진짜 거울 렌더링
+		m_mirror->Render(commandList);
 	}
 }
 

@@ -23,11 +23,16 @@ void Player::Update(FLOAT deltaTime)
 		m_normal = m_terrain->GetNormal(pos.x, pos.z);
 
 		// 플레이어가 바라보는 방향 설정
-		if (float theta = acosf(Vector3::Dot(m_up, m_normal)))
+		if (float theta = acosf(Vector3::Dot(XMFLOAT3{ 0.0f, 1.0f, 0.0f }, m_normal)))
 		{
-			XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(m_up, m_normal)) };
+			XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(XMFLOAT3{ 0.0f, 1.0f, 0.0f }, m_normal)) };
 			XMFLOAT4X4 rotate; XMStoreFloat4x4(&rotate, XMMatrixRotationNormal(XMLoadFloat3(&right), theta));
 			m_look = Vector3::TransformNormal(GetFront(), rotate);
+			right = Vector3::Normalize(Vector3::Cross(m_normal, m_look));
+
+			m_worldMatrix._11 = right.x;	m_worldMatrix._12 = right.y;	m_worldMatrix._13 = right.z;
+			m_worldMatrix._21 = m_normal.x;	m_worldMatrix._22 = m_normal.y;	m_worldMatrix._23 = m_normal.z;
+			m_worldMatrix._31 = m_look.x;	m_worldMatrix._32 = m_look.y;	m_worldMatrix._33 = m_look.z;
 		}
 	}
 
@@ -51,18 +56,6 @@ void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 
 	// 플레이어는 y축으로만 회전할 수 있다.
 	GameObject::Rotate(0.0f, 0.0f, yaw);
-}
-
-void Player::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
-{
-	XMFLOAT4X4 worldMatrix{ m_worldMatrix };
-	XMFLOAT3 up{ m_normal };
-	XMFLOAT3 look{ m_look };
-	XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(up, look)) };
-	worldMatrix._11 = right.x;	worldMatrix._12 = right.y;	worldMatrix._13 = right.z;
-	worldMatrix._21 = up.x;		worldMatrix._22 = up.y;		worldMatrix._23 = up.z;
-	worldMatrix._31 = look.x;	worldMatrix._32 = look.y;	worldMatrix._33 = look.z;
-	commandList->SetGraphicsRoot32BitConstants(0, 16, &Matrix::Transpose(worldMatrix), 0);
 }
 
 void Player::SetPlayerOnTerrain()
@@ -120,7 +113,6 @@ void Player::SetPlayerOnTerrain()
 	// 베지에 평면 제어점 25개
 	array<XMFLOAT3, 25> vertices;
 	for (int i = 0, z = 4; z >= 0; --z)
-	{
 		for (int x = 0; x < 5; ++x)
 		{
 			vertices[i].x = (LB.x + x * blockWidth / 4) * scale.x;
@@ -128,15 +120,14 @@ void Player::SetPlayerOnTerrain()
 			vertices[i].y = m_terrain->GetHeight(vertices[i].x, vertices[i].z);
 			++i;
 		}
-	}
 
 	// 플레이어의 위치 t
 	XMFLOAT2 uv{ (pos.x - LB.x) / blockWidth, 1.0f - (pos.z - LB.z) / blockLength };
-	XMFLOAT3 temp{ CubicBezierSum(vertices, uv) };
+	XMFLOAT3 height{ CubicBezierSum(vertices, uv) };
 
 	// 플레이어를 노말 방향으로 0.5만큼 움직임
-	temp = Vector3::Add(temp, Vector3::Mul(m_normal, 0.5f));
-	SetPosition(XMFLOAT3{ pos.x, temp.y, pos.z });
+	height = Vector3::Add(height, Vector3::Mul(m_normal, 0.5f));
+	SetPosition(XMFLOAT3{ pos.x, height.y, pos.z });
 }
 
 void Player::AddVelocity(const XMFLOAT3& increase)

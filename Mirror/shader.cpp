@@ -225,6 +225,10 @@ void BlendingShader::CreatePipelineState(const ComPtr<ID3D12Device>& device, con
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
+	// 블렌딩 객체들은 깊이버퍼에 영향을 주지않음
+	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
+	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+
 	// 블렌딩 설정
 	CD3DX12_BLEND_DESC blendState{ D3D12_DEFAULT };
 	blendState.RenderTarget[0].BlendEnable = TRUE;
@@ -237,10 +241,6 @@ void BlendingShader::CreatePipelineState(const ComPtr<ID3D12Device>& device, con
 	blendState.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	blendState.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
 	blendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	// 파티클 객체들은 깊이버퍼에 영향을 주지않음
-	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
-	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
 	// PSO 생성
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
@@ -290,7 +290,6 @@ void StencilShader::CreatePipelineState(const ComPtr<ID3D12Device>& device, cons
 	depthStencilState.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
 
 	CD3DX12_BLEND_DESC blendState{ D3D12_DEFAULT };
-	blendState.RenderTarget[0].BlendEnable = FALSE;
 	blendState.RenderTarget[0].RenderTargetWriteMask = 0;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};

@@ -351,7 +351,7 @@ void GameFramework::PopulateCommandList() const
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 
 	// ·»´õ¸µ
-	if (m_scene) m_scene->Render(m_commandList);
+	if (m_scene) m_scene->Render(m_commandList, dsvHandle);
 
 	// Indicate back buffer will now be used to present
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
