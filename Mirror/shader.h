@@ -61,6 +61,15 @@ public:
 	virtual void CreatePipelineState(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
 };
 
+class BlendingDepthShader : public Shader
+{
+public:
+	BlendingDepthShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature) { CreatePipelineState(device, rootSignature); }
+	~BlendingDepthShader() = default;
+
+	virtual void CreatePipelineState(const ComPtr<ID3D12Device>&device, const ComPtr<ID3D12RootSignature>&rootSignature);
+};
+
 class StencilShader : public Shader
 {
 public:

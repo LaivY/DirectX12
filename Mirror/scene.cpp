@@ -51,6 +51,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto terrainTessShader{ make_shared<TerrainTessShader>(device, rootSignature) };
 	auto terrainTessWireShader{ make_shared<TerrainTessWireShader>(device, rootSignature) };
 	auto blendingShader{ make_shared<BlendingShader>(device, rootSignature) };
+	auto blendingDepthShader{ make_shared<BlendingDepthShader>(device, rootSignature) };
 	auto stencilShader{ make_shared<StencilShader>(device, rootSignature) };
 	auto mirrorShader{ make_shared<MirrorShader>(device, rootSignature) };
 
@@ -87,6 +88,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddShader("TERRAINTESSWIRE", terrainTessWireShader);
 	m_resourceManager->AddShader("TERRAINTESS", terrainTessShader);
 	m_resourceManager->AddShader("BLENDING", blendingShader);
+	m_resourceManager->AddShader("BLENDINGDEPTH", blendingDepthShader);
 	m_resourceManager->AddShader("STENCIL", stencilShader);
 	m_resourceManager->AddShader("MIRROR", mirrorShader);
 	m_resourceManager->AddTexture("ROCK", rockTexture);
@@ -131,7 +133,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto mirror{ make_unique<GameObject>() };
 	mirror->SetPosition(XMFLOAT3{ 30.0f, 27.0f, 15.0f });
 	mirror->SetMesh(m_resourceManager->GetMesh("MIRROR"));
-	mirror->SetShader(m_resourceManager->GetShader("BLENDING"));
+	mirror->SetShader(m_resourceManager->GetShader("BLENDINGDEPTH"));
 	mirror->SetTexture(m_resourceManager->GetTexture("MIRROR"));
 	m_mirror = move(mirror);
 }
@@ -301,21 +303,6 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_C
 	// 스카이박스는 깊이버퍼에 영향을 미치지 않는다(SkyboxShader).
 	if (m_skybox) m_skybox->Render(commandList);
 
-	// 플레이어 렌더링
-	if (m_player) m_player->Render(commandList);
-
-	// 게임오브젝트 렌더링
-	for (const auto& gameObject : m_gameObjects)
-		gameObject->Render(commandList);
-
-	// 지형 렌더링
-	for (const auto& terrain : m_terrains)
-		terrain->Render(commandList);
-
-	// 파티클 렌더링
-	for (const auto& particle : m_particles)
-		particle->Render(commandList);
-
 	if (m_mirror && m_player)
 	{
 		// 스텐실 버퍼 초기화
@@ -343,6 +330,21 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_C
 		// 진짜 거울 렌더링
 		m_mirror->Render(commandList);
 	}
+
+	// 플레이어 렌더링
+	if (m_player) m_player->Render(commandList);
+
+	// 게임오브젝트 렌더링
+	for (const auto& gameObject : m_gameObjects)
+		gameObject->Render(commandList);
+
+	// 지형 렌더링
+	for (const auto& terrain : m_terrains)
+		terrain->Render(commandList);
+
+	// 파티클 렌더링
+	for (const auto& particle : m_particles)
+		particle->Render(commandList);
 }
 
 void Scene::ReleaseUploadBuffer()
