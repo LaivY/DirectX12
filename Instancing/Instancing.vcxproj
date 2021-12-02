@@ -24,6 +24,7 @@
     <ProjectGuid>{82620d25-e751-4a9d-b2d1-8e4bf687b106}</ProjectGuid>
     <RootNamespace>Instancing</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>02.Instancing</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

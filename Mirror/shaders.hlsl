@@ -10,11 +10,83 @@ VSOutput VSMain(VSInput input)
     output.position = mul(input.position, worldMatrix);
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projMatrix);
-    output.uv = input.uv;
+    output.color = input.color;
     return output;
 }
 
 float4 PSMain(VSOutput input) : SV_TARGET
+{
+    return input.color;
+}
+
+// --------------------------------------
+
+VSTextureOutput VSTextureMain(VSTextureInput input)
+{
+    VSTextureOutput output;
+    output.position = mul(input.position, worldMatrix);
+    output.position = mul(output.position, viewMatrix);
+    output.position = mul(output.position, projMatrix);
+    output.uv = input.uv;
+    return output;
+}
+
+float4 PSTextureMain(VSTextureOutput input) : SV_TARGET
+{
+    return g_texture.Sample(g_sampler, input.uv);
+}
+
+// --------------------------------------
+
+VSBillboardOutput VSBillboardMain(VSBillboardInput input)
+{
+    VSBillboardOutput output;
+    output.position = mul(input.position, worldMatrix);
+    output.size = input.size;
+    return output;
+}
+
+[maxvertexcount(4)]
+void GSBillboardMain(point VSBillboardOutput input[1], uint primID : SV_PrimitiveID, inout TriangleStream<GSBillboardOutput> triStream)
+{
+    // y축으로만 회전하는 빌보드
+    float3 up = float3(0.0f, 1.0f, 0.0f);
+    float3 look = cameraPosition - input[0].position.xyz;
+    look.y = 0.0f;
+    look = normalize(look);
+    float3 right = cross(up, look);
+    
+    float hw = 0.5f * input[0].size.x;
+    float hh = 0.5f * input[0].size.y;
+    
+    float4 position[4] =
+    {
+        float4(input[0].position.xyz + (hw * right) - (hh * up), 1.0f), // LB
+        float4(input[0].position.xyz + (hw * right) + (hh * up), 1.0f), // LT
+        float4(input[0].position.xyz - (hw * right) - (hh * up), 1.0f), // RB
+        float4(input[0].position.xyz - (hw * right) + (hh * up), 1.0f)  // RT
+    };
+    
+    float2 uv[4] =
+    {
+        float2(0.0f, 1.0f),
+        float2(0.0f, 0.0f),
+        float2(1.0f, 1.0f),
+        float2(1.0f, 0.0f)
+    };
+
+    GSBillboardOutput output;
+    [unroll]
+    for (int i = 0; i < 4; ++i)
+    {
+        output.position = mul(position[i], viewMatrix);
+        output.position = mul(output.position, projMatrix);
+        output.uv = uv[i];
+        triStream.Append(output);
+    }
+}
+
+float4 PSBillboardMain(GSBillboardOutput input) : SV_TARGET
 {
     return g_texture.Sample(g_sampler, input.uv);
 }
@@ -60,7 +132,6 @@ float CalculateTessFactor(float3 f3Position)
 PatchTess TerrainTessConstantHS(InputPatch<VSTerrainOutput, 25> patch, uint patchID : SV_PrimitiveID)
 {
     PatchTess output;
-
     output.EdgeTess[0] = CalculateTessFactor(0.5f * (patch[0].position.xyz + patch[4].position.xyz));
     output.EdgeTess[1] = CalculateTessFactor(0.5f * (patch[0].position.xyz + patch[20].position.xyz));
     output.EdgeTess[2] = CalculateTessFactor(0.5f * (patch[4].position.xyz + patch[24].position.xyz));
@@ -70,7 +141,6 @@ PatchTess TerrainTessConstantHS(InputPatch<VSTerrainOutput, 25> patch, uint patc
     for (int i = 0; i < 25; ++i)
         center += patch[i].position.xyz;
     center /= 25.0f;
-    
     output.InsideTess[0] = output.InsideTess[1] = CalculateTessFactor(center);
     return output;
 }

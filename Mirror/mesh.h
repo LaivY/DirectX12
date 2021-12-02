@@ -1,35 +1,40 @@
 #pragma once
 #include "stdafx.h"
 
-class Vertex
+struct Vertex
 {
-public:
 	Vertex(const XMFLOAT3& position) : m_position{ position } { }
-	~Vertex() = default;
 
-protected:
 	XMFLOAT3 m_position;
 };
 
-class TextureVertex : public Vertex
+struct ColorVertex : Vertex
 {
-public:
-	TextureVertex(const XMFLOAT3& position, const XMFLOAT2& uv) : Vertex{ position }, m_uv{ uv } { }
-	~TextureVertex() = default;
+	ColorVertex(const XMFLOAT3& position, const XMFLOAT4& color) : Vertex{ position }, m_color{ color } { }
 
-private:
+	XMFLOAT4 m_color;
+};
+
+struct BillboardVertex : Vertex
+{
+	BillboardVertex(const XMFLOAT3& position, const XMFLOAT2& size) : Vertex{ position }, m_size{ size } { }
+
+	XMFLOAT2 m_size;
+};
+
+struct TextureVertex : Vertex
+{
+	TextureVertex(const XMFLOAT3& position, const XMFLOAT2& uv) : Vertex{ position }, m_uv{ uv } { }
+
 	XMFLOAT2 m_uv;
 };
 
-class Texture2Vertex : public Vertex
+struct Texture2Vertex : Vertex
 {
-public:
-	Texture2Vertex(const XMFLOAT3& position, const XMFLOAT2& uv1, const XMFLOAT2& uv2) : Vertex{ position }, m_uv1{ uv1 }, m_uv2{ uv2 } { };
-	~Texture2Vertex() = default;
+	Texture2Vertex(const XMFLOAT3& position, const XMFLOAT2& uv0, const XMFLOAT2& uv1) : Vertex{ position }, m_uv0{ uv0 }, m_uv1{ uv1 } { };
 
-private:
+	XMFLOAT2 m_uv0;
 	XMFLOAT2 m_uv1;
-	XMFLOAT2 m_uv2;
 };
 
 class Mesh
@@ -38,9 +43,11 @@ public:
 	Mesh() = default;
 	Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
 		void* vertexData, UINT sizePerVertexData, UINT vertexDataCount, void* indexData, UINT indexDataCount, D3D_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const string& fileName, D3D_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	~Mesh() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const;
+	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const D3D12_VERTEX_BUFFER_VIEW& instanceBufferView, UINT count) const;
 	void CreateVertexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, void* data, UINT sizePerData, UINT dataCount);
 	void CreateIndexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, void* data, UINT dataCount);
 	void ReleaseUploadBuffer();
@@ -66,9 +73,23 @@ public:
 	~CubeMesh() = default;
 };
 
+class ReverseCubeMesh : public Mesh
+{
+public:
+	ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height);
+	~ReverseCubeMesh() = default;
+};
+
 class TextureRectMesh : public Mesh
 {
 public:
 	TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height, XMFLOAT3 position);
 	~TextureRectMesh() = default;
+};
+
+class BillboardMesh : public Mesh
+{
+public:
+	BillboardMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size);
+	~BillboardMesh() = default;
 };

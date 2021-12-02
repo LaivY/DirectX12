@@ -24,6 +24,7 @@
     <ProjectGuid>{02b2cd97-5015-451f-8b22-5f365f51f8f1}</ProjectGuid>
     <RootNamespace>Texture</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>04.Texture</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

@@ -24,7 +24,7 @@
     <ProjectGuid>{b8575145-2654-4c74-b0a4-37fd7f5c1899}</ProjectGuid>
     <RootNamespace>DirectX12</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>Framework</ProjectName>
+    <ProjectName>01.Framework</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

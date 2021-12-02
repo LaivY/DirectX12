@@ -36,4 +36,4 @@
 .git/
 x64/
 Debug/
-_Resource/
+Resources/

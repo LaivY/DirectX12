@@ -8,6 +8,50 @@ Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsComman
 	if (indexData) CreateIndexBuffer(device, commandList, indexData, indexDataCount);
 }
 
+Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const string& fileName, D3D_PRIMITIVE_TOPOLOGY primitiveTopology)
+	: m_primitiveTopology{ primitiveTopology }
+{
+	vector<ColorVertex> vertices;
+	vector<UINT> indices;
+
+	ifstream file{ fileName };
+
+	if (!file)
+	{
+		cout << "오류!" << endl;
+	}
+
+	string line;
+	while (getline(file, line))
+	{
+		stringstream ss{ line };
+		vector<string> data{ istream_iterator<string>(ss), {} };
+		if (data.empty()) continue;
+		if (data[0] == "v")
+		{
+			XMFLOAT3 position{
+				strtof(data[1].c_str(), NULL),
+				strtof(data[2].c_str(), NULL),
+				strtof(data[3].c_str(), NULL)
+			};
+			XMFLOAT4 color{
+				static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+				static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+				static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+				1.0f };
+			vertices.emplace_back(position, color);
+		}
+		else if (data[0] == "f")
+		{
+			indices.push_back(atoi(data[1].c_str()) - 1);
+			indices.push_back(atoi(data[2].c_str()) - 1);
+			indices.push_back(atoi(data[3].c_str()) - 1);
+		}
+	}
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(ColorVertex), vertices.size());
+	CreateIndexBuffer(device, commandList, indices.data(), indices.size());
+}
+
 void Mesh::Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const
 {
 	m_commandList->IASetPrimitiveTopology(m_primitiveTopology);
@@ -17,10 +61,20 @@ void Mesh::Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const
 		m_commandList->IASetIndexBuffer(&m_indexBufferView);
 		m_commandList->DrawIndexedInstanced(m_nIndices, 1, 0, 0, 0);
 	}
-	else
+	else m_commandList->DrawInstanced(m_nVertices, 1, 0, 0);
+}
+
+void Mesh::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const D3D12_VERTEX_BUFFER_VIEW& instanceBufferView, UINT count) const
+{
+	commandList->IASetPrimitiveTopology(m_primitiveTopology);
+	commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	commandList->IASetVertexBuffers(1, 1, &instanceBufferView);
+	if (m_nIndices)
 	{
-		m_commandList->DrawInstanced(m_nVertices, 1, 0, 0);
+		commandList->IASetIndexBuffer(&m_indexBufferView);
+		commandList->DrawIndexedInstanced(m_nIndices, count, 0, 0, 0);
 	}
+	else commandList->DrawInstanced(m_nVertices, count, 0, 0);
 }
 
 void Mesh::CreateVertexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, void* data, UINT sizePerData, UINT dataCount)
@@ -123,6 +177,75 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
 }
 
+ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height)
+{
+	m_nIndices = 0;
+	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	// 큐브 가로, 세로, 높이
+	FLOAT sx{ width }, sy{ length }, sz{ height };
+
+	// 앞면
+	vector<TextureVertex> vertices;
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+
+	// 오른쪽면
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+
+	// 왼쪽면
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
+
+	// 뒷면
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
+
+	// 윗면
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+
+	// 밑면
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
+	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+
+	// 큐브 메쉬의 정점 순서를 거꾸로하면 안밖이 바뀜
+	std::reverse(vertices.begin(), vertices.end());
+
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+}
+
 TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height, XMFLOAT3 position)
 {
 	m_nIndices = 0;
@@ -206,4 +329,13 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	}
 
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+}
+
+BillboardMesh::BillboardMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size)
+{
+	m_nIndices = 0;
+	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+
+	BillboardVertex vertex{ position, size };
+	CreateVertexBuffer(device, commandList, &vertex, sizeof(BillboardVertex), 1);
 }

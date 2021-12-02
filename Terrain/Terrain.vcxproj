@@ -24,6 +24,7 @@
     <ProjectGuid>{4cf9eda6-3739-4b89-afd0-ab53bf82e263}</ProjectGuid>
     <RootNamespace>Terrain</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>05.Terrain</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

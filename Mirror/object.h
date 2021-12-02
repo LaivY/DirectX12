@@ -8,7 +8,7 @@
 class Camera;
 
 enum class GameObjectType {
-	DEFAULT, BILLBOARD, BULLET
+	DEFAULT, BULLET
 };
 
 class GameObject
@@ -38,12 +38,13 @@ public:
 	XMFLOAT3 GetRight() const { return m_right; }
 	XMFLOAT3 GetUp() const { return m_up; }
 	XMFLOAT3 GetFront() const { return m_front; }
+	XMFLOAT3 GetRollPitchYaw() const { return XMFLOAT3{ m_roll, m_pitch, m_yaw }; }
+
 	HeightMapTerrain* GetTerrain() const { return m_terrain; }
 	XMFLOAT3 GetNormal() const { return m_normal; }
 	XMFLOAT3 GetLook() const { return m_look; }
 
 protected:
-public:
 	GameObjectType			m_type;				// 게임오브젝트 종류 특정짓기 위한 타입
 	bool					m_isDeleted;		// true일 경우 다음 프레임에 삭제됨
 
@@ -63,20 +64,6 @@ public:
 	shared_ptr<Shader>		m_shader;			// 셰이더
 	shared_ptr<Texture>		m_texture;			// 텍스쳐
 	unique_ptr<TextureInfo>	m_textureInfo;		// 텍스쳐 애니메이션 정보 구조체
-};
-
-class BillboardObject : public GameObject
-{
-public:
-	BillboardObject(const shared_ptr<Camera>& camera);
-	~BillboardObject() = default;
-
-	virtual void Update(FLOAT deltaTime);
-
-	void SetCamera(const shared_ptr<Camera>& camera);
-
-private:
-	shared_ptr<Camera> m_camera; // 기준이 되는 카메라
 };
 
 class Bullet : public GameObject

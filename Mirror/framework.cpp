@@ -1,11 +1,7 @@
 #include "framework.h"
-#include <fstream>
-#include <string>
 
 GameFramework::GameFramework(UINT width, UINT height) :
-	m_width{ width },
-	m_height{ height },
-	m_frameIndex{ 0 },
+	m_width{ width }, m_height{ height }, m_frameIndex{ 0 },
 	m_viewport{ 0.0f, 0.0f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.0f, 1.0f },
 	m_scissorRect{ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) },
 	m_rtvDescriptorSize{ 0 }
@@ -346,7 +342,7 @@ void GameFramework::PopulateCommandList() const
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
 
 	// ·»´õÅ¸°Ù, ±íÀÌ½ºÅÙ½Ç ¹öÆÛ Áö¿ì±â
-	const FLOAT clearColor[]{ 0.0f, 0.2f, 0.4f, 1.0f };
+	const FLOAT clearColor[]{ 1.0f, 1.0f, 1.0f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, NULL);
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 

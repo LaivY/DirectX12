@@ -15,10 +15,40 @@ cbuffer cbCamera : register(b1)
 struct VSInput
 {
     float4 position : POSITION;
-    float2 uv       : TEXCOORD;
+    float4 color    : COLOR;
 };
 
 struct VSOutput
+{
+    float4 position : SV_POSITION;
+    float4 color    : COLOR;
+};
+
+struct VSBillboardInput
+{
+    float4 position : POSITION;
+    float2 size     : SIZE;
+};
+
+struct VSBillboardOutput
+{
+    float4 position : POSITION;
+    float2 size     : SIZE;
+};
+
+struct GSBillboardOutput
+{
+    float4 position : SV_POSITION;
+    float2 uv       : TEXCOORD;
+};
+
+struct VSTextureInput
+{
+    float4 position : POSITION;
+    float2 uv       : TEXCOORD;
+};
+
+struct VSTextureOutput
 {
     float4 position : SV_POSITION;
     float2 uv       : TEXCOORD;

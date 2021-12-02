@@ -34,7 +34,7 @@ int APIENTRY wWinMain(_In_      HINSTANCE hInstance,
 
     // 전역 문자열을 초기화합니다.
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_BLENDING, szWindowClass, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_MIRROR, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
     // 애플리케이션 초기화를 수행합니다:
@@ -43,7 +43,7 @@ int APIENTRY wWinMain(_In_      HINSTANCE hInstance,
         return FALSE;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_BLENDING));
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MIRROR));
 
     MSG msg;
 
@@ -74,13 +74,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     WNDCLASSEXW wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
-
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDC_BLENDING));
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDC_MIRROR));
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = NULL;
@@ -122,6 +121,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_ACTIVATE:
         g_GameFramework.SetIsActive((BOOL)wParam);
         break;
+    case WM_MOUSEWHEEL:
     case WM_LBUTTONDOWN:
         g_GameFramework.OnMouseEvent(hWnd, message, wParam, lParam);
         break;
