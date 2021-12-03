@@ -24,6 +24,7 @@
     <ProjectGuid>{b7b8f104-4347-4651-925c-ff21dd337ae5}</ProjectGuid>
     <RootNamespace>Mirror</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>08.Mirror</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

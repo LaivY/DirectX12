@@ -25,11 +25,9 @@ public:
 	void SetVelocity(const XMFLOAT3& velocity) { m_velocity = velocity; }
 	void SetCamera(const shared_ptr<Camera>& camera) { m_camera = camera; }
 
-	XMFLOAT3 GetVelocity() const { return m_velocity; }
-
 private:
-	XMFLOAT3			m_velocity;		// ¼Óµµ
-	FLOAT				m_maxVelocity;	// ÃÖ´ë¼Óµµ
-	FLOAT				m_friction;		// ¸¶Âû·Â
-	shared_ptr<Camera>	m_camera;		// Ä«¸Ş¶ó
+	XMFLOAT3			m_velocity;		// ì†ë„
+	FLOAT				m_maxVelocity;	// ìµœëŒ€ì†ë„
+	FLOAT				m_friction;		// ë§ˆì°°ë ¥
+	shared_ptr<Camera>	m_camera;		// ì¹´ë©”ë¼
 };

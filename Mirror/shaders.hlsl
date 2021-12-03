@@ -49,7 +49,7 @@ VSBillboardOutput VSBillboardMain(VSBillboardInput input)
 [maxvertexcount(4)]
 void GSBillboardMain(point VSBillboardOutput input[1], uint primID : SV_PrimitiveID, inout TriangleStream<GSBillboardOutput> triStream)
 {
-    // yÃàÀ¸·Î¸¸ È¸ÀüÇÏ´Â ºôº¸µå
+    // yì¶•ìœ¼ë¡œë§Œ íšŒì „í•˜ëŠ” ë¹Œë³´ë“œ
     float3 up = float3(0.0f, 1.0f, 0.0f);
     float3 look = cameraPosition - input[0].position.xyz;
     look.y = 0.0f;
@@ -172,12 +172,12 @@ void BernsteinCoeffcient5x5(float t, out float fBernstein[5])
 
 float3 CubicBezierSum5x5(OutputPatch<HSOutput, 25> patch, float2 uv)
 {
-    // 4Â÷ º£Áö¿¡ °î¼± °è¼ö °è»ê
+    // 4ì°¨ ë² ì§€ì— ê³¡ì„  ê³„ìˆ˜ ê³„ì‚°
     float uB[5], vB[5];
     BernsteinCoeffcient5x5(uv.x, uB);
     BernsteinCoeffcient5x5(uv.y, vB);
     
-    // 4Â÷ º£Áö¿¡ °î¸é °è»ê
+    // 4ì°¨ ë² ì§€ì— ê³¡ë©´ ê³„ì‚°
     float3 sum = float3(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < 5; ++i)
     {
@@ -206,12 +206,12 @@ DSOutput DSTerrainTessMain(PatchTess patchTess, float2 uv : SV_DomainLocation, c
 {
     DSOutput result;
     
-    // À§Ä¡ ÁÂÇ¥(º£Áö¿¡ °î¸é)
+    // ìœ„ì¹˜ ì¢Œí‘œ(ë² ì§€ì— ê³¡ë©´)
     result.position = float4(CubicBezierSum5x5(patch, uv), 1.0f);
     result.position = mul(result.position, viewMatrix);
     result.position = mul(result.position, projMatrix);
     
-    // ÅØ½ºÃÄ ÁÂÇ¥
+    // í…ìŠ¤ì³ ì¢Œí‘œ
     result.uv0 = lerp(lerp(patch[0].uv0, patch[4].uv0, uv.x), lerp(patch[20].uv0, patch[24].uv0, uv.x), uv.y);
     result.uv1 = lerp(lerp(patch[0].uv1, patch[4].uv1, uv.x), lerp(patch[20].uv1, patch[24].uv1, uv.x), uv.y);
     

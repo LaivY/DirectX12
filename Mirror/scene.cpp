@@ -36,10 +36,10 @@ shared_ptr<Texture> ResourceManager::GetTexture(const string& key) const
 
 void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio)
 {
-	// ¸®¼Ò½º¸Å´ÏÀú »ı¼º
+	// ë¦¬ì†ŒìŠ¤ë§¤ë‹ˆì € ìƒì„±
 	m_resourceManager = make_unique<ResourceManager>();
 
-	// ¸Ş½¬ »ı¼º
+	// ë©”ì‰¬ ìƒì„±
 	auto tankMesh{ make_shared<Mesh>(device, commandList, sPATH("Tank.obj")) };
 	auto cubeMesh{ make_shared<CubeMesh>(device, commandList, 0.5f, 0.5f, 0.5f) };
 	auto indoorMesh{ make_shared<ReverseCubeMesh>(device, commandList, 15.0f, 15.0f, 15.0f) };
@@ -48,7 +48,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto smokeMesh{ make_shared<BillboardMesh>(device, commandList, XMFLOAT3{}, XMFLOAT2{ 5.0f, 5.0f }) };
 	auto mirrorMesh{ make_shared<TextureRectMesh>(device, commandList, 15.0f, 0.0f, 15.0f, XMFLOAT3{ 0.0f, 0.0f, 0.1f }) };
 
-	// ¼ÎÀÌ´õ »ı¼º
+	// ì…°ì´ë” ìƒì„±
 	auto colorShader{ make_shared<Shader>(device, rootSignature) };
 	auto textureShader{ make_shared<TextureShader>(device, rootSignature) };
 	auto terrainTessShader{ make_shared<TerrainTessShader>(device, rootSignature) };
@@ -59,7 +59,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto mirrorShader{ make_shared<MirrorShader>(device, rootSignature) };
 	auto mirrorTextureShader{ make_shared<MirrorTextureShader>(device, rootSignature) };
 
-	// ÅØ½ºÃÄ »ı¼º
+	// í…ìŠ¤ì³ ìƒì„±
 	auto rockTexture{ make_shared<Texture>() };
 	rockTexture->LoadTextureFile(device, commandList, 2, wPATH("Rock.dds"));
 	rockTexture->CreateSrvDescriptorHeap(device);
@@ -93,7 +93,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	mirrorTexture->CreateSrvDescriptorHeap(device);
 	mirrorTexture->CreateShaderResourceView(device);
 
-	// ¸®¼Ò½º¸Å´ÏÀú¿¡ ¸®¼Ò½º Ãß°¡
+	// ë¦¬ì†ŒìŠ¤ë§¤ë‹ˆì €ì— ë¦¬ì†ŒìŠ¤ ì¶”ê°€
 	m_resourceManager->AddMesh("TANK", tankMesh);
 	m_resourceManager->AddMesh("CUBE", cubeMesh);
 	m_resourceManager->AddMesh("INDOOR", indoorMesh);
@@ -119,39 +119,39 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddTexture("MIRROR", mirrorTexture);
 	m_resourceManager->AddTexture("INDOOR", indoorTexture);
 
-	// Ä«¸Ş¶ó »ı¼º
+	// ì¹´ë©”ë¼ ìƒì„±
 	auto camera{ make_shared<ThirdPersonCamera>() };
 	SetCamera(camera);
 
-	// Ä«¸Ş¶ó Åõ¿µ Çà·Ä ¼³Á¤
+	// ì¹´ë©”ë¼ íˆ¬ì˜ í–‰ë ¬ ì„¤ì •
 	XMFLOAT4X4 projMatrix;
 	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, aspectRatio, 1.0f, 5000.0f));
 	camera->SetProjMatrix(projMatrix);
 
-	// ÇÃ·¹ÀÌ¾î »ı¼º
+	// í”Œë ˆì´ì–´ ìƒì„±
 	auto player{ make_shared<Player>() };
 	player->SetMesh(m_resourceManager->GetMesh("TANK"));
 	player->SetShader(m_resourceManager->GetShader("COLOR"));
 	SetPlayer(player);
 
-	// Ä«¸Ş¶ó, ÇÃ·¹ÀÌ¾î ¼­·Î ¼³Á¤
+	// ì¹´ë©”ë¼, í”Œë ˆì´ì–´ ì„œë¡œ ì„¤ì •
 	camera->SetPlayer(player);
 	player->SetCamera(camera);
 
-	// ½ºÄ«ÀÌ¹Ú½º »ı¼º
+	// ìŠ¤ì¹´ì´ë°•ìŠ¤ ìƒì„±
 	auto skybox{ make_unique<Skybox>(device, commandList, rootSignature) };
 	skybox->SetCamera(camera);
 	SetSkybox(skybox);
 
-	// ÁöÇü »ı¼º
-	// ÇÑ ºí·Ï ´ç 25°³ÀÇ Á¤Á¡À¸·Î ÀÌ·ç¾îÁ®ÀÖÀ¸¹Ç·Î ºí·Ï ³Êºñ, ±æÀÌ´Â 4ÀÇ ¹è¼ö¿©¾ßÇÑ´Ù.
+	// ì§€í˜• ìƒì„±
+	// í•œ ë¸”ë¡ ë‹¹ 25ê°œì˜ ì •ì ìœ¼ë¡œ ì´ë£¨ì–´ì ¸ìˆìœ¼ë¯€ë¡œ ë¸”ë¡ ë„ˆë¹„, ê¸¸ì´ëŠ” 4ì˜ ë°°ìˆ˜ì—¬ì•¼í•œë‹¤.
 	XMFLOAT3 terrainScale{ 1.0f, 0.2f, 1.0f };
 	auto terrain{ make_unique<HeightMapTerrain>(device, commandList, wPATH("HeightMap.raw"), m_resourceManager->GetShader("TERRAINTESS"), 
 												m_resourceManager->GetTexture("TERRAIN"), 257, 257, 12, 12, terrainScale) };
 	terrain->SetPosition({ -257.0f / 2.0f, 0.0f, -257.0f / 2.0f });
 	m_terrains.push_back(move(terrain));
 
-	// ºôº¸µå »ç°¢Çü »ı¼º
+	// ë¹Œë³´ë“œ ì‚¬ê°í˜• ìƒì„±
 	auto billboardObject{ make_unique<GameObject>() };
 	billboardObject->SetPosition(XMFLOAT3{ 0.0f, 500.0f, 0.0f });
 	billboardObject->SetMesh(m_resourceManager->GetMesh("BILLBOARD"));
@@ -159,7 +159,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	billboardObject->SetTexture(m_resourceManager->GetTexture("ROCK"));
 	m_gameObjects.push_back(move(billboardObject));
 
-	// ½Ç³» »ı¼º
+	// ì‹¤ë‚´ ìƒì„±
 	auto indoor{ make_unique<GameObject>() };
 	indoor->SetPosition(XMFLOAT3{ 0.0f, 500.0f, 0.0f });
 	indoor->SetMesh(m_resourceManager->GetMesh("INDOOR"));
@@ -167,7 +167,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	indoor->SetTexture(m_resourceManager->GetTexture("INDOOR"));
 	m_gameObjects.push_back(move(indoor));
 
-	// °Å¿ï »ı¼º
+	// ê±°ìš¸ ìƒì„±
 	auto mirror{ make_unique<GameObject>() };
 	mirror->SetPosition(XMFLOAT3{ 0.0f, 500.0f -7.5f, 14.5f });
 	mirror->SetMesh(m_resourceManager->GetMesh("MIRROR"));
@@ -178,20 +178,20 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 
 void Scene::OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime)
 {
-	// È­¸é °¡¿îµ¥ ÁÂÇ¥ °è»ê
+	// í™”ë©´ ê°€ìš´ë° ì¢Œí‘œ ê³„ì‚°
 	RECT rect; GetWindowRect(hWnd, &rect);
 	POINT oldMousePosition{ rect.left + width / 2, rect.top + height / 2 };
 
-	// ¿òÁ÷ÀÎ ¸¶¿ì½º ÁÂÇ¥
+	// ì›€ì§ì¸ ë§ˆìš°ìŠ¤ ì¢Œí‘œ
 	POINT newMousePosition; GetCursorPos(&newMousePosition);
 
-	// ¿òÁ÷ÀÎ Á¤µµ¿¡ ºñ·ÊÇØ¼­ È¸Àü
+	// ì›€ì§ì¸ ì •ë„ì— ë¹„ë¡€í•´ì„œ íšŒì „
 	int dx = newMousePosition.x - oldMousePosition.x;
 	int dy = newMousePosition.y - oldMousePosition.y;
 	float sensitive{ 2.5f };
 	if (m_player) m_player->Rotate(0.0f, dy * sensitive * deltaTime, dx * sensitive * deltaTime);
 
-	// ¸¶¿ì½º¸¦ È­¸é °¡¿îµ¥·Î ÀÌµ¿
+	// ë§ˆìš°ìŠ¤ë¥¼ í™”ë©´ ê°€ìš´ë°ë¡œ ì´ë™
 	SetCursorPos(oldMousePosition.x, oldMousePosition.y);
 }
 
@@ -223,7 +223,7 @@ void Scene::OnKeyboardEvent(FLOAT deltaTime)
 	}
 	if (GetAsyncKeyState('A') & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetRight(), deltaTime * -10.0f));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetLocalXAxis(), deltaTime * -10.0f));
 	}
 	if (GetAsyncKeyState('S') & 0x8000)
 	{
@@ -231,7 +231,7 @@ void Scene::OnKeyboardEvent(FLOAT deltaTime)
 	}
 	if (GetAsyncKeyState('D') & 0x8000)
 	{
-		m_player->AddVelocity(Vector3::Mul(m_player->GetRight(), deltaTime * 10.0f));
+		m_player->AddVelocity(Vector3::Mul(m_player->GetLocalXAxis(), deltaTime * 10.0f));
 	}
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 	{
@@ -245,7 +245,7 @@ void Scene::OnKeyboardEvent(FLOAT deltaTime)
 
 void Scene::OnKeyboardEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	// ÁöÇü ¿ÍÀÌ¾îÇÁ·¹ÀÓ ON, OFF
+	// ì§€í˜• ì™€ì´ì–´í”„ë ˆì„ ON, OFF
 	static bool drawAsWireframe{ false };
 	if (wParam == 'q' || wParam == 'Q')
 	{
@@ -257,10 +257,10 @@ void Scene::OnKeyboardEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 				terrain->SetShader(m_resourceManager->GetShader("TERRAINTESS"));
 	}
 
-	// ½Ç³»·Î ÀÌµ¿
+	// ì‹¤ë‚´ë¡œ ì´ë™
 	else if (wParam == 'i' || wParam == 'I')
 	{
-		// right up look ÃÊ±âÈ­
+		// right up look ì´ˆê¸°í™”
 		XMFLOAT3 rpy{ m_player->GetRollPitchYaw() };
 		m_player->Rotate(-rpy.x, -rpy.y, -rpy.z);
 		
@@ -272,13 +272,13 @@ void Scene::OnKeyboardEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		m_player->SetPosition({ 0.0f, 500.0f - 15.0f, 0.0f });
 	}
 
-	// ÁöÇü À§·Î ÀÌµ¿
+	// ì§€í˜• ìœ„ë¡œ ì´ë™
 	else if (wParam == 'e' || wParam == 'E')
 	{
 		m_player->SetPosition({ 0.0f, 0.0f, 0.0f });
 	}
 
-	// Á¾·á
+	// ì¢…ë£Œ
 	else if (wParam == VK_ESCAPE)
 	{
 		exit(0);
@@ -310,7 +310,7 @@ void Scene::RemoveDeletedObjects()
 	auto pred = [&](unique_ptr<GameObject>& object) {
 		if (object->isDeleted() && object->GetType() == GameObjectType::BULLET)
 		{
-			// Æø¹ß ÀÌÆåÆ® »ı¼º
+			// í­ë°œ ì´í™íŠ¸ ìƒì„±
 			auto textureInfo{ make_unique<TextureInfo>() };
 			textureInfo->frameInterver *= 1.5f;
 			textureInfo->isFrameRepeat = false;
@@ -323,7 +323,7 @@ void Scene::RemoveDeletedObjects()
 			explosion->SetTextureInfo(textureInfo);
 			willBeAdded.push_back(move(explosion));
 
-			// ¿¬±â ÀÌÆåÆ® »ı¼º
+			// ì—°ê¸° ì´í™íŠ¸ ìƒì„±
 			textureInfo = make_unique<TextureInfo>();
 			textureInfo->frameInterver *= 3.0f;
 			textureInfo->isFrameRepeat = false;
@@ -341,7 +341,7 @@ void Scene::RemoveDeletedObjects()
 	m_gameObjects.erase(remove_if(m_gameObjects.begin(), m_gameObjects.end(), pred), m_gameObjects.end());
 	m_particles.erase(remove_if(m_particles.begin(), m_particles.end(), pred), m_particles.end());
 
-	// ÃÑ¾Ë »èÁ¦µÉ ¶§ »ı±â´Â ÀÌÆåÆ®´Â ÆÄÆ¼Å¬ °´Ã¼¿¡ Ãß°¡ÇÑ´Ù.
+	// ì´ì•Œ ì‚­ì œë  ë•Œ ìƒê¸°ëŠ” ì´í™íŠ¸ëŠ” íŒŒí‹°í´ ê°ì²´ì— ì¶”ê°€í•œë‹¤.
 	for (auto& object : willBeAdded)
 		m_particles.push_back(move(object));
 }
@@ -355,7 +355,7 @@ void Scene::UpdateObjectsTerrain()
 		float width{ terrain->GetWidth() * scale.x };
 		float length{ terrain->GetLength() * scale.z };
 
-		// ÇÏ´Ã¿¡¼­ +zÃàÀ» ¸Ó¸®ÂÊÀ¸·Î µÎ°í ÁöÇüÀ» ºÃÀ» ¶§¸¦ ±âÁØ
+		// í•˜ëŠ˜ì—ì„œ +zì¶•ì„ ë¨¸ë¦¬ìª½ìœ¼ë¡œ ë‘ê³  ì§€í˜•ì„ ë´¤ì„ ë•Œë¥¼ ê¸°ì¤€
 		float left{ tPos.x };
 		float right{ tPos.x + width };
 		float top{ tPos.z + length };
@@ -389,27 +389,27 @@ void Scene::UpdateObjectsTerrain()
 
 void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
-	// Ä«¸Ş¶ó ¼ÎÀÌ´õ º¯¼ö(ºä, Åõ¿µ º¯È¯ Çà·Ä) ÃÖ½ÅÈ­
+	// ì¹´ë©”ë¼ ì…°ì´ë” ë³€ìˆ˜(ë·°, íˆ¬ì˜ ë³€í™˜ í–‰ë ¬) ìµœì‹ í™”
 	if (m_camera) m_camera->UpdateShaderVariable(commandList);
 
-	// ¹İ»ç»ó, °Å¿ï ·»´õ¸µ
+	// ë°˜ì‚¬ìƒ, ê±°ìš¸ ë Œë”ë§
 	if (m_mirror && m_player)
 	{
-		// ½ºÅÙ½Ç ¹öÆÛ ÃÊ±âÈ­
+		// ìŠ¤í…ì‹¤ ë²„í¼ ì´ˆê¸°í™”
 		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 
-		// ½ºÅÙ½Ç ÂüÁ¶°ª ¼³Á¤
+		// ìŠ¤í…ì‹¤ ì°¸ì¡°ê°’ ì„¤ì •
 		commandList->OMSetStencilRef(1);
 
-		// °Å¿ï À§Ä¡¸¦ ½ºÅÙ½Ç ¹öÆÛ¿¡ Ç¥½Ã
+		// ê±°ìš¸ ìœ„ì¹˜ë¥¼ ìŠ¤í…ì‹¤ ë²„í¼ì— í‘œì‹œ
 		m_mirror->Render(commandList, m_resourceManager->GetShader("STENCIL"));
 
-		// ¹İ»ç Çà·Ä
+		// ë°˜ì‚¬ í–‰ë ¬
 		XMVECTOR mirrorPlane{ XMVectorSet(0.0f, 0.0f, -1.0f, m_mirror->GetPosition().z) };
 		XMFLOAT4X4 reflectMatrix;
 		XMStoreFloat4x4(&reflectMatrix, XMMatrixReflect(mirrorPlane));
 
-		// ½Ç³» ¹İ»ç»ó ·»´õ¸µ
+		// ì‹¤ë‚´ ë°˜ì‚¬ìƒ ë Œë”ë§
 		for (const auto& object : m_gameObjects)
 		{
 			XMFLOAT4X4 temp{ object->GetWorldMatrix() };
@@ -418,34 +418,34 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_C
 			object->SetWorldMatrix(temp);
 		}
 
-		// ÇÃ·¹ÀÌ¾î ¹İ»ç»ó ·»´õ¸µ
+		// í”Œë ˆì´ì–´ ë°˜ì‚¬ìƒ ë Œë”ë§
 		XMFLOAT4X4 originWorldMatrix{ m_player->GetWorldMatrix() };
 		m_player->SetWorldMatrix(Matrix::Mul(originWorldMatrix, reflectMatrix));
 		m_player->Render(commandList, m_resourceManager->GetShader("MIRROR"));
 		m_player->SetWorldMatrix(originWorldMatrix);
 
-		// °Å¿ï ·»´õ¸µ
+		// ê±°ìš¸ ë Œë”ë§
 		m_mirror->Render(commandList);
 
-		// ½ºÅÙ½Ç ÂüÁ¶°ª ÃÊ±âÈ­
+		// ìŠ¤í…ì‹¤ ì°¸ì¡°ê°’ ì´ˆê¸°í™”
 		commandList->OMSetStencilRef(0);
 	}
 
-	// ½ºÄ«ÀÌ¹Ú½º ·»´õ¸µ
+	// ìŠ¤ì¹´ì´ë°•ìŠ¤ ë Œë”ë§
 	if (m_skybox) m_skybox->Render(commandList);
 
-	// ÇÃ·¹ÀÌ¾î ·»´õ¸µ
+	// í”Œë ˆì´ì–´ ë Œë”ë§
 	if (m_player) m_player->Render(commandList);
 
-	// °ÔÀÓ¿ÀºêÁ§Æ® ·»´õ¸µ
+	// ê²Œì„ì˜¤ë¸Œì íŠ¸ ë Œë”ë§
 	for (const auto& gameObject : m_gameObjects)
 		gameObject->Render(commandList);
 
-	// ÁöÇü ·»´õ¸µ
+	// ì§€í˜• ë Œë”ë§
 	for (const auto& terrain : m_terrains)
 		terrain->Render(commandList);
 
-	// ÆÄÆ¼Å¬ ·»´õ¸µ
+	// íŒŒí‹°í´ ë Œë”ë§
 	for (const auto& particle : m_particles)
 		particle->Render(commandList);
 }
@@ -491,11 +491,11 @@ HeightMapTerrain* Scene::GetTerrain(FLOAT x, FLOAT z) const
 		float width{ t->GetWidth() * scale.x };
 		float length{ t->GetLength() * scale.z };
 
-		// ÁöÇüÀ» ÇÏ´Ã¿¡¼­ ¹ØÀ¸·Î ºÃÀ» ¶§
-		float left{ pos.x };			// ¿ŞÂÊ
-		float right{ pos.x + width };	// ¿À¸¥ÂÊ
-		float top{ pos.z + length };	// À§
-		float bot{ pos.z };				// ¹Ø
+		// ì§€í˜•ì„ í•˜ëŠ˜ì—ì„œ ë°‘ìœ¼ë¡œ ë´¤ì„ ë•Œ
+		float left{ pos.x };			// ì™¼ìª½
+		float right{ pos.x + width };	// ì˜¤ë¥¸ìª½
+		float top{ pos.z + length };	// ìœ„
+		float bot{ pos.z };				// ë°‘
 
 		if ((left <= x && x <= right) && (bot <= z && z <= top))
 			return true;

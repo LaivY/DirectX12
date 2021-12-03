@@ -59,14 +59,14 @@ public:
 	HeightMapTerrain* GetTerrain(FLOAT x, FLOAT z) const;
 
 private:
-	unique_ptr<ResourceManager>				m_resourceManager;	// ¸ğµç ¸Ş½¬, ¼ÎÀÌ´õ, ÅØ½ºÃÄµé
+	unique_ptr<ResourceManager>				m_resourceManager;	// ëª¨ë“  ë©”ì‰¬, ì…°ì´ë”, í…ìŠ¤ì³ë“¤
 
-	vector<unique_ptr<GameObject>>			m_gameObjects;		// °ÔÀÓ¿ÀºêÁ§Æ®
-	vector<unique_ptr<GameObject>>			m_particles;			// ¹İÅõ¸í °´Ã¼
-	vector<unique_ptr<HeightMapTerrain>>	m_terrains;			// ÁöÇü
-	unique_ptr<GameObject>					m_mirror;			// °Å¿ï
-	unique_ptr<Skybox>						m_skybox;			// ½ºÄ«ÀÌ¹Ú½º
+	vector<unique_ptr<GameObject>>			m_gameObjects;		// ê²Œì„ì˜¤ë¸Œì íŠ¸
+	vector<unique_ptr<GameObject>>			m_particles;			// ë°˜íˆ¬ëª… ê°ì²´
+	vector<unique_ptr<HeightMapTerrain>>	m_terrains;			// ì§€í˜•
+	unique_ptr<GameObject>					m_mirror;			// ê±°ìš¸
+	unique_ptr<Skybox>						m_skybox;			// ìŠ¤ì¹´ì´ë°•ìŠ¤
 
-	shared_ptr<Player>						m_player;			// ÇÃ·¹ÀÌ¾î
-	shared_ptr<Camera>						m_camera;			// Ä«¸Ş¶ó
+	shared_ptr<Player>						m_player;			// í”Œë ˆì´ì–´
+	shared_ptr<Camera>						m_camera;			// ì¹´ë©”ë¼
 };

@@ -4,13 +4,13 @@ void Texture::LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<I
 {
 	ComPtr<ID3D12Resource> textureBuffer, textureUploadBuffer;
 
-	// DDS ÅØ½ºÃÄ ·Îµù
+	// DDS í…ìŠ¤ì³ ë¡œë”©
 	unique_ptr<uint8_t[]> ddsData;
 	vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DDS_ALPHA_MODE ddsAlphaMode{ DDS_ALPHA_MODE_UNKNOWN };
 	DX::ThrowIfFailed(LoadDDSTextureFromFileEx(device.Get(), fileName.c_str(), 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT, &textureBuffer, ddsData, subresources, &ddsAlphaMode));
 
-	// µğÆúÆ® ÈüÀ¸·Î µ¥ÀÌÅÍ º¹»çÇÏ±â À§ÇÑ ¾÷·Îµå Èü »ı¼º
+	// ë””í´íŠ¸ í™ìœ¼ë¡œ ë°ì´í„° ë³µì‚¬í•˜ê¸° ìœ„í•œ ì—…ë¡œë“œ í™ ìƒì„±
 	UINT nSubresources{ (UINT)subresources.size() };
 	UINT64 nBytes{ GetRequiredIntermediateSize(textureBuffer.Get(), 0, nSubresources) };
 	DX::ThrowIfFailed(device->CreateCommittedResource(
@@ -22,13 +22,13 @@ void Texture::LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<I
 		IID_PPV_ARGS(&textureUploadBuffer)
 	));
 
-	// subresources¿¡ ÀÖ´Â µ¥ÀÌÅÍ¸¦ textureBuffer·Î º¹»ç
+	// subresourcesì— ìˆëŠ” ë°ì´í„°ë¥¼ textureBufferë¡œ ë³µì‚¬
 	UpdateSubresources(commandList.Get(), textureBuffer.Get(), textureUploadBuffer.Get(), 0, 0, nSubresources, subresources.data());
 
-	// ¸®¼Ò½º º£¸®¾î ¼³Á¤
+	// ë¦¬ì†ŒìŠ¤ ë² ë¦¬ì–´ ì„¤ì •
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 
-	// ÀúÀå
+	// ì €ì¥
 	m_textures.push_back(make_pair(textureBuffer, rootParameterIndex));
 	m_textureUploadBuffers.push_back(textureUploadBuffer);
 }
@@ -38,7 +38,7 @@ void Texture::CreateSrvDescriptorHeap(const ComPtr<ID3D12Device>& device)
 	if (m_srvHeap) m_srvHeap.Reset();
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
-	srvHeapDesc.NumDescriptors = m_textures.size(); // SRV °³¼ö
+	srvHeapDesc.NumDescriptors = m_textures.size(); // SRV ê°œìˆ˜
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap));

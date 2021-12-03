@@ -18,7 +18,7 @@ Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsComman
 
 	if (!file)
 	{
-		cout << "ø¿∑˘!" << endl;
+		cout << "Ïò§Î•ò!" << endl;
 	}
 
 	string line;
@@ -79,13 +79,13 @@ void Mesh::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const D3
 
 void Mesh::CreateVertexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, void* data, UINT sizePerData, UINT dataCount)
 {
-	// ¡§¡° πˆ∆€ ∞πºˆ ¿˙¿Â
+	// Ï†ïÏ†ê Î≤ÑÌçº Í∞ØÏàò Ï†ÄÏû•
 	m_nVertices = dataCount;
 
-	// ¡§¡° πˆ∆€ ª˝º∫
+	// Ï†ïÏ†ê Î≤ÑÌçº ÏÉùÏÑ±
 	m_vertexBuffer = CreateBufferResource(device, commandList, data, sizePerData, dataCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_vertexUploadBuffer);
 
-	// ¡§¡° πˆ∆€ ∫‰ º≥¡§
+	// Ï†ïÏ†ê Î≤ÑÌçº Î∑∞ ÏÑ§Ï†ï
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.SizeInBytes = sizePerData * dataCount;
 	m_vertexBufferView.StrideInBytes = sizePerData;
@@ -93,13 +93,13 @@ void Mesh::CreateVertexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<I
 
 void Mesh::CreateIndexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, void* data, UINT dataCount)
 {
-	// ¿Œµ¶Ω∫ πˆ∆€ ∞πºˆ ¿˙¿Â
+	// Ïù∏Îç±Ïä§ Î≤ÑÌçº Í∞ØÏàò Ï†ÄÏû•
 	m_nIndices = dataCount;
 
-	// ¿Œµ¶Ω∫ πˆ∆€ ª˝º∫
+	// Ïù∏Îç±Ïä§ Î≤ÑÌçº ÏÉùÏÑ±
 	m_indexBuffer = CreateBufferResource(device, commandList, data, sizeof(UINT), dataCount, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_indexUploadBuffer);
 
-	// ¿Œµ¶Ω∫ πˆ∆€ ∫‰ º≥¡§
+	// Ïù∏Îç±Ïä§ Î≤ÑÌçº Î∑∞ ÏÑ§Ï†ï
 	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_indexBufferView.SizeInBytes = sizeof(UINT) * dataCount;
@@ -116,10 +116,10 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_nIndices = 0;
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	// ≈•∫Í ∞°∑Œ, ºº∑Œ, ≥Ù¿Ã
+	// ÌÅêÎ∏å Í∞ÄÎ°ú, ÏÑ∏Î°ú, ÎÜíÏù¥
 	FLOAT sx{ width }, sy{ length }, sz{ height };
 
-	// æ’∏È
+	// ÏïûÎ©¥
 	vector<TextureVertex> vertices;
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
@@ -129,7 +129,7 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// ø¿∏•¬ ∏È
+	// Ïò§Î•∏Ï™ΩÎ©¥
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -138,7 +138,7 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// øﬁ¬ ∏È
+	// ÏôºÏ™ΩÎ©¥
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -147,7 +147,7 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// µﬁ∏È
+	// Îí∑Î©¥
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -156,7 +156,7 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// ¿≠∏È
+	// ÏúóÎ©¥
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -165,7 +165,7 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// πÿ∏È
+	// Î∞ëÎ©¥
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -182,10 +182,10 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	m_nIndices = 0;
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	// ≈•∫Í ∞°∑Œ, ºº∑Œ, ≥Ù¿Ã
+	// ÌÅêÎ∏å Í∞ÄÎ°ú, ÏÑ∏Î°ú, ÎÜíÏù¥
 	FLOAT sx{ width }, sy{ length }, sz{ height };
 
-	// æ’∏È
+	// ÏïûÎ©¥
 	vector<TextureVertex> vertices;
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
@@ -195,7 +195,7 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// ø¿∏•¬ ∏È
+	// Ïò§Î•∏Ï™ΩÎ©¥
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -204,7 +204,7 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// øﬁ¬ ∏È
+	// ÏôºÏ™ΩÎ©¥
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -213,7 +213,7 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// µﬁ∏È
+	// Îí∑Î©¥
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -222,7 +222,7 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// ¿≠∏È
+	// ÏúóÎ©¥
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -231,7 +231,7 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// πÿ∏È
+	// Î∞ëÎ©¥
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
@@ -240,7 +240,7 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
 	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
 
-	// ≈•∫Í ∏ﬁΩ¨¿« ¡§¡° º¯º≠∏¶ ∞≈≤Ÿ∑Œ«œ∏È æ»π€¿Ã πŸ≤Ò
+	// ÌÅêÎ∏å Î©îÏâ¨Ïùò Ï†ïÏ†ê ÏàúÏÑúÎ•º Í±∞Íæ∏Î°úÌïòÎ©¥ ÏïàÎ∞ñÏù¥ Î∞îÎÄú
 	std::reverse(vertices.begin(), vertices.end());
 
 	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
@@ -256,8 +256,8 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	
 	if (width == 0.0f)
 	{
-		// ∫–±‚«œ¥¬ ¿Ã¿Ø¥¬ ¿ßƒ°ø° µ˚∂Û ªÔ∞¢«¸ øÕ¿Œµ˘ º¯º≠∞° ¥ﬁ∂Û¡ˆ±‚ ∂ßπÆø°
-		// YZ∆Ú∏È
+		// Î∂ÑÍ∏∞ÌïòÎäî Ïù¥Ïú†Îäî ÏúÑÏπòÏóê Îî∞Îùº ÏÇºÍ∞ÅÌòï ÏôÄÏù∏Îî© ÏàúÏÑúÍ∞Ä Îã¨ÎùºÏßÄÍ∏∞ ÎïåÎ¨∏Ïóê
+		// YZÌèâÎ©¥
 		if (position.x > 0.0f)
 		{
 			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
@@ -281,7 +281,7 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	}
 	else if (length == 0.0f)
 	{
-		// XY∆Ú∏È
+		// XYÌèâÎ©¥
 		if (position.z > 0.0f)
 		{
 			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
@@ -305,7 +305,7 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	}
 	else if (height == 0.0f)
 	{
-		// XZ∆Ú∏È
+		// XZÌèâÎ©¥
 		if (position.y > 0.0f)
 		{
 			vertices.emplace_back(XMFLOAT3{ -hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0

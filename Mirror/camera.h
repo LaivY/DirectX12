@@ -15,41 +15,35 @@ public:
 	void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
-	void UpdateLocalAxis();
 
 	void SetViewMatrix(const XMFLOAT4X4& viewMatrix) { m_viewMatrix = viewMatrix; }
 	void SetProjMatrix(const XMFLOAT4X4& projMatrix) { m_projMatrix = projMatrix; }
-	void SetEye(const XMFLOAT3& eye) { m_eye = eye; UpdateLocalAxis(); }
-	void SetAt(const XMFLOAT3& at) { m_look = at;	UpdateLocalAxis(); }
-	void SetUp(const XMFLOAT3& up) { m_up = up;		UpdateLocalAxis(); }
+	void SetEye(const XMFLOAT3& eye) { m_eye = eye; }
+	void SetAt(const XMFLOAT3& at) { m_at = at; }
+	void SetUp(const XMFLOAT3& up) { m_up = up; }
 	void SetPlayer(const shared_ptr<Player>& player);
 	void SetTerrain(HeightMapTerrain* terrain) { m_terrain = terrain; }
 
 	XMFLOAT4X4 GetViewMatrix() const { return m_viewMatrix; }
 	XMFLOAT4X4 GetProjMatrix() const { return m_projMatrix; }
 	XMFLOAT3 GetEye() const { return m_eye; }
-	XMFLOAT3 GetAt() const { return m_look; }
+	XMFLOAT3 GetAt() const { return m_at; }
 	XMFLOAT3 GetUp() const { return m_up; }
-	shared_ptr<Player> GetPlayer() const { return m_player; }
 
 protected:
-	XMFLOAT4X4			m_viewMatrix;	// ºäº¯È¯ Çà·Ä
-	XMFLOAT4X4			m_projMatrix;	// Åõ¿µº¯È¯ Çà·Ä
+	XMFLOAT4X4			m_viewMatrix;	// ë·°ë³€í™˜ í–‰ë ¬
+	XMFLOAT4X4			m_projMatrix;	// íˆ¬ì˜ë³€í™˜ í–‰ë ¬
 
-	XMFLOAT3			m_eye;			// Ä«¸Ş¶ó À§Ä¡
-	XMFLOAT3			m_look;			// Ä«¸Ş¶ó°¡ ¹Ù¶óº¸´Â ¹æÇâ
-	XMFLOAT3			m_up;			// Ä«¸Ş¶ó Upº¤ÅÍ
+	XMFLOAT3			m_eye;			// ì¹´ë©”ë¼ ìœ„ì¹˜
+	XMFLOAT3			m_at;			// ì¹´ë©”ë¼ê°€ ë°”ë¼ë³´ëŠ” ë°©í–¥
+	XMFLOAT3			m_up;			// ì¹´ë©”ë¼ Upë²¡í„°
 
-	XMFLOAT3			m_u;			// ·ÎÄÃ xÃà
-	XMFLOAT3			m_v;			// ·ÎÄÃ yÃà
-	XMFLOAT3			m_n;			// ·ÎÄÃ zÃà
+	FLOAT				m_roll;			// xì¶• íšŒì „ê°
+	FLOAT				m_pitch;		// yì¶• íšŒì „ê°
+	FLOAT				m_yaw;			// zì¶• íšŒì „ê°
 
-	FLOAT				m_roll;			// xÃà È¸Àü°¢
-	FLOAT				m_pitch;		// yÃà È¸Àü°¢
-	FLOAT				m_yaw;			// zÃà È¸Àü°¢
-
-	shared_ptr<Player>	m_player;		// ÇÃ·¹ÀÌ¾î
-	HeightMapTerrain*	m_terrain;		// Ä«¸Ş¶ó°¡ À§Ä¡ÇØÀÖ´Â ÁöÇü
+	shared_ptr<Player>	m_player;		// í”Œë ˆì´ì–´
+	HeightMapTerrain*	m_terrain;		// ì¹´ë©”ë¼ê°€ ìœ„ì¹˜í•´ìˆëŠ” ì§€í˜•
 };
 
 class ThirdPersonCamera : public Camera
@@ -69,7 +63,7 @@ public:
 	void SetDelay(FLOAT delay) { m_delay = delay; }
 
 private:
-	XMFLOAT3	m_offset;	// ÇÃ·¹ÀÌ¾î·ÎºÎÅÍ ¶³¾îÁ®ÀÖ´Â À§Ä¡
-	FLOAT		m_distance;	// ¿ÀÇÁ¼Â ¹æÇâÀ¸·Î ¶³¾îÁø °Å¸®
-	FLOAT		m_delay;	// ¿òÁ÷ÀÓ µô·¹ÀÌ (0.0 ~ 1.0)
+	XMFLOAT3	m_offset;	// í”Œë ˆì´ì–´ë¡œë¶€í„° ë–¨ì–´ì ¸ìˆëŠ” ìœ„ì¹˜
+	FLOAT		m_distance;	// ì˜¤í”„ì…‹ ë°©í–¥ìœ¼ë¡œ ë–¨ì–´ì§„ ê±°ë¦¬
+	FLOAT		m_delay;	// ì›€ì§ì„ ë”œë ˆì´ (0.0 ~ 1.0)
 };

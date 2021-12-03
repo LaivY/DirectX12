@@ -1,9 +1,8 @@
 #include "camera.h"
 
-Camera::Camera() :
-	m_eye{ 0.0f, 0.0f, 0.0f }, m_look{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
-	m_u{ 1.0f, 0.0f, 0.0f }, m_v{ 0.0f, 1.0f, 0.0f }, m_n{ 0.0f, 0.0f, 1.0f },
-	m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }
+Camera::Camera() : m_eye{ 0.0f, 0.0f, 0.0f }, m_at{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
+				   //m_u{ 1.0f, 0.0f, 0.0f }, m_v{ 0.0f, 1.0f, 0.0f }, m_n{ 0.0f, 0.0f, 1.0f },
+				   m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_terrain{ nullptr }
 {
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&m_projMatrix, XMMatrixIdentity());
@@ -11,34 +10,18 @@ Camera::Camera() :
 
 void Camera::Update(FLOAT deltaTime)
 {
-	// Ä«¸Þ¶ó°¡ ÁöÇü ¹ØÀ¸·Î ³»·Á°¡Áö ¾Êµµ·ÏÇÔ
-	if (m_terrain)
-	{
-		XMFLOAT3 pos{ GetEye() };
-		FLOAT height{ m_terrain->GetHeight(pos.x, pos.z) };
-		if (pos.y < height + 0.5f)
-			SetEye(XMFLOAT3{ pos.x, height + 0.5f, pos.z });
-	}
-
-	// Ä«¸Þ¶ó ºä º¯È¯ Çà·Ä ÃÖ½ÅÈ­
-	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_look)), XMLoadFloat3(&m_up)));
+	// ì¹´ë©”ë¼ ë·° ë³€í™˜ í–‰ë ¬ ìµœì‹ í™”
+	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_at)), XMLoadFloat3(&m_up)));
 }
 
 void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
-	// DIRECTX´Â Çà¿ì¼±(row-major), HLSL´Â ¿­¿ì¼±(column-major)
-	// Çà·ÄÀÌ ¼ÎÀÌ´õ·Î ³Ñ¾î°¥ ¶§ ÀÚµ¿À¸·Î ÀüÄ¡ Çà·Ä·Î º¯È¯µÈ´Ù.
-	// ±×·¡¼­ ¼ÎÀÌ´õ¿¡ ÀüÄ¡ Çà·ÄÀ» ³Ñ°ÜÁÖ¸é DIRECTXÀÇ °ö¼À ¼ø¼­¿Í µ¿ÀÏÇÏ°Ô °è»êÇÒ ¼ö ÀÖ´Ù.
+	// DIRECTXëŠ” í–‰ìš°ì„ (row-major), HLSLëŠ” ì—´ìš°ì„ (column-major)
+	// í–‰ë ¬ì´ ì…°ì´ë”ë¡œ ë„˜ì–´ê°ˆ ë•Œ ìžë™ìœ¼ë¡œ ì „ì¹˜ í–‰ë ¬ë¡œ ë³€í™˜ëœë‹¤.
+	// ê·¸ëž˜ì„œ ì…°ì´ë”ì— ì „ì¹˜ í–‰ë ¬ì„ ë„˜ê²¨ì£¼ë©´ DIRECTXì˜ ê³±ì…ˆ ìˆœì„œì™€ ë™ì¼í•˜ê²Œ ê³„ì‚°í•  ìˆ˜ ìžˆë‹¤.
 	commandList->SetGraphicsRoot32BitConstants(1, 16, &Matrix::Transpose(m_viewMatrix), 0);
 	commandList->SetGraphicsRoot32BitConstants(1, 16, &Matrix::Transpose(m_projMatrix), 16);
 	commandList->SetGraphicsRoot32BitConstants(1, 3, &GetEye(), 32);
-}
-
-void Camera::UpdateLocalAxis()
-{
-	m_n = Vector3::Normalize(m_look);					 // ·ÎÄÃ zÃà
-	m_u = Vector3::Normalize(Vector3::Cross(m_up, m_n)); // ·ÎÄÃ xÃà
-	m_v = Vector3::Cross(m_n, m_u);						 // ·ÎÄÃ yÃà
 }
 
 void Camera::Move(const XMFLOAT3& shift)
@@ -49,37 +32,41 @@ void Camera::Move(const XMFLOAT3& shift)
 void Camera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
 	XMMATRIX rotate{ XMMatrixIdentity() };
+	XMVECTOR worldXAxis{ XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f) };
+	XMVECTOR worldYAxis{ XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f) };
+	XMVECTOR worldZAxis{ XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f) };
+
 	if (roll != 0.0f)
 	{
-		// zÃà(roll)À¸·Î´Â È¸ÀüÇÒ ¼ö ¾øÀ½
+		rotate *= XMMatrixRotationAxis(worldZAxis, XMConvertToRadians(roll));
+		m_roll += roll;
 	}
 	if (pitch != 0.0f)
 	{
-		// xÃà(pitch)ÀÇ °æ¿ì MIN_PITCH ~ MAX_PITCH
+		// xì¶•(pitch)ì˜ ê²½ìš° MIN_PITCH ~ MAX_PITCH
 		if (m_pitch + pitch > MAX_PITCH)
 		{
-			rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MAX_PITCH - m_pitch));
+			rotate *= XMMatrixRotationAxis(worldXAxis, XMConvertToRadians(MAX_PITCH - m_pitch));
 			m_pitch = MAX_PITCH;
 		}
 		else if (m_pitch + pitch < MIN_PITCH)
 		{
-			rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(MIN_PITCH - m_pitch));
+			rotate *= XMMatrixRotationAxis(worldXAxis, XMConvertToRadians(MIN_PITCH - m_pitch));
 			m_pitch = MIN_PITCH;
 		}
 		else
 		{
-			rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_u), XMConvertToRadians(pitch));
+			rotate *= XMMatrixRotationAxis(worldXAxis, XMConvertToRadians(pitch));
 			m_pitch += pitch;
 		}
 	}
 	if (yaw != 0.0f)
 	{
-		// yÃà(yaw)ÀÇ °æ¿ì Á¦ÇÑ ¾øÀ½
-		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_v), XMConvertToRadians(yaw));
+		// yì¶•(yaw)ì˜ ê²½ìš° ì œí•œ ì—†ìŒ
+		rotate *= XMMatrixRotationAxis(worldYAxis, XMConvertToRadians(yaw));
 		m_yaw += yaw;
 	}
-	XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), rotate));
-	UpdateLocalAxis();
+	XMStoreFloat3(&m_at, XMVector3TransformNormal(XMLoadFloat3(&m_at), rotate));
 }
 
 void Camera::SetPlayer(const shared_ptr<Player>& player)
@@ -98,16 +85,29 @@ ThirdPersonCamera::ThirdPersonCamera() : Camera{}, m_distance{ 5.0f }, m_delay{ 
 
 void ThirdPersonCamera::Update(FLOAT deltaTime)
 {
+	// í”Œë ˆì´ì–´ ìœ„ì¹˜ + ì˜¤í”„ì…‹ ìœ„ì¹˜ë¡œ ì´ë™
 	XMFLOAT3 destination{ Vector3::Add(m_player->GetPosition(), Vector3::Mul(m_offset, m_distance)) };
-	XMFLOAT3 direction{ Vector3::Sub(destination, GetEye()) };
+	XMFLOAT3 direction{ Vector3::Sub(destination, m_eye) };
 	XMFLOAT3 shift{ Vector3::Mul(direction, fmax((1.0f - m_delay) * deltaTime * 10.0f, 0.01f)) };
-	SetEye(Vector3::Add(GetEye(), shift));
-	Camera::Update(deltaTime);
+	SetEye(Vector3::Add(m_eye, shift));
+
+	// ì¹´ë©”ë¼ê°€ ì§€í˜• ë°‘ìœ¼ë¡œ ë‚´ë ¤ê°€ì§€ ì•Šë„ë¡í•¨
+	if (m_terrain)
+	{
+		FLOAT height{ m_terrain->GetHeight(m_eye.x, m_eye.z) };
+		if (m_eye.y < height + 0.5f)
+			SetEye(XMFLOAT3{ m_eye.x, height + 0.5f, m_eye.z });
+	}
+
+	// ì¹´ë©”ë¼ ë·° ë³€í™˜ í–‰ë ¬ ìµœì‹ í™”
+	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_at)), XMLoadFloat3(&m_up)));
 }
 
 void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
 	XMMATRIX rotate{ XMMatrixIdentity() };
+	XMVECTOR worldYAxis{ XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f) };
+
 	if (roll != 0.0f)
 	{
 		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetFront()), XMConvertToRadians(roll));
@@ -115,22 +115,18 @@ void ThirdPersonCamera::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 	}
 	if (pitch != 0.0f)
 	{
-		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetRight()), XMConvertToRadians(pitch));
+		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&m_player->GetLocalXAxis()), XMConvertToRadians(pitch));
 		m_pitch += pitch;
 	}
 	if (yaw != 0.0f)
 	{
-		XMFLOAT3 up{ 0.0f, 1.0f, 0.0f };
-		rotate *= XMMatrixRotationAxis(XMLoadFloat3(&up), XMConvertToRadians(yaw));
+		rotate *= XMMatrixRotationAxis(worldYAxis, XMConvertToRadians(yaw));
 		m_yaw += yaw;
 	}
 	XMStoreFloat3(&m_offset, XMVector3TransformNormal(XMLoadFloat3(&m_offset), rotate));
 
-	// Ç×»ó ÇÃ·¹ÀÌ¾î¸¦ ¹Ù¶óº¸µµ·Ï ¼³Á¤
+	// í•­ìƒ í”Œë ˆì´ì–´ë¥¼ ë°”ë¼ë³´ë„ë¡ ì„¤ì •
 	XMFLOAT3 look{ Vector3::Sub(m_player->GetPosition(), m_eye) };
 	if (Vector3::Length(look))
-	{
-		m_look = look;
-		UpdateLocalAxis();
-	}
+		m_at = look;
 }

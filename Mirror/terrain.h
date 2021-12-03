@@ -20,10 +20,10 @@ public:
 	XMFLOAT3 GetScale() const { return m_scale; }
 	
 private:
-	unique_ptr<BYTE[]>	m_pixels;	// ÇÈ¼¿µéÀÇ 2Â÷¿ø ¹è¿­(°¢ ¿ø¼Ò´Â 0~255ÀÇ °ª)
-	INT					m_width;	// ÀÌ¹ÌÁöÀÇ °¡·Î ±æÀÌ
-	INT					m_length;	// ÀÌ¹ÌÁöÀÇ ¼¼·Î ±æÀÌ
-	XMFLOAT3			m_scale;	// È®´ë ºñÀ²
+	unique_ptr<BYTE[]>	m_pixels;	// í”½ì…€ë“¤ì˜ 2ì°¨ì› ë°°ì—´(ê° ì›ì†ŒëŠ” 0~255ì˜ ê°’)
+	INT					m_width;	// ì´ë¯¸ì§€ì˜ ê°€ë¡œ ê¸¸ì´
+	INT					m_length;	// ì´ë¯¸ì§€ì˜ ì„¸ë¡œ ê¸¸ì´
+	XMFLOAT3			m_scale;	// í™•ëŒ€ ë¹„ìœ¨
 };
 
 class HeightMapGridMesh : public Mesh
@@ -67,11 +67,11 @@ public:
 	XMFLOAT3 GetScale() const { return m_scale; }
 
 private:
-	unique_ptr<HeightMapImage>		m_heightMapImage;	// ³ôÀÌ¸Ê ÀÌ¹ÌÁö
-	vector<unique_ptr<GameObject>>	m_blocks;			// ºí·Ïµé
-	INT								m_width;			// ÀÌ¹ÌÁöÀÇ °¡·Î ±æÀÌ
-	INT								m_length;			// ÀÌ¹ÌÁöÀÇ ¼¼·Î ±æÀÌ
-	INT								m_blockWidth;		// ºí·ÏÀÇ °¡·Î ±æÀÌ
-	INT								m_blockLength;		// ºí·ÏÀÇ ¼¼·Î ±æÀÌ
-	XMFLOAT3						m_scale;			// È®´ë ºñÀ²
+	unique_ptr<HeightMapImage>		m_heightMapImage;	// ë†’ì´ë§µ ì´ë¯¸ì§€
+	vector<unique_ptr<GameObject>>	m_blocks;			// ë¸”ë¡ë“¤
+	INT								m_width;			// ì´ë¯¸ì§€ì˜ ê°€ë¡œ ê¸¸ì´
+	INT								m_length;			// ì´ë¯¸ì§€ì˜ ì„¸ë¡œ ê¸¸ì´
+	INT								m_blockWidth;		// ë¸”ë¡ì˜ ê°€ë¡œ ê¸¸ì´
+	INT								m_blockLength;		// ë¸”ë¡ì˜ ì„¸ë¡œ ê¸¸ì´
+	XMFLOAT3						m_scale;			// í™•ëŒ€ ë¹„ìœ¨
 };

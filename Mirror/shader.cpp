@@ -13,14 +13,14 @@ Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignat
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// ¡§¡° ºŒ¿Ã¥ı ∑π¿Ãæ∆øÙ º≥¡§
+	// Ï†ïÏ†ê ÏÖ∞Ïù¥Îçî Î†àÏù¥ÏïÑÏõÉ ÏÑ§Ï†ï
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// PSO ª˝º∫
+	// PSO ÏÉùÏÑ±
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = rootSignature.Get();
@@ -51,14 +51,14 @@ TextureShader::TextureShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTextureMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// ¡§¡° ºŒ¿Ã¥ı ∑π¿Ãæ∆øÙ º≥¡§
+	// Ï†ïÏ†ê ÏÖ∞Ïù¥Îçî Î†àÏù¥ÏïÑÏõÉ ÏÑ§Ï†ï
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// PSO ª˝º∫
+	// PSO ÏÉùÏÑ±
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = rootSignature.Get();
@@ -217,9 +217,9 @@ SkyboxShader::SkyboxShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// ±Ì¿Ã ∞ÀªÁ OFF
-	// ±Ì¿Ã æ≤±‚ OFF
-	// ∞≈øÔ¿Ã ¿÷¥¬ ∫Œ∫–ø°¥¬ ±◊∏Æ¡ˆæ ¿Ω
+	// ÍπäÏù¥ Í≤ÄÏÇ¨ OFF
+	// ÍπäÏù¥ Ïì∞Í∏∞ OFF
+	// Í±∞Ïö∏Ïù¥ ÏûàÎäî Î∂ÄÎ∂ÑÏóêÎäî Í∑∏Î¶¨ÏßÄÏïäÏùå
 	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
 	depthStencilState.DepthEnable = FALSE;
 	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -258,25 +258,25 @@ BlendingShader::BlendingShader(const ComPtr<ID3D12Device>& device, const ComPtr<
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "GSBillboardMain", "gs_5_1", compileFlags, 0, &geometryShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSBillboardMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// ¡§¡° ºŒ¿Ã¥ı ∑π¿Ãæ∆øÙ º≥¡§
+	// Ï†ïÏ†ê ÏÖ∞Ïù¥Îçî Î†àÏù¥ÏïÑÏõÉ ÏÑ§Ï†ï
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// ±Ì¿Ã æ≤±‚ OFF
+	// ÍπäÏù¥ Ïì∞Í∏∞ OFF
 	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
 	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
-	// ∫Ì∑ªµ˘ º≥¡§
+	// Î∏îÎ†åÎî© ÏÑ§Ï†ï
 	CD3DX12_BLEND_DESC blendState{ D3D12_DEFAULT };
 	blendState.RenderTarget[0].BlendEnable = TRUE;
 	blendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
 	blendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 	blendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
 
-	// PSO ª˝º∫
+	// PSO ÏÉùÏÑ±
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = rootSignature.Get();
@@ -308,21 +308,21 @@ BlendingDepthShader::BlendingDepthShader(const ComPtr<ID3D12Device>& device, con
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTextureMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// ¡§¡° ºŒ¿Ã¥ı ∑π¿Ãæ∆øÙ º≥¡§
+	// Ï†ïÏ†ê ÏÖ∞Ïù¥Îçî Î†àÏù¥ÏïÑÏõÉ ÏÑ§Ï†ï
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// ∫Ì∑ªµ˘ º≥¡§
+	// Î∏îÎ†åÎî© ÏÑ§Ï†ï
 	CD3DX12_BLEND_DESC blendState{ D3D12_DEFAULT };
 	blendState.RenderTarget[0].BlendEnable = TRUE;
 	blendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
 	blendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 	blendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
 
-	// PSO ª˝º∫
+	// PSO ÏÉùÏÑ±
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = rootSignature.Get();
@@ -352,23 +352,23 @@ StencilShader::StencilShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 
-	// ¡§¡° ºŒ¿Ã¥ı ∑π¿Ãæ∆øÙ º≥¡§
+	// Ï†ïÏ†ê ÏÖ∞Ïù¥Îçî Î†àÏù¥ÏïÑÏõÉ ÏÑ§Ï†ï
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// ±Ì¿Ã ≈◊Ω∫∆Æ		ON
-	// ±Ì¿Ã πˆ∆€ æ≤±‚	OFF
-	// Ω∫≈ŸΩ« πˆ∆€ æ≤±‚	ON
+	// ÍπäÏù¥ ÌÖåÏä§Ìä∏		ON
+	// ÍπäÏù¥ Î≤ÑÌçº Ïì∞Í∏∞	OFF
+	// Ïä§ÌÖêÏã§ Î≤ÑÌçº Ïì∞Í∏∞	ON
 	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
 	depthStencilState.DepthEnable = TRUE;
 	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 	depthStencilState.StencilEnable = TRUE;
 	depthStencilState.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;
 
-	// ∑ª¥ı∏µ OFF
+	// Î†åÎçîÎßÅ OFF
 	CD3DX12_BLEND_DESC blendState{ D3D12_DEFAULT };
 	blendState.RenderTarget[0].RenderTargetWriteMask = 0;
 
@@ -401,18 +401,18 @@ MirrorShader::MirrorShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// ¡§¡° ºŒ¿Ã¥ı ∑π¿Ãæ∆øÙ º≥¡§
+	// Ï†ïÏ†ê ÏÖ∞Ïù¥Îçî Î†àÏù¥ÏïÑÏõÉ ÏÑ§Ï†ï
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// ∞≈øÔø°º≠¥¬ æ’∏È¿Ã µﬁ∏È¿∏∑Œ µﬁ∏È¿Ã æ’∏È¿∏∑Œ πŸ≤Ô¥Ÿ.
+	// Í±∞Ïö∏ÏóêÏÑúÎäî ÏïûÎ©¥Ïù¥ Îí∑Î©¥ÏúºÎ°ú Îí∑Î©¥Ïù¥ ÏïûÎ©¥ÏúºÎ°ú Î∞îÎÄêÎã§.
 	CD3DX12_RASTERIZER_DESC rasterizerState{ D3D12_DEFAULT };
 	rasterizerState.FrontCounterClockwise = TRUE;
 
-	// ∞≈øÔø°∏∏ ∞‘¿”ø¿∫Í¡ß∆ÆµÈ¿ª ±◊∏∞¥Ÿ.
+	// Í±∞Ïö∏ÏóêÎßå Í≤åÏûÑÏò§Î∏åÏ†ùÌä∏Îì§ÏùÑ Í∑∏Î¶∞Îã§.
 	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
 	depthStencilState.StencilEnable = TRUE;
 	depthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
@@ -447,7 +447,7 @@ MirrorTextureShader::MirrorTextureShader(const ComPtr<ID3D12Device>& device, con
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTextureMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// ¡§¡° ºŒ¿Ã¥ı ∑π¿Ãæ∆øÙ º≥¡§
+	// Ï†ïÏ†ê ÏÖ∞Ïù¥Îçî Î†àÏù¥ÏïÑÏõÉ ÏÑ§Ï†ï
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },

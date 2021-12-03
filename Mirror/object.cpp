@@ -1,29 +1,29 @@
 #include "object.h"
 #include "camera.h"
 
-GameObject::GameObject() : m_type{ GameObjectType::DEFAULT }, m_isDeleted{ false }, m_right{ 1.0f, 0.0f, 0.0f }, m_up{ 0.0f, 1.0f, 0.0f }, m_front{ 0.0f, 0.0f, 1.0f },
-						   m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_terrain{ nullptr }, m_normal{ 0.0f, 1.0f, 0.0f }, m_look{ 0.0f, 0.0f, 1.0f }, m_textureInfo{ nullptr }
+GameObject::GameObject() : m_type{ GameObjectType::DEFAULT }, m_isDeleted{ false }, m_localXAxis{ 1.0f, 0.0f, 0.0f }, m_localYAxis{ 0.0f, 1.0f, 0.0f }, m_localZAxis{ 0.0f, 0.0f, 1.0f },
+						   m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_terrain{ nullptr }, m_textureInfo{ nullptr }
 {
 	XMStoreFloat4x4(&m_worldMatrix, XMMatrixIdentity());
 }
 
 void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const shared_ptr<Shader>& shader) const
 {
-	// PSO ¼³Á¤
+	// PSO ì„¤ì •
 	if (shader) commandList->SetPipelineState(shader->GetPipelineState().Get());
 	else if (m_shader) commandList->SetPipelineState(m_shader->GetPipelineState().Get());
 
-	// ¼ÎÀÌ´õ º¯¼ö ÃÖ½ÅÈ­
+	// ì…°ì´ë” ë³€ìˆ˜ ìµœì‹ í™”
 	UpdateShaderVariable(commandList);
 
-	// ÅØ½ºÃÄ
+	// í…ìŠ¤ì³
 	if (m_texture)
 	{
 		if (m_textureInfo) m_texture->SetTextureInfo(m_textureInfo.get());
 		m_texture->UpdateShaderVariable(commandList);
 	}
 
-	// ¸Ş½¬ ·»´õ¸µ
+	// ë©”ì‰¬ ë Œë”ë§
 	if (m_mesh) m_mesh->Render(commandList);
 }
 
@@ -57,20 +57,20 @@ void GameObject::Move(const XMFLOAT3& shift)
 
 void GameObject::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
-	// È¸Àü
+	// íšŒì „
 	XMMATRIX rotate{ XMMatrixRotationRollPitchYaw(XMConvertToRadians(pitch), XMConvertToRadians(yaw), XMConvertToRadians(roll)) };
 	XMMATRIX worldMatrix{ rotate * XMLoadFloat4x4(&m_worldMatrix) };
 	XMStoreFloat4x4(&m_worldMatrix, worldMatrix);
 
-	// ·ÎÄÃ x,y,zÃà ÃÖ½ÅÈ­
-	XMStoreFloat3(&m_right, XMVector3TransformNormal(XMLoadFloat3(&m_right), rotate));
-	XMStoreFloat3(&m_up, XMVector3TransformNormal(XMLoadFloat3(&m_up), rotate));
-	XMStoreFloat3(&m_front, XMVector3TransformNormal(XMLoadFloat3(&m_front), rotate));
+	// ë¡œì»¬ x,y,zì¶• ìµœì‹ í™”
+	XMStoreFloat3(&m_localXAxis, XMVector3TransformNormal(XMLoadFloat3(&m_localXAxis), rotate));
+	XMStoreFloat3(&m_localYAxis, XMVector3TransformNormal(XMLoadFloat3(&m_localYAxis), rotate));
+	XMStoreFloat3(&m_localZAxis, XMVector3TransformNormal(XMLoadFloat3(&m_localZAxis), rotate));
 }
 
 void GameObject::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
-	// °ÔÀÓ¿ÀºêÁ§Æ®ÀÇ ¿ùµå º¯È¯ Çà·Ä ÃÖ½ÅÈ­
+	// ê²Œì„ì˜¤ë¸Œì íŠ¸ì˜ ì›”ë“œ ë³€í™˜ í–‰ë ¬ ìµœì‹ í™”
 	commandList->SetGraphicsRoot32BitConstants(0, 16, &Matrix::Transpose(m_worldMatrix), 0);
 }
 
@@ -109,6 +109,16 @@ XMFLOAT3 GameObject::GetPosition() const
 	return XMFLOAT3{ m_worldMatrix._41, m_worldMatrix._42, m_worldMatrix._43 };
 }
 
+XMFLOAT3 GameObject::GetNormal() const
+{
+	return XMFLOAT3{ m_worldMatrix._21, m_worldMatrix._22, m_worldMatrix._23 };
+}
+
+XMFLOAT3 GameObject::GetLook() const
+{
+	return XMFLOAT3{ m_worldMatrix._31, m_worldMatrix._32, m_worldMatrix._33 };
+}
+
 // --------------------------------------
 
 Bullet::Bullet(const XMFLOAT3& position, const XMFLOAT3& direction, const XMFLOAT3& up, FLOAT speed, FLOAT damage)
@@ -129,11 +139,11 @@ void Bullet::Update(FLOAT deltaTime)
 {
 	GameObject::Update(deltaTime);
 
-	// ÀÏÁ¤ °Å¸® ³¯¾Æ°¡¸é »èÁ¦
+	// ì¼ì • ê±°ë¦¬ ë‚ ì•„ê°€ë©´ ì‚­ì œ
 	if (Vector3::Length(Vector3::Sub(GetPosition(), m_origin)) > 100.0f)
 		m_isDeleted = true;
 
-	// ÁöÇü¿¡ ´êÀ¸¸é »èÁ¦
+	// ì§€í˜•ì— ë‹¿ìœ¼ë©´ ì‚­ì œ
 	if (m_terrain)
 	{
 		XMFLOAT3 position{ GetPosition() };
@@ -141,9 +151,9 @@ void Bullet::Update(FLOAT deltaTime)
 			m_isDeleted = true;
 	}
 
-	// »èÁ¦µÉ °´Ã¼´Â ¾÷µ¥ÀÌÆ®ÇÒ ÇÊ¿ä ¾øÀ½
+	// ì‚­ì œë  ê°ì²´ëŠ” ì—…ë°ì´íŠ¸í•  í•„ìš” ì—†ìŒ
 	if (m_isDeleted) return;
 
-	// ÃÑ¾Ë ÁøÇà ¹æÇâÀ¸·Î ÀÌµ¿
+	// ì´ì•Œ ì§„í–‰ ë°©í–¥ìœ¼ë¡œ ì´ë™
 	Move(Vector3::Mul(m_direction, m_speed * deltaTime));
 }

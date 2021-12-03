@@ -2,7 +2,7 @@
 
 Skybox::Skybox(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature) : m_faces{ new GameObject[6] }
 {
-	// ¸Ş½¬ »ı¼º
+	// ë©”ì‰¬ ìƒì„±
 	shared_ptr<TextureRectMesh> frontMesh{ make_shared<TextureRectMesh>(device, commandList, 20.0f, 0.0f, 20.0f, XMFLOAT3{ 0.0f, 0.0f, 10.0f }) };
 	shared_ptr<TextureRectMesh> leftMesh{ make_shared<TextureRectMesh>(device, commandList, 0.0f, 20.0f, 20.0f, XMFLOAT3{ -10.0f, 0.0f, 0.0f }) };
 	shared_ptr<TextureRectMesh> rightMesh{ make_shared<TextureRectMesh>(device, commandList, 0.0f, 20.0f, 20.0f, XMFLOAT3{ 10.0f, 0.0f, 0.0f }) };
@@ -10,10 +10,10 @@ Skybox::Skybox(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCo
 	shared_ptr<TextureRectMesh> topMesh{ make_shared<TextureRectMesh>(device, commandList, 20.0f, 20.0f, 0.0f, XMFLOAT3{ 0.0f, 10.0f, 0.0f }) };
 	shared_ptr<TextureRectMesh> botMesh{ make_shared<TextureRectMesh>(device, commandList, 20.0f, 20.0f, 0.0f, XMFLOAT3{ 0.0f, -10.0f, 0.0f }) };
 
-	// ¼ÎÀÌ´õ »ı¼º
+	// ì…°ì´ë” ìƒì„±
 	shared_ptr<SkyboxShader> skyboxShader{ make_shared<SkyboxShader>(device, rootSignature) };
 
-	// ÅØ½ºÃÄ »ı¼º
+	// í…ìŠ¤ì³ ìƒì„±
 	shared_ptr<Texture> frontTexture{ make_shared<Texture>() };
 	frontTexture->LoadTextureFile(device, commandList, 2, wPATH("SkyboxFront.dds"));
 	frontTexture->CreateSrvDescriptorHeap(device);
@@ -44,13 +44,13 @@ Skybox::Skybox(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCo
 	botTexture->CreateSrvDescriptorHeap(device);
 	botTexture->CreateShaderResourceView(device);
 
-	// ¸é »ı¼º
-	m_faces[0].SetMesh(frontMesh);	m_faces[0].SetShader(skyboxShader); m_faces[0].SetTexture(frontTexture);	// ¾Õ
-	m_faces[1].SetMesh(leftMesh);	m_faces[1].SetShader(skyboxShader); m_faces[1].SetTexture(leftTexture);		// ¿ŞÂÊ
-	m_faces[2].SetMesh(rightMesh);	m_faces[2].SetShader(skyboxShader); m_faces[2].SetTexture(rightTexture);	// ¿À¸¥ÂÊ
-	m_faces[3].SetMesh(backMesh);	m_faces[3].SetShader(skyboxShader); m_faces[3].SetTexture(backTexture);		// µÚ
-	m_faces[4].SetMesh(topMesh);	m_faces[4].SetShader(skyboxShader); m_faces[4].SetTexture(topTexture);		// À§
-	m_faces[5].SetMesh(botMesh);	m_faces[5].SetShader(skyboxShader); m_faces[5].SetTexture(botTexture);		// ¾Æ·¡
+	// ë©´ ìƒì„±
+	m_faces[0].SetMesh(frontMesh);	m_faces[0].SetShader(skyboxShader); m_faces[0].SetTexture(frontTexture);	// ì•
+	m_faces[1].SetMesh(leftMesh);	m_faces[1].SetShader(skyboxShader); m_faces[1].SetTexture(leftTexture);		// ì™¼ìª½
+	m_faces[2].SetMesh(rightMesh);	m_faces[2].SetShader(skyboxShader); m_faces[2].SetTexture(rightTexture);	// ì˜¤ë¥¸ìª½
+	m_faces[3].SetMesh(backMesh);	m_faces[3].SetShader(skyboxShader); m_faces[3].SetTexture(backTexture);		// ë’¤
+	m_faces[4].SetMesh(topMesh);	m_faces[4].SetShader(skyboxShader); m_faces[4].SetTexture(topTexture);		// ìœ„
+	m_faces[5].SetMesh(botMesh);	m_faces[5].SetShader(skyboxShader); m_faces[5].SetTexture(botTexture);		// ì•„ë˜
 }
 
 void Skybox::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const

@@ -8,10 +8,10 @@ ComPtr<ID3D12Resource> CreateBufferResource(const ComPtr<ID3D12Device>& device, 
 	ComPtr<ID3D12Resource> buffer;
 	const UINT bufferSize{ sizePerData * dataCount };
 
-	// µğÆúÆ® ¹öÆÛ¿¡ µ¥ÀÌÅÍ¸¦ ³ÖÀ» °æ¿ì ¾÷·Îµå ¹öÆÛ°¡ ÇÊ¿äÇÔ
+	// ë””í´íŠ¸ ë²„í¼ì— ë°ì´í„°ë¥¼ ë„£ì„ ê²½ìš° ì—…ë¡œë“œ ë²„í¼ê°€ í•„ìš”í•¨
 	if (heapType == D3D12_HEAP_TYPE_DEFAULT)
 	{
-		// µğÆúÆ® Èü »ı¼º
+		// ë””í´íŠ¸ í™ ìƒì„±
 		DX::ThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 			D3D12_HEAP_FLAG_NONE,
@@ -20,7 +20,7 @@ ComPtr<ID3D12Resource> CreateBufferResource(const ComPtr<ID3D12Device>& device, 
 			NULL,
 			IID_PPV_ARGS(&buffer)));
 
-		// ¾÷·Îµå Èü »ı¼º
+		// ì—…ë¡œë“œ í™ ìƒì„±
 		DX::ThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,
@@ -29,22 +29,22 @@ ComPtr<ID3D12Resource> CreateBufferResource(const ComPtr<ID3D12Device>& device, 
 			NULL,
 			IID_PPV_ARGS(&uploadBuffer)));
 
-		// ¾÷·Îµå Èü¿¡¼­ µğÆúÆ® ÈüÀ¸·Î º¹»ç
+		// ì—…ë¡œë“œ í™ì—ì„œ ë””í´íŠ¸ í™ìœ¼ë¡œ ë³µì‚¬
 		D3D12_SUBRESOURCE_DATA bufferData{};
 		bufferData.pData = data;
 		bufferData.RowPitch = bufferSize;
 		bufferData.SlicePitch = bufferData.RowPitch;
 		UpdateSubresources<1>(commandList.Get(), buffer.Get(), uploadBuffer.Get(), 0, 0, 1, &bufferData);
 
-		// ¹öÆÛ ¸®¼Ò½º º£¸®¾î ¼³Á¤
+		// ë²„í¼ ë¦¬ì†ŒìŠ¤ ë² ë¦¬ì–´ ì„¤ì •
 		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, resourceState));
 		return buffer;
 	}
 
-	// ¾÷·Îµå ¹öÆÛ¿¡ µ¥ÀÌÅÍ¸¦ ³ÖÀ» °æ¿ì ¹Ù·Î º¹»çÇÔ
+	// ì—…ë¡œë“œ ë²„í¼ì— ë°ì´í„°ë¥¼ ë„£ì„ ê²½ìš° ë°”ë¡œ ë³µì‚¬í•¨
 	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
 	{
-		// ¾÷·Îµå Èü »ı¼º
+		// ì—…ë¡œë“œ í™ ìƒì„±
 		DX::ThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,
@@ -53,14 +53,14 @@ ComPtr<ID3D12Resource> CreateBufferResource(const ComPtr<ID3D12Device>& device, 
 			NULL,
 			IID_PPV_ARGS(&buffer)));
 
-		// µ¥ÀÌÅÍ º¹»ç
+		// ë°ì´í„° ë³µì‚¬
 		UINT8* pBufferDataBegin{ NULL };
 		CD3DX12_RANGE readRange{ 0, 0 };
 		DX::ThrowIfFailed(buffer->Map(0, &readRange, reinterpret_cast<void**>(&pBufferDataBegin)));
 		memcpy(pBufferDataBegin, data, bufferSize);
 		buffer->Unmap(0, NULL);
 
-		// ¸®¼Ò½º º£¸®¾î ¼³Á¤
+		// ë¦¬ì†ŒìŠ¤ ë² ë¦¬ì–´ ì„¤ì •
 		commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, resourceState));
 		return buffer;
 	}

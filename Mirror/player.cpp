@@ -3,50 +3,44 @@
 
 Player::Player() : GameObject{}, m_velocity{ 0.0f, 0.0f, 0.0f }, m_maxVelocity{ 10.0f }, m_friction{ 1.1f }
 {
-
+	m_type = GameObjectType::PLAYER;
 }
 
 void Player::Update(FLOAT deltaTime)
 {
 	Move(m_velocity);
 
-	m_look = m_front;
-
-	// ½Ç³», ÁöÇü ¹ÛÀ¸·Î ¸ø³ª°¡°Ô ¼³Á¤
+	// ì‹¤ë‚´, ì§€í˜• ë°–ìœ¼ë¡œ ëª»ë‚˜ê°€ê²Œ ì„¤ì •
 	SetPlayerInArea();
 
-	// ÇÃ·¹ÀÌ¾î°¡ ¾î¶² ÁöÇü À§¿¡ ÀÖ´Ù¸é
-	if (m_terrain)
+	// í”Œë ˆì´ì–´ê°€ ì§€í˜• ìœ„ì— ìˆê³  ì‹¤ë‚´ì— ìˆëŠ”ê²Œ ì•„ë‹ˆë¼ë©´
+	if (m_terrain && GetPosition().y < 300.0f)
 	{
-		// ½Ç³»¿¡ ÀÖ´Â°Ô ¾Æ´Ï¶ó¸é
-		if (GetPosition().y < 300.0f)
-		{
-			// ÇÃ·¹ÀÌ¾î°¡ ÁöÇü À§¸¦ ¿òÁ÷ÀÌµµ·Ï ¼³Á¤
-			SetPlayerOnTerrain();
+		// í”Œë ˆì´ì–´ê°€ ì§€í˜• ìœ„ë¥¼ ì›€ì§ì´ë„ë¡ ì„¤ì •
+		SetPlayerOnTerrain();
 
-			// ÇÃ·¹ÀÌ¾îÀÇ ³ë¸»°ú ·è º¤ÅÍ ¼³Á¤
-			SetPlayerNormalAndLook();
-		}
+		// í”Œë ˆì´ì–´ì˜ ë…¸ë§ê³¼ ë£© ë²¡í„° ì„¤ì •
+		SetPlayerNormalAndLook();
 	}
 	m_velocity = Vector3::Mul(m_velocity, 1 / m_friction * deltaTime);
 }
 
 void Player::Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw)
 {
-	// È¸Àü°¢ Á¦ÇÑ
+	// íšŒì „ê° ì œí•œ
 	if (m_pitch + pitch > MAX_PITCH)
 		pitch = MAX_PITCH - m_pitch;
 	else if (m_pitch + pitch < MIN_PITCH)
 		pitch = MIN_PITCH - m_pitch;
 
-	// È¸Àü°¢ ÇÕ»ê
+	// íšŒì „ê° í•©ì‚°
 	m_roll += roll; m_pitch += pitch; m_yaw += yaw;
 
-	// Ä«¸Ş¶ó´Â x,yÃàÀ¸·Î È¸ÀüÇÒ ¼ö ÀÖ´Ù.
-	// GameObject::Rotate¿¡¼­ ÇÃ·¹ÀÌ¾îÀÇ ·ÎÄÃ x,y,zÃàÀ» º¯°æÇÏ¹Ç·Î ¸ÕÀú È£ÃâÇØ¾ßÇÑ´Ù.
+	// ì¹´ë©”ë¼ëŠ” x,yì¶•ìœ¼ë¡œ íšŒì „í•  ìˆ˜ ìˆë‹¤.
+	// GameObject::Rotateì—ì„œ í”Œë ˆì´ì–´ì˜ ë¡œì»¬ x,y,zì¶•ì„ ë³€ê²½í•˜ë¯€ë¡œ ë¨¼ì € í˜¸ì¶œí•´ì•¼í•œë‹¤.
 	m_camera->Rotate(0.0f, pitch, yaw);
 
-	// ÇÃ·¹ÀÌ¾î´Â yÃàÀ¸·Î¸¸ È¸ÀüÇÒ ¼ö ÀÖ´Ù.
+	// í”Œë ˆì´ì–´ëŠ” yì¶•ìœ¼ë¡œë§Œ íšŒì „í•  ìˆ˜ ìˆë‹¤.
 	GameObject::Rotate(0.0f, 0.0f, yaw);
 }
 
@@ -54,7 +48,7 @@ void Player::SetPlayerInArea()
 {
 	XMFLOAT3 pos{ GetPosition() };
 
-	// ½Ç³» ¹ÛÀ¸·Î ¸ø³ª°¡°Ô
+	// ì‹¤ë‚´ ë°–ìœ¼ë¡œ ëª»ë‚˜ê°€ê²Œ
 	if (GetPosition().y > 300.0f)
 	{
 		pos.x = clamp(pos.x, -14.0f, 14.0f);
@@ -62,7 +56,7 @@ void Player::SetPlayerInArea()
 		SetPosition(pos);
 	}
 
-	// ÁöÇü ¹ÛÀ¸·Î ¸ø³ª°¡°Ô
+	// ì§€í˜• ë°–ìœ¼ë¡œ ëª»ë‚˜ê°€ê²Œ
 	else if (m_terrain)
 	{
 		XMFLOAT3 tPos{ m_terrain->GetPosition() };
@@ -76,10 +70,10 @@ void Player::SetPlayerInArea()
 void Player::SetPlayerOnTerrain()
 {
 	/*
-	1. ÇÃ·¹ÀÌ¾î°¡ À§Ä¡ÇÑ ºí·ÏÀÇ ÁÂÃøÇÏ´Ü ÁÂÇ¥¸¦ ±¸ÇÑ´Ù.
-	2. ÇØ´ç ÁÂÇ¥¸¦ ÀÌ¿ëÇÏ¿© ºí·Ï ¸Ş½¬ÀÇ Á¤Á¡ 25°³¸¦ ±¸ÇÑ´Ù.
-	3. Á¤Á¡ 25°³¸¦ ÀÌ¿ëÇÏ¿© 4Â÷ º£Áö¾î °î¸éÀ» ±¸ÇÑ´Ù.
-	4. ÇÃ·¹ÀÌ¾îÀÇ À§Ä¡ t¸¦ ±¸ÇØ¼­ º£Áö¾î °î¸é »óÀÇ ³ôÀÌ¸¦ ±¸ÇÑ´Ù.
+	1. í”Œë ˆì´ì–´ê°€ ìœ„ì¹˜í•œ ë¸”ë¡ì˜ ì¢Œì¸¡í•˜ë‹¨ ì¢Œí‘œë¥¼ êµ¬í•œë‹¤.
+	2. í•´ë‹¹ ì¢Œí‘œë¥¼ ì´ìš©í•˜ì—¬ ë¸”ë¡ ë©”ì‰¬ì˜ ì •ì  25ê°œë¥¼ êµ¬í•œë‹¤.
+	3. ì •ì  25ê°œë¥¼ ì´ìš©í•˜ì—¬ 4ì°¨ ë² ì§€ì–´ ê³¡ë©´ì„ êµ¬í•œë‹¤.
+	4. í”Œë ˆì´ì–´ì˜ ìœ„ì¹˜ të¥¼ êµ¬í•´ì„œ ë² ì§€ì–´ ê³¡ë©´ ìƒì˜ ë†’ì´ë¥¼ êµ¬í•œë‹¤.
 	*/
 
 	XMFLOAT3 pos{ GetPosition() };
@@ -90,7 +84,7 @@ void Player::SetPlayerOnTerrain()
 
 	auto CubicBezierSum = [](const array<XMFLOAT3, 25>& patch, XMFLOAT2 t) {
 
-		// 4Â÷ º£Áö¾î °î¼± °è¼ö
+		// 4ì°¨ ë² ì§€ì–´ ê³¡ì„  ê³„ìˆ˜
 		array<float, 5> uB, vB;
 		float txInv{ 1.0f - t.x };
 		uB[0] = txInv * txInv * txInv * txInv;
@@ -106,7 +100,7 @@ void Player::SetPlayerOnTerrain()
 		vB[3] = 4.0f * t.y * t.y * t.y * tyInv;
 		vB[4] = t.y * t.y * t.y * t.y;
 
-		// 4Â÷ º£Áö¿¡ °î¸é °è»ê
+		// 4ì°¨ ë² ì§€ì— ê³¡ë©´ ê³„ì‚°
 		XMFLOAT3 sum{ 0.0f, 0.0f, 0.0f };
 		for (int i = 0; i < 5; ++i)
 		{
@@ -122,7 +116,7 @@ void Player::SetPlayerOnTerrain()
 		return sum;
 	};
 
-	// º£Áö¿¡ Æò¸é Á¦¾îÁ¡ 25°³
+	// ë² ì§€ì— í‰ë©´ ì œì–´ì  25ê°œ
 	array<XMFLOAT3, 25> vertices;
 	for (int i = 0, z = 4; z >= 0; --z)
 		for (int x = 0; x < 5; ++x)
@@ -133,7 +127,7 @@ void Player::SetPlayerOnTerrain()
 			++i;
 		}
 
-	// ÇÃ·¹ÀÌ¾îÀÇ À§Ä¡ t
+	// í”Œë ˆì´ì–´ì˜ ìœ„ì¹˜ t
 	XMFLOAT2 uv{ (pos.x - LB.x) / (blockWidth * scale.x), 1.0f - ((pos.z - LB.z) / (blockLength * scale.z)) };
 	XMFLOAT3 posOnBazier{ CubicBezierSum(vertices, uv) };
 	SetPosition(XMFLOAT3{ pos.x, posOnBazier.y, pos.z });
@@ -142,21 +136,19 @@ void Player::SetPlayerOnTerrain()
 void Player::SetPlayerNormalAndLook()
 {
 	XMFLOAT3 pos{ GetPosition() };
+	XMFLOAT3 up{ m_terrain->GetNormal(pos.x, pos.z) };
 
-	// ³ë¸» ¼³Á¤
-	m_normal = m_terrain->GetNormal(pos.x, pos.z);
-
-	// ·è ¼³Á¤
-	if (float theta = acosf(Vector3::Dot(XMFLOAT3{ 0.0f, 1.0f, 0.0f }, m_normal)))
+	// ì§€í˜• ë…¸ë©€ì„ yì¶•ìœ¼ë¡œ x, zì¶• ê³„ì‚°
+	if (float theta = acosf(Vector3::Dot(XMFLOAT3{ 0.0f, 1.0f, 0.0f }, up)))
 	{
-		XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(XMFLOAT3{ 0.0f, 1.0f, 0.0f }, m_normal)) };
+		XMFLOAT3 right{ Vector3::Normalize(Vector3::Cross(XMFLOAT3{ 0.0f, 1.0f, 0.0f }, up)) };
 		XMFLOAT4X4 rotate; XMStoreFloat4x4(&rotate, XMMatrixRotationNormal(XMLoadFloat3(&right), theta));
-		m_look = Vector3::TransformNormal(GetFront(), rotate);
-		right = Vector3::Normalize(Vector3::Cross(m_normal, m_look));
+		XMFLOAT3 look{ Vector3::TransformNormal(GetFront(), rotate) };
+		right = Vector3::Normalize(Vector3::Cross(up, look));
 
 		m_worldMatrix._11 = right.x;	m_worldMatrix._12 = right.y;	m_worldMatrix._13 = right.z;
-		m_worldMatrix._21 = m_normal.x;	m_worldMatrix._22 = m_normal.y;	m_worldMatrix._23 = m_normal.z;
-		m_worldMatrix._31 = m_look.x;	m_worldMatrix._32 = m_look.y;	m_worldMatrix._33 = m_look.z;
+		m_worldMatrix._21 = up.x;		m_worldMatrix._22 = up.y;		m_worldMatrix._23 = up.z;
+		m_worldMatrix._31 = look.x;		m_worldMatrix._32 = look.y;		m_worldMatrix._33 = look.z;
 	}
 }
 
@@ -164,7 +156,7 @@ void Player::AddVelocity(const XMFLOAT3& increase)
 {
 	m_velocity = Vector3::Add(m_velocity, increase);
 
-	// ÃÖ´ë ¼Óµµ¿¡ °É¸°´Ù¸é ÇØ´ç ºñÀ²·Î Ãà¼Ò½ÃÅ´
+	// ìµœëŒ€ ì†ë„ì— ê±¸ë¦°ë‹¤ë©´ í•´ë‹¹ ë¹„ìœ¨ë¡œ ì¶•ì†Œì‹œí‚´
 	FLOAT length{ Vector3::Length(m_velocity) };
 	if (length > m_maxVelocity)
 	{

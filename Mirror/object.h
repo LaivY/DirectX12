@@ -8,7 +8,7 @@
 class Camera;
 
 enum class GameObjectType {
-	DEFAULT, BULLET
+	DEFAULT, PLAYER, BULLET
 };
 
 class GameObject
@@ -35,35 +35,32 @@ public:
 	bool isDeleted() const { return m_isDeleted; }
 	XMFLOAT4X4 GetWorldMatrix() const { return m_worldMatrix; }
 	XMFLOAT3 GetPosition() const;
-	XMFLOAT3 GetRight() const { return m_right; }
-	XMFLOAT3 GetUp() const { return m_up; }
-	XMFLOAT3 GetFront() const { return m_front; }
+	XMFLOAT3 GetLocalXAxis() const { return m_localXAxis; }
+	XMFLOAT3 GetUp() const { return m_localYAxis; }
+	XMFLOAT3 GetFront() const { return m_localZAxis; }
 	XMFLOAT3 GetRollPitchYaw() const { return XMFLOAT3{ m_roll, m_pitch, m_yaw }; }
 
 	HeightMapTerrain* GetTerrain() const { return m_terrain; }
-	XMFLOAT3 GetNormal() const { return m_normal; }
-	XMFLOAT3 GetLook() const { return m_look; }
+	XMFLOAT3 GetNormal() const;
+	XMFLOAT3 GetLook() const;
 
 protected:
-	GameObjectType			m_type;				// °ÔÀÓ¿ÀºêÁ§Æ® Á¾·ù Æ¯Á¤Áş±â À§ÇÑ Å¸ÀÔ
-	bool					m_isDeleted;		// trueÀÏ °æ¿ì ´ÙÀ½ ÇÁ·¹ÀÓ¿¡ »èÁ¦µÊ
+	XMFLOAT4X4				m_worldMatrix;		// ì›”ë“œ ë³€í™˜ í–‰ë ¬
+	XMFLOAT3				m_localXAxis;		// ê²Œì„ì˜¤ë¸Œì íŠ¸ì— yì¶• íšŒì „ë§Œ ì ìš©ë¬ì„ ë•Œì˜ ë¡œì»¬ xì¶•
+	XMFLOAT3				m_localYAxis;		// ë¡œì»¬ yì¶•
+	XMFLOAT3				m_localZAxis;		// ë¡œì»¬ zì¶•
+	FLOAT					m_roll;				// zì¶• íšŒì „ê°
+	FLOAT					m_pitch;			// xì¶• íšŒì „ê°
+	FLOAT					m_yaw;				// yì¶• íšŒì „ê°
 
-	XMFLOAT4X4				m_worldMatrix;		// ¿ùµå º¯È¯ Çà·Ä
-	XMFLOAT3				m_right;			// ·ÎÄÃ xÃà
-	XMFLOAT3				m_up;				// ·ÎÄÃ yÃà
-	XMFLOAT3				m_front;			// ·ÎÄÃ zÃà
-	FLOAT					m_roll;				// zÃà È¸Àü°¢
-	FLOAT					m_pitch;			// xÃà È¸Àü°¢
-	FLOAT					m_yaw;				// yÃà È¸Àü°¢
+	HeightMapTerrain*		m_terrain;			// ì§€í˜•
+	shared_ptr<Mesh>		m_mesh;				// ë©”ì‰¬
+	shared_ptr<Shader>		m_shader;			// ì…°ì´ë”
+	shared_ptr<Texture>		m_texture;			// í…ìŠ¤ì³
+	unique_ptr<TextureInfo>	m_textureInfo;		// í…ìŠ¤ì³ ì• ë‹ˆë©”ì´ì…˜ ì •ë³´ êµ¬ì¡°ì²´
 
-	HeightMapTerrain*		m_terrain;			// ¼­ÀÖ´Â ÁöÇü °´Ã¼ÀÇ Æ÷ÀÎÅÍ
-	XMFLOAT3				m_normal;			// ÇöÀç À§Ä¡ÀÇ ³ë¸» º¤ÅÍ
-	XMFLOAT3				m_look;				// ÁöÇüÀÌ Àû¿ëµÈ Á¤¸é º¤ÅÍ
-
-	shared_ptr<Mesh>		m_mesh;				// ¸Ş½¬
-	shared_ptr<Shader>		m_shader;			// ¼ÎÀÌ´õ
-	shared_ptr<Texture>		m_texture;			// ÅØ½ºÃÄ
-	unique_ptr<TextureInfo>	m_textureInfo;		// ÅØ½ºÃÄ ¾Ö´Ï¸ŞÀÌ¼Ç Á¤º¸ ±¸Á¶Ã¼
+	GameObjectType			m_type;				// ê²Œì„ì˜¤ë¸Œì íŠ¸ íƒ€ì…
+	bool					m_isDeleted;		// ì‚­ì œ ì—¬ë¶€
 };
 
 class Bullet : public GameObject
@@ -75,8 +72,8 @@ public:
 	virtual void Update(FLOAT deltaTime);
 
 private:
-	XMFLOAT3	m_origin;		 // ¹ß»ç ½ÃÀÛ À§Ä¡
-	XMFLOAT3	m_direction;	 // ³¯¾Æ°¡´Â ¹æÇâ
-	FLOAT		m_speed;		 // ³¯¾Æ°¡´Â ¼Óµµ
-	FLOAT		m_damage;		 // ÇÇÇØ·®
+	XMFLOAT3	m_origin;		 // ë°œì‚¬ ì‹œì‘ ìœ„ì¹˜
+	XMFLOAT3	m_direction;	 // ë‚ ì•„ê°€ëŠ” ë°©í–¥
+	FLOAT		m_speed;		 // ë‚ ì•„ê°€ëŠ” ì†ë„
+	FLOAT		m_damage;		 // í”¼í•´ëŸ‰
 };
