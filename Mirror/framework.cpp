@@ -1,4 +1,4 @@
-#include "framework.h"
+﻿#include "framework.h"
 
 GameFramework::GameFramework(UINT width, UINT height) :
 	m_width{ width }, m_height{ height }, m_frameIndex{ 0 },

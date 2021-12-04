@@ -1,4 +1,4 @@
-#include "timer.h"
+﻿#include "timer.h"
 
 Timer::Timer() : m_tick{}, m_deltaTime { 0.0f }
 {

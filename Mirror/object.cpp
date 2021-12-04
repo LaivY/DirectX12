@@ -1,4 +1,4 @@
-#include "object.h"
+﻿#include "object.h"
 #include "camera.h"
 
 GameObject::GameObject() : m_type{ GameObjectType::DEFAULT }, m_isDeleted{ false }, m_localXAxis{ 1.0f, 0.0f, 0.0f }, m_localYAxis{ 0.0f, 1.0f, 0.0f }, m_localZAxis{ 0.0f, 0.0f, 1.0f },

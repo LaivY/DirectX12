@@ -1,4 +1,4 @@
-#include "scene.h"
+﻿#include "scene.h"
 
 void ResourceManager::ReleaseUploadBuffer() const
 {

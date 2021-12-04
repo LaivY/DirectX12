@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 UINT g_cbvSrvDescriptorIncrementSize{ 0 };
 

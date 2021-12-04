@@ -1,4 +1,4 @@
-#include "terrain.h"
+﻿#include "terrain.h"
 #include "object.h"
 
 HeightMapImage::HeightMapImage(const wstring& fileName, INT width, INT length, XMFLOAT3 scale)

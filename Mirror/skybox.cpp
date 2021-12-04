@@ -1,4 +1,4 @@
-#include "skybox.h"
+﻿#include "skybox.h"
 
 Skybox::Skybox(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature) : m_faces{ new GameObject[6] }
 {

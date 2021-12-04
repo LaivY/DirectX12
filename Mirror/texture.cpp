@@ -1,4 +1,4 @@
-#include "texture.h"
+﻿#include "texture.h"
 
 void Texture::LoadTextureFile(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, UINT rootParameterIndex, const wstring& fileName)
 {
