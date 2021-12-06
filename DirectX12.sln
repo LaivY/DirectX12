@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "08.Mirror", "Mirror\Mirror.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FBXLoader", "FBXLoader\FBXLoader.vcxproj", "{783676D0-F76B-4CBC-A802-3D5E8B9BD408}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "09.Shadow", "Shadow\Shadow.vcxproj", "{3821769F-944A-4688-88B5-39760722DBF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -101,6 +103,14 @@ Global
 		{783676D0-F76B-4CBC-A802-3D5E8B9BD408}.Release|x64.Build.0 = Release|x64
 		{783676D0-F76B-4CBC-A802-3D5E8B9BD408}.Release|x86.ActiveCfg = Release|Win32
 		{783676D0-F76B-4CBC-A802-3D5E8B9BD408}.Release|x86.Build.0 = Release|Win32
+		{3821769F-944A-4688-88B5-39760722DBF0}.Debug|x64.ActiveCfg = Debug|x64
+		{3821769F-944A-4688-88B5-39760722DBF0}.Debug|x64.Build.0 = Debug|x64
+		{3821769F-944A-4688-88B5-39760722DBF0}.Debug|x86.ActiveCfg = Debug|Win32
+		{3821769F-944A-4688-88B5-39760722DBF0}.Debug|x86.Build.0 = Debug|Win32
+		{3821769F-944A-4688-88B5-39760722DBF0}.Release|x64.ActiveCfg = Release|x64
+		{3821769F-944A-4688-88B5-39760722DBF0}.Release|x64.Build.0 = Release|x64
+		{3821769F-944A-4688-88B5-39760722DBF0}.Release|x86.ActiveCfg = Release|Win32
+		{3821769F-944A-4688-88B5-39760722DBF0}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

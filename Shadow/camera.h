@@ -5,15 +5,23 @@
 #define MAX_PITCH +60
 #define MIN_PITCH -80
 
+struct cbCamera
+{
+	XMFLOAT4X4	viewMatrix;
+	XMFLOAT4X4	projMatrix;
+	XMFLOAT3	eye;
+};
+
 class Camera
 {
 public:
 	Camera();
-	~Camera() = default;
+	~Camera();
 
 	virtual void Update(FLOAT deltaTime);
 	void Move(const XMFLOAT3& shift);
 	virtual void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
+	void CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList);
 
 	void SetViewMatrix(const XMFLOAT4X4& viewMatrix) { m_viewMatrix = viewMatrix; }
@@ -31,19 +39,22 @@ public:
 	XMFLOAT3 GetUp() const { return m_up; }
 
 protected:
-	XMFLOAT4X4			m_viewMatrix;	// 뷰변환 행렬
-	XMFLOAT4X4			m_projMatrix;	// 투영변환 행렬
+	XMFLOAT4X4				m_viewMatrix;	// 뷰변환 행렬
+	XMFLOAT4X4				m_projMatrix;	// 투영변환 행렬
 
-	XMFLOAT3			m_eye;			// 카메라 위치
-	XMFLOAT3			m_at;			// 카메라가 바라보는 방향
-	XMFLOAT3			m_up;			// 카메라 Up벡터
+	XMFLOAT3				m_eye;			// 카메라 위치
+	XMFLOAT3				m_at;			// 카메라가 바라보는 방향
+	XMFLOAT3				m_up;			// 카메라 Up벡터
 
-	FLOAT				m_roll;			// x축 회전각
-	FLOAT				m_pitch;		// y축 회전각
-	FLOAT				m_yaw;			// z축 회전각
+	FLOAT					m_roll;			// x축 회전각
+	FLOAT					m_pitch;		// y축 회전각
+	FLOAT					m_yaw;			// z축 회전각
 
-	shared_ptr<Player>	m_player;		// 플레이어
-	HeightMapTerrain*	m_terrain;		// 카메라가 위치해있는 지형
+	shared_ptr<Player>		m_player;		// 플레이어
+	HeightMapTerrain*		m_terrain;		// 카메라가 위치해있는 지형
+
+	ComPtr<ID3D12Resource>	m_cbCamera;		// 상수 버퍼
+	cbCamera*				m_pcbCamera;	// 상수 버퍼 포인터
 };
 
 class ThirdPersonCamera : public Camera

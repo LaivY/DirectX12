@@ -1,3 +1,6 @@
+#define MAX_LIGHT       1
+#define MAX_MATERIAL    1
+
 cbuffer cbGameObject : register(b0)
 {
     matrix worldMatrix;
@@ -7,7 +10,36 @@ cbuffer cbCamera : register(b1)
 {
     matrix viewMatrix;
     matrix projMatrix;
-    float3 cameraPosition;
+    float3 eye;
+}
+
+struct Light
+{
+    float3  strength; 
+    float   fallOffStart;
+    float3  direction;
+    float   fallOffEnd;
+    float3  position;
+    bool    isActivate;
+    int     type;
+    float3  padding;
+};
+
+struct Material
+{
+    float4  diffuseAlbedo;
+    float3  fresnelR0;
+    float   shininess;
+};
+
+cbuffer cbLights : register(b2)
+{
+    Light lights[MAX_LIGHT];
+}
+
+cbuffer cbMaterial : register(b3)
+{
+    Material materials[MAX_MATERIAL];
 }
 
 // --------------------------------------

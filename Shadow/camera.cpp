@@ -1,11 +1,15 @@
 ﻿#include "camera.h"
 
 Camera::Camera() : m_eye{ 0.0f, 0.0f, 0.0f }, m_at{ 0.0f, 0.0f, 1.0f }, m_up{ 0.0f, 1.0f, 0.0f },
-				   //m_u{ 1.0f, 0.0f, 0.0f }, m_v{ 0.0f, 1.0f, 0.0f }, m_n{ 0.0f, 0.0f, 1.0f },
-				   m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_terrain{ nullptr }
+				   m_roll{ 0.0f }, m_pitch{ 0.0f }, m_yaw{ 0.0f }, m_terrain{ nullptr }, m_pcbCamera{ nullptr }
 {
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&m_projMatrix, XMMatrixIdentity());
+}
+
+Camera::~Camera()
+{
+	if (m_cbCamera) m_cbCamera->Unmap(0, NULL);
 }
 
 void Camera::Update(FLOAT deltaTime)
@@ -14,14 +18,23 @@ void Camera::Update(FLOAT deltaTime)
 	XMStoreFloat4x4(&m_viewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&m_eye), XMLoadFloat3(&Vector3::Add(m_eye, m_at)), XMLoadFloat3(&m_up)));
 }
 
+void Camera::CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
+{
+	ComPtr<ID3D12Resource> dummy;
+	UINT cbCameraByteSize{ ((sizeof(cbCamera) + 255) & ~255) };
+	m_cbCamera = CreateBufferResource(device, commandList, NULL, cbCameraByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
+	m_cbCamera->Map(0, NULL, reinterpret_cast<void**>(&m_pcbCamera));
+}
+
 void Camera::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
-	// DIRECTX는 행우선(row-major), HLSL는 열우선(column-major)
+	// DirectX는 행우선(row-major), HLSL는 열우선(column-major)
 	// 행렬이 셰이더로 넘어갈 때 자동으로 전치 행렬로 변환된다.
-	// 그래서 셰이더에 전치 행렬을 넘겨주면 DIRECTX의 곱셈 순서와 동일하게 계산할 수 있다.
-	commandList->SetGraphicsRoot32BitConstants(1, 16, &Matrix::Transpose(m_viewMatrix), 0);
-	commandList->SetGraphicsRoot32BitConstants(1, 16, &Matrix::Transpose(m_projMatrix), 16);
-	commandList->SetGraphicsRoot32BitConstants(1, 3, &GetEye(), 32);
+	// 그래서 셰이더에 전치 행렬을 넘겨주면 DirectX의 곱셈 순서와 동일하게 계산할 수 있다.
+	m_pcbCamera->viewMatrix = Matrix::Transpose(m_viewMatrix);
+	m_pcbCamera->projMatrix = Matrix::Transpose(m_projMatrix);
+	m_pcbCamera->eye = GetEye();
+	commandList->SetGraphicsRootConstantBufferView(1, m_cbCamera->GetGPUVirtualAddress());
 }
 
 void Camera::Move(const XMFLOAT3& shift)

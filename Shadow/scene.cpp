@@ -34,10 +34,20 @@ shared_ptr<Texture> ResourceManager::GetTexture(const string& key) const
 
 // --------------------------------------
 
+Scene::~Scene()
+{
+	if (m_cbLights) m_cbLights->Unmap(0, NULL);
+	if (m_cbMaterials) m_cbMaterials->Unmap(0, NULL);
+}
+
 void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio)
 {
 	// 리소스매니저 생성
 	m_resourceManager = make_unique<ResourceManager>();
+
+	// 조명, 재질 생성
+	CreateShaderVariable(device, commandList);
+	CreateLightAndMeterial();
 
 	// 메쉬 생성
 	auto tankMesh{ make_shared<Mesh>(device, commandList, sPATH("Tank.obj")) };
@@ -58,6 +68,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto stencilShader{ make_shared<StencilShader>(device, rootSignature) };
 	auto mirrorShader{ make_shared<MirrorShader>(device, rootSignature) };
 	auto mirrorTextureShader{ make_shared<MirrorTextureShader>(device, rootSignature) };
+	auto shadowShader{ make_shared<ShadowShader>(device, rootSignature) };
 
 	// 텍스쳐 생성
 	auto rockTexture{ make_shared<Texture>() };
@@ -93,9 +104,6 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	mirrorTexture->CreateSrvDescriptorHeap(device);
 	mirrorTexture->CreateShaderResourceView(device);
 
-	// 섀도우맵 생성
-	auto shadowTexture{ make_shared<ShadowMap>(device, 800, 800) };
-
 	// 리소스매니저에 리소스 추가
 	m_resourceManager->AddMesh("TANK", tankMesh);
 	m_resourceManager->AddMesh("CUBE", cubeMesh);
@@ -114,6 +122,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddShader("STENCIL", stencilShader);
 	m_resourceManager->AddShader("MIRROR", mirrorShader);
 	m_resourceManager->AddShader("MIRRORTEXTURE", mirrorTextureShader);
+	m_resourceManager->AddShader("SHADOW", shadowShader);
 
 	m_resourceManager->AddTexture("ROCK", rockTexture);
 	m_resourceManager->AddTexture("TERRAIN", terrainTexture);
@@ -121,10 +130,13 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddTexture("SMOKE", smokeTexture);
 	m_resourceManager->AddTexture("MIRROR", mirrorTexture);
 	m_resourceManager->AddTexture("INDOOR", indoorTexture);
-	m_resourceManager->AddTexture("SHADOW", shadowTexture);
+
+	// 그림자맵 생성
+	//m_shadowMap = make_unique<ShadowMap>(device, 800, 800);
 
 	// 카메라 생성
 	auto camera{ make_shared<ThirdPersonCamera>() };
+	camera->CreateShaderVariable(device, commandList);
 	SetCamera(camera);
 
 	// 카메라 투영 행렬 설정
@@ -301,10 +313,50 @@ void Scene::OnUpdate(FLOAT deltaTime)
 		particle->Update(deltaTime);
 }
 
+void Scene::CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
+{
+	ComPtr<ID3D12Resource> dummy;
+	UINT cbLightByteSize{ ((sizeof(Lights) + 255) & ~255) };
+	m_cbLights = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
+	m_cbLights->Map(0, NULL, reinterpret_cast<void**>(&m_pcbLights));
+
+	UINT cbMeterialByteSize{ ((sizeof(Materials) + 255) & ~255) };
+	m_cbMaterials = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
+	m_cbMaterials->Map(0, NULL, reinterpret_cast<void**>(&m_pcbMaterials));
+}
+
+void Scene::CreateLightAndMeterial()
+{
+	m_lights = make_unique<Lights>();
+	m_lights->ligths[0].isActivate = true;
+	m_lights->ligths[0].type = DIRECTIONAL_LIGHT;
+	m_lights->ligths[0].strength = XMFLOAT3{ 1.0f, 1.0f, 1.0f };
+	m_lights->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 1.0f };
+
+	m_materials = make_unique<Materials>();
+	m_materials->meterials[0].diffuseAlbedo = XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+	m_materials->meterials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
+	m_materials->meterials[0].roughness = 0.5f;
+}
+
 void Scene::Update(FLOAT deltaTime)
 {
 	RemoveDeletedObjects();
 	UpdateObjectsTerrain();
+}
+
+void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+{
+	if (m_cbLights)
+	{
+		memcpy(m_pcbLights, m_lights.get(), sizeof(Lights));
+		commandList->SetGraphicsRootConstantBufferView(5, m_cbLights->GetGPUVirtualAddress());
+	}
+	if (m_cbMaterials)
+	{
+		memcpy(m_pcbMaterials, m_materials.get(), sizeof(Material));
+		commandList->SetGraphicsRootConstantBufferView(6, m_cbMaterials->GetGPUVirtualAddress());
+	}
 }
 
 void Scene::RemoveDeletedObjects()
@@ -393,6 +445,12 @@ void Scene::UpdateObjectsTerrain()
 
 void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
+	// 그림자맵 렌더링
+	//RenderToShadowMap(commandList);
+
+	// 씬 셰이더 변수(조명, 재질) 최신화
+	UpdateShaderVariable(commandList);
+
 	// 카메라 셰이더 변수(뷰, 투영 변환 행렬) 최신화
 	if (m_camera) m_camera->UpdateShaderVariable(commandList);
 
@@ -452,6 +510,32 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_C
 	// 파티클 렌더링
 	for (const auto& particle : m_particles)
 		particle->Render(commandList);
+}
+
+void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+{
+	if (!m_shadowMap) return;
+
+	commandList->RSSetViewports(1, &m_shadowMap->GetViewport());
+	commandList->RSSetScissorRects(1, &m_shadowMap->GetScissorRect());
+
+	// 리소스배리어 설정(깊이버퍼쓰기)
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->GetShadowMap().Get(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
+
+	// 깊이스텐실 버퍼 초기화
+	commandList->ClearDepthStencilView(m_shadowMap->GetDsv(), D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
+
+	// 렌더타겟 설정
+	commandList->OMSetRenderTargets(0, NULL, FALSE, &m_shadowMap->GetDsv());
+
+	// 카메라를 광원 위치로 이동
+	m_shadowMap->GetCamera()->UpdateShaderVariable(commandList);
+
+	// 렌더링
+	if (m_player) m_player->Render(commandList, m_resourceManager->GetShader("SHADOW"));
+	
+	// 리소스배리어 설정(셰이더에서 읽기)
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->GetShadowMap().Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
 }
 
 void Scene::ReleaseUploadBuffer()

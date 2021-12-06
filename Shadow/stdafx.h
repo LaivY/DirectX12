@@ -24,7 +24,7 @@
 using namespace std;
 using Microsoft::WRL::ComPtr;
 
-// DIRECT3D 12
+// DirectX 12
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -36,6 +36,15 @@ using Microsoft::WRL::ComPtr;
 #include <d3d12sdklayers.h>
 #include "d3dx12.h"
 using namespace DirectX;
+
+// --------------------------------------
+
+#define MAX_LIGHT           1
+#define MAX_MATERIAL        1
+#define DIRECTIONAL_LIGHT   0
+#define POINT_LIGHT         1
+
+// --------------------------------------
 
 namespace DX
 {

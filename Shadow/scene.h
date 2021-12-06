@@ -3,8 +3,38 @@
 #include "camera.h"
 #include "object.h"
 #include "player.h"
+#include "shadow.h"
 #include "skybox.h"
 #include "terrain.h"
+
+struct Light // 16바이트로 정렬
+{
+	XMFLOAT3	strength;		// 색상				:: 12
+	FLOAT		fallOffStart;	// 감쇠 시작 거리	:: 4
+	XMFLOAT3	direction;		// 방향				:: 12
+	FLOAT		fallOffEnd;		// 감쇠 끝 거리		:: 4
+	XMFLOAT3	position;		// 위치				:: 12
+	bool		isActivate;		// 활성화 여부		:: 4
+	int			type;			// 0 : 방향, 1 : 점	:: 4
+	XMFLOAT3	padding;		// 채우기용			:: 12
+};
+
+struct Material // 16바이트로 정렬
+{
+	XMFLOAT4	diffuseAlbedo;	// 분산 반사율(전체적인 색감)
+	XMFLOAT3	fresnelR0;		// 반사광
+	FLOAT		roughness;		// 표면의 거칠기
+};
+
+struct Lights
+{
+	Light ligths[MAX_LIGHT];
+};
+
+struct Materials
+{
+	Material meterials[MAX_MATERIAL];
+};
 
 class ResourceManager
 {
@@ -31,8 +61,8 @@ private:
 class Scene
 {
 public:
-	Scene() = default;
-	~Scene() = default;
+	Scene() : m_pcbLights{ nullptr }, m_pcbMaterials{ nullptr } { }
+	~Scene();
 
 	void OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio);
 	void OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime);
@@ -41,13 +71,17 @@ public:
 	void OnKeyboardEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	void OnUpdate(FLOAT deltaTime);
 
+	void CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void CreateLightAndMeterial();
+	void CreateBullet();
+
 	void Update(FLOAT deltaTime);
+	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void RemoveDeletedObjects();
 	void UpdateObjectsTerrain();
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
+	void RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void ReleaseUploadBuffer();
-
-	void CreateBullet();
 
 	void SetSkybox(unique_ptr<Skybox>& skybox);
 	void SetPlayer(const shared_ptr<Player>& player);
@@ -62,11 +96,19 @@ private:
 	unique_ptr<ResourceManager>				m_resourceManager;	// 모든 메쉬, 셰이더, 텍스쳐들
 
 	vector<unique_ptr<GameObject>>			m_gameObjects;		// 게임오브젝트
-	vector<unique_ptr<GameObject>>			m_particles;			// 반투명 객체
+	vector<unique_ptr<GameObject>>			m_particles;		// 반투명 객체
 	vector<unique_ptr<HeightMapTerrain>>	m_terrains;			// 지형
 	unique_ptr<GameObject>					m_mirror;			// 거울
 	unique_ptr<Skybox>						m_skybox;			// 스카이박스
-
+	unique_ptr<ShadowMap>					m_shadowMap;		// 그림자맵
 	shared_ptr<Player>						m_player;			// 플레이어
 	shared_ptr<Camera>						m_camera;			// 카메라
+
+	unique_ptr<Lights>						m_lights;			// 조명
+	ComPtr<ID3D12Resource>					m_cbLights;			// 조명 상수 버퍼
+	Lights*									m_pcbLights;		// 조명 상수 버퍼 포인터
+
+	unique_ptr<Materials>					m_materials;		// 재질
+	ComPtr<ID3D12Resource>					m_cbMaterials;		// 재질 상수 버퍼
+	Materials*								m_pcbMaterials;		// 재질 상수 버퍼 포인터
 };

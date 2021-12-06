@@ -53,7 +53,7 @@ void GSBillboardMain(point VSBillboardOutput input[1], uint primID : SV_Primitiv
 {
     // y축으로만 회전하는 빌보드
     float3 up = float3(0.0f, 1.0f, 0.0f);
-    float3 look = cameraPosition - input[0].position.xyz;
+    float3 look = eye - input[0].position.xyz;
     look.y = 0.0f;
     look = normalize(look);
     float3 right = cross(up, look);
@@ -126,7 +126,7 @@ VSTerrainOutput VSTerrainTessMain(VSTerrainInput input)
 
 float CalculateTessFactor(float3 f3Position)
 {   
-    float fDistToCamera = distance(f3Position, cameraPosition);
+    float fDistToCamera = distance(f3Position, eye);
     float s = saturate(fDistToCamera / 75.0f);
     return lerp(64.0f, 3.0f, s);
 }
