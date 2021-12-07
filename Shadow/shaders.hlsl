@@ -1,4 +1,4 @@
-#include "header.hlsl"
+#include "common.hlsl"
 
 Texture2D g_texture                     : register(t0);
 Texture2D g_detailTexture               : register(t1);
@@ -230,4 +230,48 @@ float4 PSTerrainTessMain(DSOutput pin) : SV_TARGET
 float4 PSTerrainTessWireMain(DSOutput pin) : SV_TARGET
 {
     return float4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+// --------------------------------------
+
+VSModelOutput VSModelMain(VSModelInput input)
+{
+    VSModelOutput output;
+    output.position = mul(input.position, worldMatrix);
+    output.position = mul(output.position, viewMatrix);
+    output.position = mul(output.position, projMatrix);
+    output.normal = mul(float4(input.normal, 0.0f), worldMatrix).xyz;
+    output.color = input.color;
+    return output;
+}
+
+float4 PSModelMain(VSModelOutput input) : SV_TARGET
+{   
+    // 노말 벡터 정규화
+    input.normal = normalize(input.normal);
+    
+    // 조명 -> 눈 단위 벡터
+    float3 toEye = normalize(eye - input.position.xyz);
+    
+    // 간접 조명(씬 전체에 비치는 간접광이 있어야되는데... 나는 안했음)
+    float4 ambient = /* gAmbientLight */materials[0].diffuseAlbedo;
+    
+    // 최종 조명 색깔
+    float4 litColor = ambient;
+    
+    // 모든 조명 계산
+    for (int i = 0; i < MAX_LIGHT; ++i)
+    {
+        if (lights[i].type == DIRECTIONAL_LIGHT)
+        {
+            litColor += float4(ComputeDirectionalLight(lights[0], materials[0], input.normal, toEye), 0.0f);
+        }
+        else if (lights[i].type == POINT_LIGHT)
+        {
+            /* 점 조명 처리하는 코드 */
+        }
+    }
+    
+    litColor.a = materials[0].diffuseAlbedo.a;
+    return litColor;
 }

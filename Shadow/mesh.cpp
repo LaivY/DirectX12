@@ -9,47 +9,57 @@ Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsComman
 }
 
 Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const string& fileName, D3D_PRIMITIVE_TOPOLOGY primitiveTopology)
-	: m_primitiveTopology{ primitiveTopology }
+	: m_nIndices{ 0 }, m_primitiveTopology{ primitiveTopology }
 {
-	vector<ColorVertex> vertices;
-	vector<UINT> indices;
+	vector<ModelVertex> vertices;
+	vector<XMFLOAT3> positions;
+	vector<XMFLOAT3> normals;
+	vector<XMFLOAT4> colors;
 
 	ifstream file{ fileName };
-
 	if (!file)
 	{
 		cout << "오류!" << endl;
+		exit(-1);
 	}
 
 	string line;
 	while (getline(file, line))
 	{
 		stringstream ss{ line };
-		vector<string> data{ istream_iterator<string>(ss), {} };
-		if (data.empty()) continue;
-		if (data[0] == "v")
+		if (line[0] == 'v' && line[1] == 'n')
 		{
-			XMFLOAT3 position{
-				strtof(data[1].c_str(), NULL),
-				strtof(data[2].c_str(), NULL),
-				strtof(data[3].c_str(), NULL)
-			};
-			XMFLOAT4 color{
-				static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-				static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-				static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-				1.0f };
-			vertices.emplace_back(position, color);
+			char type;			ss >> type >> type;
+			XMFLOAT3 normal;	ss >> normal.x >> normal.y >> normal.z;
+			normals.push_back(normal);
 		}
-		else if (data[0] == "f")
+		else if (line[0] == 'v')
 		{
-			indices.push_back(atoi(data[1].c_str()) - 1);
-			indices.push_back(atoi(data[2].c_str()) - 1);
-			indices.push_back(atoi(data[3].c_str()) - 1);
+			char type;		ss >> type;
+			XMFLOAT3 pos;	ss >> pos.x >> pos.y >> pos.z;
+			positions.push_back(pos);
+		}
+		else if (line[0] == 'f')
+		{
+			replace(line.begin(), line.end(), '/', ' ');
+			ss = stringstream{ line };
+
+			char type; ss >> type;
+			for (int i = 0; i < 3; ++i)
+			{
+				int vi, vni; ss >> vi >> vni;
+				XMFLOAT4 color
+				{
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					1.0f
+				};
+				vertices.emplace_back(positions[vi - 1], normals[vni - 1], color);
+			}
 		}
 	}
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(ColorVertex), vertices.size());
-	CreateIndexBuffer(device, commandList, indices.data(), indices.size());
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(ModelVertex), vertices.size());
 }
 
 void Mesh::Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const

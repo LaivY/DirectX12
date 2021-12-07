@@ -50,7 +50,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	CreateLightAndMeterial();
 
 	// 메쉬 생성
-	auto tankMesh{ make_shared<Mesh>(device, commandList, sPATH("Tank.obj")) };
+	auto tankMesh{ make_shared<Mesh>(device, commandList, sPATH("tank.obj")) };
 	auto cubeMesh{ make_shared<CubeMesh>(device, commandList, 0.5f, 0.5f, 0.5f) };
 	auto indoorMesh{ make_shared<ReverseCubeMesh>(device, commandList, 15.0f, 15.0f, 15.0f) };
 	auto bulletMesh{ make_shared<CubeMesh>(device, commandList, 0.1f, 0.1f, 0.1f) };
@@ -68,6 +68,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto stencilShader{ make_shared<StencilShader>(device, rootSignature) };
 	auto mirrorShader{ make_shared<MirrorShader>(device, rootSignature) };
 	auto mirrorTextureShader{ make_shared<MirrorTextureShader>(device, rootSignature) };
+	auto modelShader{ make_shared<ModelShader>(device, rootSignature) };
 	auto shadowShader{ make_shared<ShadowShader>(device, rootSignature) };
 
 	// 텍스쳐 생성
@@ -122,6 +123,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddShader("STENCIL", stencilShader);
 	m_resourceManager->AddShader("MIRROR", mirrorShader);
 	m_resourceManager->AddShader("MIRRORTEXTURE", mirrorTextureShader);
+	m_resourceManager->AddShader("MODEL", modelShader);
 	m_resourceManager->AddShader("SHADOW", shadowShader);
 
 	m_resourceManager->AddTexture("ROCK", rockTexture);
@@ -147,7 +149,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	// 플레이어 생성
 	auto player{ make_shared<Player>() };
 	player->SetMesh(m_resourceManager->GetMesh("TANK"));
-	player->SetShader(m_resourceManager->GetShader("COLOR"));
+	player->SetShader(m_resourceManager->GetShader("MODEL"));
 	SetPlayer(player);
 
 	// 카메라, 플레이어 서로 설정
@@ -331,12 +333,12 @@ void Scene::CreateLightAndMeterial()
 	m_lights->ligths[0].isActivate = true;
 	m_lights->ligths[0].type = DIRECTIONAL_LIGHT;
 	m_lights->ligths[0].strength = XMFLOAT3{ 1.0f, 1.0f, 1.0f };
-	m_lights->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 1.0f };
+	m_lights->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 0.0f };
 
 	m_materials = make_unique<Materials>();
-	m_materials->meterials[0].diffuseAlbedo = XMFLOAT4{ 1.0f, 1.0f, 1.0f, 1.0f };
+	m_materials->meterials[0].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
 	m_materials->meterials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
-	m_materials->meterials[0].roughness = 0.5f;
+	m_materials->meterials[0].roughness = 0.05f;
 }
 
 void Scene::Update(FLOAT deltaTime)

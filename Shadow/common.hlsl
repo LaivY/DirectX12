@@ -1,5 +1,8 @@
+#include "lighting.hlsl"
 #define MAX_LIGHT       1
 #define MAX_MATERIAL    1
+
+// --------------------------------------
 
 cbuffer cbGameObject : register(b0)
 {
@@ -12,25 +15,6 @@ cbuffer cbCamera : register(b1)
     matrix projMatrix;
     float3 eye;
 }
-
-struct Light
-{
-    float3  strength; 
-    float   fallOffStart;
-    float3  direction;
-    float   fallOffEnd;
-    float3  position;
-    bool    isActivate;
-    int     type;
-    float3  padding;
-};
-
-struct Material
-{
-    float4  diffuseAlbedo;
-    float3  fresnelR0;
-    float   shininess;
-};
 
 cbuffer cbLights : register(b2)
 {
@@ -118,4 +102,18 @@ struct DSOutput
     float4 position : SV_POSITION;
     float2 uv0      : TEXCOORD0;
     float2 uv1      : TEXCOORD1;
+};
+
+struct VSModelInput
+{
+    float4 position : POSITION;
+    float3 normal   : NORMAL;
+    float4 color    : COLOR;
+};
+
+struct VSModelOutput
+{
+    float4 position : SV_POSITION;
+    float3 normal   : NORMAL;
+    float4 color    : COLOR;
 };

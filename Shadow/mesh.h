@@ -37,6 +37,14 @@ struct Texture2Vertex : Vertex
 	XMFLOAT2 m_uv1;
 };
 
+struct ModelVertex : Vertex
+{
+	ModelVertex(const XMFLOAT3& position, const XMFLOAT3& normal, const XMFLOAT4 color) : Vertex{ position }, m_normal{ normal }, m_color{ color } { }
+
+	XMFLOAT3 m_normal;
+	XMFLOAT4 m_color;
+};
+
 class Mesh
 {
 public:

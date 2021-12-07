@@ -85,6 +85,13 @@ public:
 	~MirrorTextureShader() = default;
 };
 
+class ModelShader : public Shader
+{
+public:
+	ModelShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature);
+	~ModelShader() = default;
+};
+
 class ShadowShader : public Shader
 {
 public:
