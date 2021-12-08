@@ -9,37 +9,29 @@
 
 struct Light // 16바이트로 정렬
 {
-	XMFLOAT3	strength;		// 색상				:: 12
-	FLOAT		fallOffStart;	// 감쇠 시작 거리	:: 4
-	XMFLOAT3	direction;		// 방향				:: 12
-	FLOAT		fallOffEnd;		// 감쇠 끝 거리		:: 4
-	XMFLOAT3	position;		// 위치				:: 12
-	bool		isActivate;		// 활성화 여부		:: 4
-	int			type;			// 0 : 방향, 1 : 점	:: 4
-	XMFLOAT3	padding;		// 채우기용			:: 12
+	XMFLOAT3	strength;					// 색상					:: 12
+	FLOAT		fallOffStart;				// 감쇠 시작 거리		:: 4
+	XMFLOAT3	direction;					// 방향					:: 12
+	FLOAT		fallOffEnd;					// 감쇠 끝 거리			:: 4
+	XMFLOAT3	position;					// 위치					:: 12
+	bool		isActivate;					// 활성화 여부			:: 4
+	int			type;						// 0 : 방향, 1 : 점		:: 4
+	XMFLOAT3	padding;					// 채우기용				:: 12
 };
 
 struct Material // 16바이트로 정렬
 {
-	XMFLOAT4	diffuseAlbedo;	// 분산 반사율(전체적인 색감)
-	XMFLOAT3	fresnelR0;		// 반사광
-	FLOAT		roughness;		// 표면의 거칠기
-};
-
-struct Lights
-{
-	Light		ligths[MAX_LIGHT];
-};
-
-struct Materials
-{
-	Material	meterials[MAX_MATERIAL];
+	XMFLOAT4	diffuseAlbedo;				// 분산 반사율(전체적인 색감)
+	XMFLOAT3	fresnelR0;					// 반사광
+	FLOAT		roughness;					// 표면의 거칠기
 };
 
 struct cbScene
 {
-	Light		ligths[MAX_LIGHT];
-	Material	meterials[MAX_MATERIAL];
+	Light		ligths[MAX_LIGHT];			// 조명들
+	Material	materials[MAX_MATERIAL];	// 재질들
+	XMFLOAT4X4	lightViewMatrix;			// 그림자를 만드는 조명 뷰 변환 행렬
+	XMFLOAT4X4	lightProjMatrix;			// 그림자를 만드는 조명 투영 변환 행렬
 };
 
 class ResourceManager
@@ -67,7 +59,7 @@ private:
 class Scene
 {
 public:
-	Scene() : m_pcbScene{ nullptr } { }
+	Scene();
 	~Scene();
 
 	void OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio);
@@ -85,7 +77,7 @@ public:
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void RemoveDeletedObjects();
 	void UpdateObjectsTerrain();
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
+	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
 	void RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void ReleaseUploadBuffer();
 
@@ -99,6 +91,9 @@ public:
 	HeightMapTerrain* GetTerrain(FLOAT x, FLOAT z) const;
 
 private:
+	D3D12_VIEWPORT							m_viewport;
+	D3D12_RECT								m_scissorRect;
+
 	unique_ptr<ResourceManager>				m_resourceManager;	// 모든 메쉬, 셰이더, 텍스쳐들
 
 	vector<unique_ptr<GameObject>>			m_gameObjects;		// 게임오브젝트

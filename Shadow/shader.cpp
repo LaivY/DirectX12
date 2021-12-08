@@ -526,13 +526,12 @@ ShadowShader::ShadowShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 #endif
 
 	// 픽셀 셰이더는 필요없음
-	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSModelMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
+	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
 	// 깊이값 바이어스 설정

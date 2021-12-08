@@ -25,20 +25,23 @@ using namespace std;
 using Microsoft::WRL::ComPtr;
 
 // DirectX 12
-#pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
-#include <d3d12.h>
 #include <dxgi1_6.h>
-#include <D3Dcompiler.h>
-#include <DirectXMath.h>
+#include <d3d12.h>
 #include <d3d12sdklayers.h>
+#include <d3dcompiler.h>
+#include <DirectXMath.h>
+#include <DirectXCollision.h>
 #include "d3dx12.h"
 using namespace DirectX;
 
 // --------------------------------------
 
+#define SCREEN_WIDTH        1280
+#define SCREEN_HEIGHT       720
 #define MAX_LIGHT           1
 #define MAX_MATERIAL        1
 #define DIRECTIONAL_LIGHT   0

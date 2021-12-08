@@ -173,10 +173,10 @@ HeightMapTerrain::HeightMapTerrain(const ComPtr<ID3D12Device>& device, const Com
 		}
 }
 
-void HeightMapTerrain::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+void HeightMapTerrain::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const shared_ptr<Shader>& shader) const
 {
 	for (const auto& block : m_blocks)
-		block->Render(commandList);
+		block->Render(commandList, shader);
 }
 
 void HeightMapTerrain::Move(const XMFLOAT3& shift)

@@ -49,7 +49,7 @@ public:
 		const shared_ptr<Shader>& shader, const shared_ptr<Texture>& texture, INT width, INT length, INT blockWidth, INT blockLength, XMFLOAT3 scale);
 	~HeightMapTerrain() = default;
 
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const shared_ptr<Shader>& shader = nullptr) const;
 	void Move(const XMFLOAT3& shift);
 	void Rotate(FLOAT roll, FLOAT pitch, FLOAT yaw);
 

@@ -34,6 +34,14 @@ shared_ptr<Texture> ResourceManager::GetTexture(const string& key) const
 
 // --------------------------------------
 
+Scene::Scene()
+	: m_viewport{ 0.0f, 0.0f, static_cast<float>(SCREEN_WIDTH), static_cast<float>(SCREEN_HEIGHT), 0.0f, 1.0f },
+	  m_scissorRect{ 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT },
+	  m_pcbScene{ nullptr }
+{
+
+}
+
 Scene::~Scene()
 {
 	if (m_cbScene) m_cbScene->Unmap(0, NULL);
@@ -317,17 +325,9 @@ void Scene::OnUpdate(FLOAT deltaTime)
 void Scene::CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
 	ComPtr<ID3D12Resource> dummy;
-	UINT cbSceneByteSize{ (sizeof(Lights) + 255) & ~255 };
+	UINT cbSceneByteSize{ (sizeof(cbScene) + 255) & ~255 };
 	m_cbScene = CreateBufferResource(device, commandList, NULL, cbSceneByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
 	m_cbScene->Map(0, NULL, reinterpret_cast<void**>(&m_pcbScene));
-
-	//UINT cbLightByteSize{ ((sizeof(Lights) + 255) & ~255) };
-	//m_cbLights = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
-	//m_cbLights->Map(0, NULL, reinterpret_cast<void**>(&m_pcbLights));
-
-	//UINT cbMeterialByteSize{ ((sizeof(Materials) + 255) & ~255) };
-	//m_cbMaterials = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
-	//m_cbMaterials->Map(0, NULL, reinterpret_cast<void**>(&m_pcbMaterials));
 }
 
 void Scene::CreateLightAndMeterial()
@@ -339,9 +339,9 @@ void Scene::CreateLightAndMeterial()
 	m_cbSceneData->ligths[0].strength = XMFLOAT3{ 1.0f, 1.0f, 1.0f };
 	m_cbSceneData->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 0.0f };
 
-	m_cbSceneData->meterials[0].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
-	m_cbSceneData->meterials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
-	m_cbSceneData->meterials[0].roughness = 0.05f;
+	m_cbSceneData->materials[0].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
+	m_cbSceneData->materials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
+	m_cbSceneData->materials[0].roughness = 0.05f;
 }
 
 void Scene::Update(FLOAT deltaTime)
@@ -354,6 +354,36 @@ void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comman
 {
 	if (m_cbScene)
 	{
+		// 씬을 모두 감싸는 바운딩 구
+		BoundingSphere sceneSphere{ XMFLOAT3{ 0.0f, 0.0f, 0.0f }, 150.0f };
+
+		// 메쉬 정점을 조명 좌표계로 바꿔주는 행렬 계산
+		XMFLOAT3 lightDir{ 1.0f, -1.0f, 0.0f };
+		XMFLOAT3 lightPos{ Vector3::Mul(lightDir, -5.0f * sceneSphere.Radius) };
+		XMFLOAT3 targetPos{ sceneSphere.Center };
+		XMFLOAT3 lightUp{ 0.0f, 1.0f, 0.0f };
+
+		XMFLOAT4X4 lightViewMatrix; 
+		XMStoreFloat4x4(&lightViewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&lightPos), XMLoadFloat3(&targetPos), XMLoadFloat3(&lightUp)));
+
+		// 조명 좌표계에서의 씬 구 원점
+		XMFLOAT3 sphereCenterLS{ Vector3::TransformCoord(sceneSphere.Center, lightViewMatrix) };
+
+		// 직교 투영 행렬 설정
+		float l = sphereCenterLS.x - sceneSphere.Radius;
+		float b = sphereCenterLS.y - sceneSphere.Radius;
+		float n = sphereCenterLS.z - sceneSphere.Radius;
+		float r = sphereCenterLS.x + sceneSphere.Radius;
+		float t = sphereCenterLS.y + sceneSphere.Radius;
+		float f = sphereCenterLS.z + sceneSphere.Radius;
+		XMFLOAT4X4 lightProjMatrix;
+		XMStoreFloat4x4(&lightProjMatrix, XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f));
+
+		// 상수 버퍼 데이터에 저장
+		m_cbSceneData->lightViewMatrix = lightViewMatrix;
+		m_cbSceneData->lightProjMatrix = lightProjMatrix;
+
+		// 셰이더로 복사
 		memcpy(m_pcbScene, m_cbSceneData.get(), sizeof(cbScene));
 		commandList->SetGraphicsRootConstantBufferView(5, m_cbScene->GetGPUVirtualAddress());
 	}
@@ -443,10 +473,15 @@ void Scene::UpdateObjectsTerrain()
 	}
 }
 
-void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
+void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
 	// 그림자맵 렌더링
-	//RenderToShadowMap(commandList);
+	RenderToShadowMap(commandList);
+
+	// 뷰포트, 가위사각형, 렌더타겟 복구
+	commandList->RSSetViewports(1, &m_viewport);
+	commandList->RSSetScissorRects(1, &m_scissorRect);
+	commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
 
 	// 씬 셰이더 변수(조명, 재질) 최신화
 	UpdateShaderVariable(commandList);
@@ -516,6 +551,10 @@ void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandLi
 {
 	if (!m_shadowMap) return;
 
+	ID3D12DescriptorHeap* ppHeaps[] = { m_shadowMap->GetSrvHeap().Get() };
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	commandList->SetGraphicsRootDescriptorTable(4, m_shadowMap->GetGpuSrvHandle());
+
 	commandList->RSSetViewports(1, &m_shadowMap->GetViewport());
 	commandList->RSSetScissorRects(1, &m_shadowMap->GetScissorRect());
 
@@ -528,11 +567,10 @@ void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandLi
 	// 렌더타겟 설정
 	commandList->OMSetRenderTargets(0, NULL, FALSE, &m_shadowMap->GetCpuDsvHandle());
 
-	// 카메라를 광원 위치로 이동
-	//m_shadowMap->GetCamera()->UpdateShaderVariable(commandList);
-
 	// 렌더링
 	if (m_player) m_player->Render(commandList, m_resourceManager->GetShader("SHADOW"));
+	for (const auto& terrain : m_terrains)
+		terrain->Render(commandList, m_resourceManager->GetShader("SHADOW"));
 	
 	// 리소스배리어 설정(셰이더에서 읽기)
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->GetShadowMap().Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));

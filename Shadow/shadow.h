@@ -14,6 +14,7 @@ public:
 	D3D12_VIEWPORT GetViewport() const { return m_viewport; }
 	D3D12_RECT GetScissorRect() const { return m_scissorRect; }
 
+	ComPtr<ID3D12DescriptorHeap> GetSrvHeap() const { return m_srvHeap; }
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuSrvHandle() const { return m_cpuSrvHandle; }
 	CD3DX12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle() const { return m_gpuSrvHandle; }
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuDsvHandle() const { return m_cpuDsvHandle; }

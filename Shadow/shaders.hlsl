@@ -1,11 +1,5 @@
 #include "common.hlsl"
 
-Texture2D g_texture                     : register(t0);
-Texture2D g_detailTexture               : register(t1);
-texture2D g_shadowMap                   : register(t2);
-SamplerState g_sampler                  : register(s0);
-SamplerComparisonState g_shadowSampler  : register(s1);
-
 VSOutput VSMain(VSInput input)
 {
     VSOutput output;
@@ -221,10 +215,12 @@ DSOutput DSTerrainTessMain(PatchTess patchTess, float2 uv : SV_DomainLocation, c
 }
 
 float4 PSTerrainTessMain(DSOutput pin) : SV_TARGET
-{
+{   
     float4 baseTextureColor = g_texture.Sample(g_sampler, pin.uv0);
     float4 detailTextureColor = g_detailTexture.Sample(g_sampler, pin.uv1);
-    return lerp(baseTextureColor, detailTextureColor, 0.4f);
+    
+    float4 texColor = lerp(baseTextureColor, detailTextureColor, 0.4f);
+    return texColor;
 }
 
 float4 PSTerrainTessWireMain(DSOutput pin) : SV_TARGET
@@ -237,21 +233,22 @@ float4 PSTerrainTessWireMain(DSOutput pin) : SV_TARGET
 VSModelOutput VSModelMain(VSModelInput input)
 {
     VSModelOutput output;
-    output.position = mul(input.position, worldMatrix);
-    output.position = mul(output.position, viewMatrix);
-    output.position = mul(output.position, projMatrix);
+    output.positionH = mul(input.position, worldMatrix);
+    output.positionW = output.positionH;
+    output.positionH = mul(output.positionH, viewMatrix);
+    output.positionH = mul(output.positionH, projMatrix);
     output.normal = mul(float4(input.normal, 0.0f), worldMatrix).xyz;
     output.color = input.color;
     return output;
 }
 
 float4 PSModelMain(VSModelOutput input) : SV_TARGET
-{   
+{
     // 노말 벡터 정규화
     input.normal = normalize(input.normal);
     
     // 조명 -> 눈 단위 벡터
-    float3 toEye = normalize(eye - input.position.xyz);
+    float3 toEye = normalize(eye - input.positionH.xyz);
     
     // 간접 조명(씬 전체에 비치는 간접광이 있어야되는데... 나는 안했음)
     float4 ambient = /* gAmbientLight */materials[0].diffuseAlbedo;
@@ -273,5 +270,12 @@ float4 PSModelMain(VSModelOutput input) : SV_TARGET
     }
     
     litColor.a = materials[0].diffuseAlbedo.a;
-    return litColor;
+    
+    // 그림자 계산
+    float4 shadowPosH = mul(input.positionW, lightViewMatrix);
+    shadowPosH = mul(shadowPosH, lightProjMatrix);
+    shadowPosH = shadowPosH * 0.5f + 0.5f;
+    float shadowFacter = CalcShadowFactor(shadowPosH);
+    
+    return litColor * shadowFacter;
 }
