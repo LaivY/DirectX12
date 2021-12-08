@@ -11,7 +11,7 @@ Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsComman
 Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const string& fileName, D3D_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_nIndices{ 0 }, m_primitiveTopology{ primitiveTopology }
 {
-	vector<ModelVertex> vertices;
+	vector<Vertex> vertices;
 	vector<XMFLOAT3> positions;
 	vector<XMFLOAT3> normals;
 	vector<XMFLOAT4> colors;
@@ -48,18 +48,19 @@ Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsComman
 			for (int i = 0; i < 3; ++i)
 			{
 				int vi, vni; ss >> vi >> vni;
-				XMFLOAT4 color
-				{
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					1.0f
-				};
-				vertices.emplace_back(positions[vi - 1], normals[vni - 1], color);
+
+				Vertex v;
+				v.position	= positions[vi - 1];
+				v.normal	= normals[vni - 1];
+				v.color.x	= static_cast<float>(rand());
+				v.color.y	= static_cast<float>(rand());
+				v.color.z	= static_cast<float>(rand());
+				v.color.w	= 1.0f;
+				vertices.push_back(v);
 			}
 		}
 	}
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(ModelVertex), vertices.size());
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Vertex), vertices.size());
 }
 
 void Mesh::Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const
@@ -129,62 +130,64 @@ CubeMesh::CubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	// 큐브 가로, 세로, 높이
 	FLOAT sx{ width }, sy{ length }, sz{ height };
 
-	// 앞면
-	vector<TextureVertex> vertices;
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	Vertex v;
+	vector<Vertex> vertices(36);
 
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	// 앞면
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 오른쪽면
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 왼쪽면
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 뒷면
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 윗면
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 밑면
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Vertex), vertices.size());
 }
 
 ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height)
@@ -196,64 +199,67 @@ ReverseCubeMesh::ReverseCubeMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	FLOAT sx{ width }, sy{ length }, sz{ height };
 
 	// 앞면
-	vector<TextureVertex> vertices;
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	Vertex v;
+	vector<Vertex> vertices(36);
 
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	// 앞면
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 오른쪽면
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 왼쪽면
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 뒷면
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 윗면
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, +sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, +sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { -sx, +sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { +sx, +sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { -sx, +sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 밑면
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, +sz }, XMFLOAT2{ 1.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, +sz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, +sz }, XMFLOAT2{ 0.0f, 0.0f });
-	vertices.emplace_back(XMFLOAT3{ -sx, -sy, -sz }, XMFLOAT2{ 1.0f, 1.0f });
-	vertices.emplace_back(XMFLOAT3{ +sx, -sy, -sz }, XMFLOAT2{ 0.0f, 1.0f });
+	v.position = { +sx, -sy, +sz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+	v.position = { -sx, -sy, -sz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+	v.position = { +sx, -sy, -sz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 
 	// 큐브 메쉬의 정점 순서를 거꾸로하면 안밖이 바뀜
 	std::reverse(vertices.begin(), vertices.end());
 
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Vertex), vertices.size());
 }
 
 TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, FLOAT width, FLOAT length, FLOAT height, XMFLOAT3 position)
@@ -261,7 +267,8 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 	m_nIndices = 0;
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	vector<TextureVertex> vertices;
+	Vertex v;
+	vector<Vertex> vertices(6);
 	FLOAT hx{ position.x + width / 2.0f }, hy{ position.y + height / 2.0f }, hz{ position.z + length / 2.0f };
 	
 	if (width == 0.0f)
@@ -270,23 +277,23 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 		// YZ평면
 		if (position.x > 0.0f)
 		{
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 0.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, +hy, -hz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, -hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 3
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, -hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, +hz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 		}
 		else
 		{
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
+			v.position = { +hx, +hy, -hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, -hz }, XMFLOAT2{ 0.0f, 1.0f }); // 2
+			v.position = { +hx, +hy, -hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, -hz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 		}
 	}
 	else if (length == 0.0f)
@@ -294,23 +301,23 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 		// XY평면
 		if (position.z > 0.0f)
 		{
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+			v.position = { -hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
-			vertices.emplace_back(XMFLOAT3{ -hx, -hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 3
+			v.position = { -hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+			v.position = { -hx, -hy, +hz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 		}
 		else
 		{
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ -hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { -hx, +hy, +hz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+			v.position = { -hx, -hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ -hx, -hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 3
-			vertices.emplace_back(XMFLOAT3{ +hx, -hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 2
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { -hx, -hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+			v.position = { +hx, -hy, +hz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 		}
 	}
 	else if (height == 0.0f)
@@ -318,27 +325,27 @@ TextureRectMesh::TextureRectMesh(const ComPtr<ID3D12Device>& device, const ComPt
 		// XZ평면
 		if (position.y > 0.0f)
 		{
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 0.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
+			v.position = { -hx, +hy, -hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, +hy, -hz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
 
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, -hz }, XMFLOAT2{ 0.0f, 0.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 1.0f }); // 2
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 1.0f }); // 3
+			v.position = { -hx, +hy, -hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+			v.position = { -hx, +hy, +hz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
 		}
 		else
 		{
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, -hz }, XMFLOAT2{ 0.0f, 1.0f }); // 0
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 3
+			v.position = { +hx, +hy, -hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+			v.position = { -hx, +hy, -hz }; v.uv0 = { 0.0f, 1.0f }; vertices.push_back(v);
+			v.position = { -hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
 
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, -hz }, XMFLOAT2{ 1.0f, 1.0f }); // 1
-			vertices.emplace_back(XMFLOAT3{ -hx, +hy, +hz }, XMFLOAT2{ 0.0f, 0.0f }); // 3
-			vertices.emplace_back(XMFLOAT3{ +hx, +hy, +hz }, XMFLOAT2{ 1.0f, 0.0f }); // 2
+			v.position = { +hx, +hy, -hz }; v.uv0 = { 1.0f, 1.0f }; vertices.push_back(v);
+			v.position = { -hx, +hy, +hz }; v.uv0 = { 0.0f, 0.0f }; vertices.push_back(v);
+			v.position = { +hx, +hy, +hz }; v.uv0 = { 1.0f, 0.0f }; vertices.push_back(v);
 		}
 	}
 
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(TextureVertex), vertices.size());
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Vertex), vertices.size());
 }
 
 BillboardMesh::BillboardMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size)
@@ -346,6 +353,8 @@ BillboardMesh::BillboardMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 	m_nIndices = 0;
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
 
-	BillboardVertex vertex{ position, size };
-	CreateVertexBuffer(device, commandList, &vertex, sizeof(BillboardVertex), 1);
+	Vertex v;
+	v.position = position;
+	v.uv0 = size;
+	CreateVertexBuffer(device, commandList, &v, sizeof(Vertex), 1);
 }

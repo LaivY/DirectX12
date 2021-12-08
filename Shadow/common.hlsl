@@ -33,53 +33,29 @@ SamplerComparisonState g_shadowSampler  : register(s1);
 
 // --------------------------------------
 
-struct VSInput
+struct VS_INPUT
 {
     float4 position : POSITION;
+    float3 normal   : NORMAL;
     float4 color    : COLOR;
+    float2 uv0      : TEXCOORD0;
+    float2 uv1      : TEXCOORD1;
 };
 
-struct VSOutput
+struct PS_INPUT
 {
-    float4 position : SV_POSITION;
-    float4 color    : COLOR;
-};
-
-struct VSBillboardInput
-{
-    float4 position : POSITION;
-    float2 size     : SIZE;
-};
-
-struct VSBillboardOutput
-{
-    float4 position : POSITION;
-    float2 size     : SIZE;
+    float4 positionH    : SV_POSITION;
+    float4 positionW    : POSITION;
+    float3 normal       : NORMAL;
+    float4 color        : COLOR;
+    float2 uv0          : TEXCOORD0;
+    float2 uv1          : TEXCOORD1;
 };
 
 struct GSBillboardOutput
 {
     float4 position : SV_POSITION;
     float2 uv       : TEXCOORD;
-};
-
-struct VSTextureInput
-{
-    float4 position : POSITION;
-    float2 uv       : TEXCOORD;
-};
-
-struct VSTextureOutput
-{
-    float4 position : SV_POSITION;
-    float2 uv       : TEXCOORD;
-};
-
-struct VSTerrainInput
-{
-    float4 position : POSITION;
-    float2 uv0      : TEXCOORD0;
-    float2 uv1      : TEXCOORD1;
 };
 
 struct VSTerrainOutput
@@ -107,21 +83,6 @@ struct DSOutput
     float4 position : SV_POSITION;
     float2 uv0      : TEXCOORD0;
     float2 uv1      : TEXCOORD1;
-};
-
-struct VSModelInput
-{
-    float4 position : POSITION;
-    float3 normal   : NORMAL;
-    float4 color    : COLOR;
-};
-
-struct VSModelOutput
-{
-    float4 positionH    : SV_POSITION;
-    float4 positionW    : POSITION0;
-    float3 normal       : NORMAL;
-    float4 color        : COLOR;
 };
 
 // --------------------------------------

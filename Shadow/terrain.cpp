@@ -71,15 +71,18 @@ HeightMapGridMesh::HeightMapGridMesh(const ComPtr<ID3D12Device>& device, const C
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 
 	// 정점 데이터 설정, 정점 버퍼 생성
-	vector<Texture2Vertex> vertices;
+	vector<Vertex> vertices;
 	for (int z = zStart; z < zStart + length; ++z)
 		for (int x = xStart; x < xStart + width; ++x)
-			vertices.emplace_back(
-				XMFLOAT3{ x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z },
-				XMFLOAT2{ (float)x / (float)heightMapImage->GetWidth(), 1.0f - ((float)z / (float)heightMapImage->GetLength()) },
-				XMFLOAT2{ (float)x / (float)scale.x * 1.5f, (float)z / (float)scale.z * 1.5f }
-			);
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Texture2Vertex), vertices.size());
+		{
+			Vertex v;
+			v.position = { x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z };
+			v.uv0 = { (float)x / (float)heightMapImage->GetWidth(), 1.0f - ((float)z / (float)heightMapImage->GetLength()) };
+			v.uv1 = { (float)x / (float)scale.x * 1.5f, (float)z / (float)scale.z * 1.5f };
+			vertices.push_back(v);
+		}
+
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Vertex), vertices.size());
 
 	// 인덱스 데이터 설정, 인덱스 버퍼 생성
 	vector<UINT> indices;
@@ -127,16 +130,18 @@ HeightMapGridTessMesh::HeightMapGridTessMesh(const ComPtr<ID3D12Device>& device,
 	float heightMapImageLength{ static_cast<float>(heightMapImage->GetLength()) };
 
 	// (-x, +z)(=좌측상단)에서부터 (+x, -z)(=우측하단)까지
-	vector<Texture2Vertex> vertices;
+	vector<Vertex> vertices;
 	for (int z = zStart + length; z >= zStart; z -= lengthStride)
 		for (int x = xStart; x <= xStart + width; x += widthStride)
-			vertices.emplace_back(
-				XMFLOAT3{ x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z },
-				XMFLOAT2{ (float)x / heightMapImageWidth, 1.0f - ((float)z / heightMapImageLength) },
-				XMFLOAT2{ (float)x / scale.x * 1.5f, (float)z / scale.z * 1.5f }
-			);
+		{
+			Vertex v;
+			v.position = { x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z };
+			v.uv0 = { (float)x / heightMapImageWidth, 1.0f - ((float)z / heightMapImageLength) };
+			v.uv1 = { (float)x / scale.x * 1.5f, (float)z / scale.z * 1.5f };
+			vertices.push_back(v);
+		}
 
-	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Texture2Vertex), vertices.size());
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(Vertex), vertices.size());
 }
 
 // --------------------------------------

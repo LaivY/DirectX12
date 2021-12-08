@@ -3,46 +3,11 @@
 
 struct Vertex
 {
-	Vertex(const XMFLOAT3& position) : m_position{ position } { }
-
-	XMFLOAT3 m_position;
-};
-
-struct ColorVertex : Vertex
-{
-	ColorVertex(const XMFLOAT3& position, const XMFLOAT4& color) : Vertex{ position }, m_color{ color } { }
-
-	XMFLOAT4 m_color;
-};
-
-struct BillboardVertex : Vertex
-{
-	BillboardVertex(const XMFLOAT3& position, const XMFLOAT2& size) : Vertex{ position }, m_size{ size } { }
-
-	XMFLOAT2 m_size;
-};
-
-struct TextureVertex : Vertex
-{
-	TextureVertex(const XMFLOAT3& position, const XMFLOAT2& uv) : Vertex{ position }, m_uv{ uv } { }
-
-	XMFLOAT2 m_uv;
-};
-
-struct Texture2Vertex : Vertex
-{
-	Texture2Vertex(const XMFLOAT3& position, const XMFLOAT2& uv0, const XMFLOAT2& uv1) : Vertex{ position }, m_uv0{ uv0 }, m_uv1{ uv1 } { };
-
-	XMFLOAT2 m_uv0;
-	XMFLOAT2 m_uv1;
-};
-
-struct ModelVertex : Vertex
-{
-	ModelVertex(const XMFLOAT3& position, const XMFLOAT3& normal, const XMFLOAT4 color) : Vertex{ position }, m_normal{ normal }, m_color{ color } { }
-
-	XMFLOAT3 m_normal;
-	XMFLOAT4 m_color;
+	XMFLOAT3 position{};
+	XMFLOAT3 normal{};
+	XMFLOAT4 color{};
+	XMFLOAT2 uv0{};
+	XMFLOAT2 uv1{};
 };
 
 class Mesh

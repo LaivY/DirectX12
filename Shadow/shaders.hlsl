@@ -1,49 +1,49 @@
 #include "common.hlsl"
 
-VSOutput VSMain(VSInput input)
+PS_INPUT VSMain(VS_INPUT input)
 {
-    VSOutput output;
-    output.position = mul(input.position, worldMatrix);
-    output.position = mul(output.position, viewMatrix);
-    output.position = mul(output.position, projMatrix);
+    PS_INPUT output;
+    output.positionH = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionH, viewMatrix);
+    output.positionH = mul(output.positionH, projMatrix);
     output.color = input.color;
     return output;
 }
 
-float4 PSMain(VSOutput input) : SV_TARGET
+float4 PSMain(PS_INPUT input) : SV_TARGET
 {
     return input.color;
 }
 
 // --------------------------------------
 
-VSTextureOutput VSTextureMain(VSTextureInput input)
+PS_INPUT VSTextureMain(VS_INPUT input)
 {
-    VSTextureOutput output;
-    output.position = mul(input.position, worldMatrix);
-    output.position = mul(output.position, viewMatrix);
-    output.position = mul(output.position, projMatrix);
-    output.uv = input.uv;
+    PS_INPUT output;
+    output.positionH = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionH, viewMatrix);
+    output.positionH = mul(output.positionH, projMatrix);
+    output.uv0 = input.uv0;
     return output;
 }
 
-float4 PSTextureMain(VSTextureOutput input) : SV_TARGET
+float4 PSTextureMain(PS_INPUT input) : SV_TARGET
 {
-    return g_texture.Sample(g_sampler, input.uv);
+    return g_texture.Sample(g_sampler, input.uv0);
 }
 
 // --------------------------------------
 
-VSBillboardOutput VSBillboardMain(VSBillboardInput input)
+VS_INPUT VSBillboardMain(VS_INPUT input)
 {
-    VSBillboardOutput output;
+    VS_INPUT output;
     output.position = mul(input.position, worldMatrix);
-    output.size = input.size;
+    output.uv0 = input.uv0;
     return output;
 }
 
 [maxvertexcount(4)]
-void GSBillboardMain(point VSBillboardOutput input[1], uint primID : SV_PrimitiveID, inout TriangleStream<GSBillboardOutput> triStream)
+void GSBillboardMain(point VS_INPUT input[1], uint primID : SV_PrimitiveID, inout TriangleStream<GSBillboardOutput> triStream)
 {
     // y축으로만 회전하는 빌보드
     float3 up = float3(0.0f, 1.0f, 0.0f);
@@ -52,8 +52,8 @@ void GSBillboardMain(point VSBillboardOutput input[1], uint primID : SV_Primitiv
     look = normalize(look);
     float3 right = cross(up, look);
     
-    float hw = 0.5f * input[0].size.x;
-    float hh = 0.5f * input[0].size.y;
+    float hw = 0.5f * input[0].uv0.x;
+    float hh = 0.5f * input[0].uv0.y;
     
     float4 position[4] =
     {
@@ -89,18 +89,18 @@ float4 PSBillboardMain(GSBillboardOutput input) : SV_TARGET
 
 // --------------------------------------
 
-VSTerrainOutput VSTerrainMain(VSTerrainInput input)
+PS_INPUT VSTerrainMain(VS_INPUT input)
 {
-    VSTerrainOutput output;
-    output.position = mul(input.position, worldMatrix);
-    output.position = mul(output.position, viewMatrix);
-    output.position = mul(output.position, projMatrix);
+    PS_INPUT output;
+    output.positionH = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionH, viewMatrix);
+    output.positionH = mul(output.positionH, projMatrix);
     output.uv0 = input.uv0;
     output.uv1 = input.uv1;
     return output;
 }
 
-float4 PSTerrainMain(VSTerrainOutput input) : SV_TARGET
+float4 PSTerrainMain(PS_INPUT input) : SV_TARGET
 {
     float4 baseTextureColor = g_texture.Sample(g_sampler, input.uv0);
     float4 detailTextureColor = g_detailTexture.Sample(g_sampler, input.uv1);
@@ -109,7 +109,7 @@ float4 PSTerrainMain(VSTerrainOutput input) : SV_TARGET
 
 // --------------------------------------
 
-VSTerrainOutput VSTerrainTessMain(VSTerrainInput input)
+VSTerrainOutput VSTerrainTessMain(VS_INPUT input)
 {
     VSTerrainOutput output;
     output.position = mul(input.position, worldMatrix);
@@ -119,7 +119,7 @@ VSTerrainOutput VSTerrainTessMain(VSTerrainInput input)
 }
 
 float CalculateTessFactor(float3 f3Position)
-{   
+{
     float fDistToCamera = distance(f3Position, eye);
     float s = saturate(fDistToCamera / 75.0f);
     return lerp(64.0f, 3.0f, s);
@@ -215,7 +215,7 @@ DSOutput DSTerrainTessMain(PatchTess patchTess, float2 uv : SV_DomainLocation, c
 }
 
 float4 PSTerrainTessMain(DSOutput pin) : SV_TARGET
-{   
+{
     float4 baseTextureColor = g_texture.Sample(g_sampler, pin.uv0);
     float4 detailTextureColor = g_detailTexture.Sample(g_sampler, pin.uv1);
     
@@ -230,9 +230,9 @@ float4 PSTerrainTessWireMain(DSOutput pin) : SV_TARGET
 
 // --------------------------------------
 
-VSModelOutput VSModelMain(VSModelInput input)
+PS_INPUT VSModelMain(VS_INPUT input)
 {
-    VSModelOutput output;
+    PS_INPUT output;
     output.positionH = mul(input.position, worldMatrix);
     output.positionW = output.positionH;
     output.positionH = mul(output.positionH, viewMatrix);
@@ -242,7 +242,7 @@ VSModelOutput VSModelMain(VSModelInput input)
     return output;
 }
 
-float4 PSModelMain(VSModelOutput input) : SV_TARGET
+float4 PSModelMain(PS_INPUT input) : SV_TARGET
 {
     // 노말 벡터 정규화
     input.normal = normalize(input.normal);

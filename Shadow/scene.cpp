@@ -68,6 +68,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	// 셰이더 생성
 	auto colorShader{ make_shared<Shader>(device, rootSignature) };
 	auto textureShader{ make_shared<TextureShader>(device, rootSignature) };
+	auto terrainShader{ make_shared<TerrainShader>(device, rootSignature) };
 	auto terrainTessShader{ make_shared<TerrainTessShader>(device, rootSignature) };
 	auto terrainTessWireShader{ make_shared<TerrainTessWireShader>(device, rootSignature) };
 	auto blendingShader{ make_shared<BlendingShader>(device, rootSignature) };
@@ -123,6 +124,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 
 	m_resourceManager->AddShader("COLOR", colorShader);
 	m_resourceManager->AddShader("TEXTURE", textureShader);
+	m_resourceManager->AddShader("TERRAIN", terrainShader);
 	m_resourceManager->AddShader("TERRAINTESS", terrainTessShader);
 	m_resourceManager->AddShader("TERRAINTESSWIRE", terrainTessWireShader);
 	m_resourceManager->AddShader("BLENDING", blendingShader);
