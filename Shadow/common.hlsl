@@ -16,13 +16,9 @@ cbuffer cbCamera : register(b1)
     float3 eye;
 }
 
-cbuffer cbLights : register(b2)
+cbuffer cbScene : register(b2)
 {
     Light lights[MAX_LIGHT];
-}
-
-cbuffer cbMaterial : register(b3)
-{
     Material materials[MAX_MATERIAL];
 }
 

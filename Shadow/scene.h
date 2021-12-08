@@ -28,12 +28,18 @@ struct Material // 16바이트로 정렬
 
 struct Lights
 {
-	Light ligths[MAX_LIGHT];
+	Light		ligths[MAX_LIGHT];
 };
 
 struct Materials
 {
-	Material meterials[MAX_MATERIAL];
+	Material	meterials[MAX_MATERIAL];
+};
+
+struct cbScene
+{
+	Light		ligths[MAX_LIGHT];
+	Material	meterials[MAX_MATERIAL];
 };
 
 class ResourceManager
@@ -61,7 +67,7 @@ private:
 class Scene
 {
 public:
-	Scene() : m_pcbLights{ nullptr }, m_pcbMaterials{ nullptr } { }
+	Scene() : m_pcbScene{ nullptr } { }
 	~Scene();
 
 	void OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio);
@@ -100,15 +106,12 @@ private:
 	vector<unique_ptr<HeightMapTerrain>>	m_terrains;			// 지형
 	unique_ptr<GameObject>					m_mirror;			// 거울
 	unique_ptr<Skybox>						m_skybox;			// 스카이박스
-	unique_ptr<ShadowMap>					m_shadowMap;		// 그림자맵
 	shared_ptr<Player>						m_player;			// 플레이어
 	shared_ptr<Camera>						m_camera;			// 카메라
 
-	unique_ptr<Lights>						m_lights;			// 조명
-	ComPtr<ID3D12Resource>					m_cbLights;			// 조명 상수 버퍼
-	Lights*									m_pcbLights;		// 조명 상수 버퍼 포인터
+	unique_ptr<ShadowMap>					m_shadowMap;		// 그림자맵
 
-	unique_ptr<Materials>					m_materials;		// 재질
-	ComPtr<ID3D12Resource>					m_cbMaterials;		// 재질 상수 버퍼
-	Materials*								m_pcbMaterials;		// 재질 상수 버퍼 포인터
+	ComPtr<ID3D12Resource>					m_cbScene;			// 씬 상수 버퍼
+	cbScene*								m_pcbScene;			// 씬 상수 버퍼 포인터
+	unique_ptr<cbScene>						m_cbSceneData;		// 씬 상수 버퍼 데이터
 };

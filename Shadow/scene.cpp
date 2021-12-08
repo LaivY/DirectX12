@@ -36,8 +36,7 @@ shared_ptr<Texture> ResourceManager::GetTexture(const string& key) const
 
 Scene::~Scene()
 {
-	if (m_cbLights) m_cbLights->Unmap(0, NULL);
-	if (m_cbMaterials) m_cbMaterials->Unmap(0, NULL);
+	if (m_cbScene) m_cbScene->Unmap(0, NULL);
 }
 
 void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio)
@@ -134,7 +133,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddTexture("INDOOR", indoorTexture);
 
 	// 그림자맵 생성
-	//m_shadowMap = make_unique<ShadowMap>(device, 800, 800);
+	m_shadowMap = make_unique<ShadowMap>(device, 1024, 1024);
 
 	// 카메라 생성
 	auto camera{ make_shared<ThirdPersonCamera>() };
@@ -318,27 +317,31 @@ void Scene::OnUpdate(FLOAT deltaTime)
 void Scene::CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
 	ComPtr<ID3D12Resource> dummy;
-	UINT cbLightByteSize{ ((sizeof(Lights) + 255) & ~255) };
-	m_cbLights = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
-	m_cbLights->Map(0, NULL, reinterpret_cast<void**>(&m_pcbLights));
+	UINT cbSceneByteSize{ (sizeof(Lights) + 255) & ~255 };
+	m_cbScene = CreateBufferResource(device, commandList, NULL, cbSceneByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
+	m_cbScene->Map(0, NULL, reinterpret_cast<void**>(&m_pcbScene));
 
-	UINT cbMeterialByteSize{ ((sizeof(Materials) + 255) & ~255) };
-	m_cbMaterials = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
-	m_cbMaterials->Map(0, NULL, reinterpret_cast<void**>(&m_pcbMaterials));
+	//UINT cbLightByteSize{ ((sizeof(Lights) + 255) & ~255) };
+	//m_cbLights = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
+	//m_cbLights->Map(0, NULL, reinterpret_cast<void**>(&m_pcbLights));
+
+	//UINT cbMeterialByteSize{ ((sizeof(Materials) + 255) & ~255) };
+	//m_cbMaterials = CreateBufferResource(device, commandList, NULL, cbLightByteSize, 1, D3D12_HEAP_TYPE_UPLOAD, {}, dummy);
+	//m_cbMaterials->Map(0, NULL, reinterpret_cast<void**>(&m_pcbMaterials));
 }
 
 void Scene::CreateLightAndMeterial()
 {
-	m_lights = make_unique<Lights>();
-	m_lights->ligths[0].isActivate = true;
-	m_lights->ligths[0].type = DIRECTIONAL_LIGHT;
-	m_lights->ligths[0].strength = XMFLOAT3{ 1.0f, 1.0f, 1.0f };
-	m_lights->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 0.0f };
+	m_cbSceneData = make_unique<cbScene>();
 
-	m_materials = make_unique<Materials>();
-	m_materials->meterials[0].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
-	m_materials->meterials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
-	m_materials->meterials[0].roughness = 0.05f;
+	m_cbSceneData->ligths[0].isActivate = true;
+	m_cbSceneData->ligths[0].type = DIRECTIONAL_LIGHT;
+	m_cbSceneData->ligths[0].strength = XMFLOAT3{ 1.0f, 1.0f, 1.0f };
+	m_cbSceneData->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 0.0f };
+
+	m_cbSceneData->meterials[0].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
+	m_cbSceneData->meterials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
+	m_cbSceneData->meterials[0].roughness = 0.05f;
 }
 
 void Scene::Update(FLOAT deltaTime)
@@ -349,15 +352,10 @@ void Scene::Update(FLOAT deltaTime)
 
 void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
-	if (m_cbLights)
+	if (m_cbScene)
 	{
-		memcpy(m_pcbLights, m_lights.get(), sizeof(Lights));
-		commandList->SetGraphicsRootConstantBufferView(5, m_cbLights->GetGPUVirtualAddress());
-	}
-	if (m_cbMaterials)
-	{
-		memcpy(m_pcbMaterials, m_materials.get(), sizeof(Material));
-		commandList->SetGraphicsRootConstantBufferView(6, m_cbMaterials->GetGPUVirtualAddress());
+		memcpy(m_pcbScene, m_cbSceneData.get(), sizeof(cbScene));
+		commandList->SetGraphicsRootConstantBufferView(5, m_cbScene->GetGPUVirtualAddress());
 	}
 }
 
@@ -525,13 +523,13 @@ void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandLi
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->GetShadowMap().Get(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
 	// 깊이스텐실 버퍼 초기화
-	commandList->ClearDepthStencilView(m_shadowMap->GetDsv(), D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
+	commandList->ClearDepthStencilView(m_shadowMap->GetCpuDsvHandle(), D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 
 	// 렌더타겟 설정
-	commandList->OMSetRenderTargets(0, NULL, FALSE, &m_shadowMap->GetDsv());
+	commandList->OMSetRenderTargets(0, NULL, FALSE, &m_shadowMap->GetCpuDsvHandle());
 
 	// 카메라를 광원 위치로 이동
-	m_shadowMap->GetCamera()->UpdateShaderVariable(commandList);
+	//m_shadowMap->GetCamera()->UpdateShaderVariable(commandList);
 
 	// 렌더링
 	if (m_player) m_player->Render(commandList, m_resourceManager->GetShader("SHADOW"));
