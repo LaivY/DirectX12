@@ -3,9 +3,9 @@
 PS_INPUT VSMain(VS_INPUT input)
 {
     PS_INPUT output;
-    output.positionH = mul(input.position, worldMatrix);
-    output.positionH = mul(output.positionH, viewMatrix);
-    output.positionH = mul(output.positionH, projMatrix);
+    output.positionW = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionW, viewMatrix);
+    output.positionH = mul(output.positionH, projMatrix);    
     output.color = input.color;
     return output;
 }
@@ -43,7 +43,7 @@ VS_INPUT VSBillboardMain(VS_INPUT input)
 }
 
 [maxvertexcount(4)]
-void GSBillboardMain(point VS_INPUT input[1], uint primID : SV_PrimitiveID, inout TriangleStream<GSBillboardOutput> triStream)
+void GSBillboardMain(point VS_INPUT input[1], uint primID : SV_PrimitiveID, inout TriangleStream<PS_INPUT> triStream)
 {
     // y축으로만 회전하는 빌보드
     float3 up = float3(0.0f, 1.0f, 0.0f);
@@ -71,20 +71,25 @@ void GSBillboardMain(point VS_INPUT input[1], uint primID : SV_PrimitiveID, inou
         float2(1.0f, 0.0f)
     };
 
-    GSBillboardOutput output;
+    PS_INPUT output;
     [unroll]
     for (int i = 0; i < 4; ++i)
     {
-        output.position = mul(position[i], viewMatrix);
-        output.position = mul(output.position, projMatrix);
-        output.uv = uv[i];
+        // 모든 값들을 설정해줘야 오류가 나지않음
+        output.positionW = position[i];
+        output.positionH = mul(output.positionW, viewMatrix);
+        output.positionH = mul(output.positionH, projMatrix);
+        output.normalW = float3(0.0f, 0.0f, 0.0f);
+        output.color = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        output.uv0 = uv[i];
+        output.uv1 = float2(0.0f, 0.0f);
         triStream.Append(output);
     }
 }
 
-float4 PSBillboardMain(GSBillboardOutput input) : SV_TARGET
+float4 PSBillboardMain(PS_INPUT input) : SV_TARGET
 {
-    return g_texture.Sample(g_sampler, input.uv);
+    return g_texture.Sample(g_sampler, input.uv0);
 }
 
 // --------------------------------------
@@ -109,10 +114,11 @@ float4 PSTerrainMain(PS_INPUT input) : SV_TARGET
 
 // --------------------------------------
 
-VSTerrainOutput VSTerrainTessMain(VS_INPUT input)
+VS_INPUT VSTerrainTessMain(VS_INPUT input)
 {
-    VSTerrainOutput output;
+    VS_INPUT output;
     output.position = mul(input.position, worldMatrix);
+    output.normal = mul(float4(input.normal, 0.0f), worldMatrix).xyz;
     output.uv0 = input.uv0;
     output.uv1 = input.uv1;
     return output;
@@ -125,7 +131,7 @@ float CalculateTessFactor(float3 f3Position)
     return lerp(64.0f, 3.0f, s);
 }
 
-PatchTess TerrainTessConstantHS(InputPatch<VSTerrainOutput, 25> patch, uint patchID : SV_PrimitiveID)
+PatchTess TerrainTessConstantHS(InputPatch<VS_INPUT, 25> patch, uint patchID : SV_PrimitiveID)
 {
     PatchTess output;
     output.EdgeTess[0] = CalculateTessFactor(0.5f * (patch[0].position.xyz + patch[4].position.xyz));
@@ -147,13 +153,14 @@ PatchTess TerrainTessConstantHS(InputPatch<VSTerrainOutput, 25> patch, uint patc
 [outputcontrolpoints(25)]
 [patchconstantfunc("TerrainTessConstantHS")]
 [maxtessfactor(64.0f)]
-HSOutput HSTerrainTessMain(InputPatch<VSTerrainOutput, 25> p, uint i : SV_OutputControlPointID, uint patchId : SV_PrimitiveID)
+VS_INPUT HSTerrainTessMain(InputPatch<VS_INPUT, 25> p, uint i : SV_OutputControlPointID, uint patchId : SV_PrimitiveID)
 {
-    HSOutput result;
-    result.position = p[i].position;
-    result.uv0 = p[i].uv0;
-    result.uv1 = p[i].uv1;
-    return result;
+    VS_INPUT output;
+    output.position = p[i].position;
+    output.normal = p[i].normal;
+    output.uv0 = p[i].uv0;
+    output.uv1 = p[i].uv1;
+    return output;
 }
 
 void BernsteinCoeffcient5x5(float t, out float fBernstein[5])
@@ -166,7 +173,7 @@ void BernsteinCoeffcient5x5(float t, out float fBernstein[5])
     fBernstein[4] = t * t * t * t;
 }
 
-float3 CubicBezierSum5x5(OutputPatch<HSOutput, 25> patch, float2 uv)
+float3 CubicBezierSum5x5(OutputPatch<VS_INPUT, 25> patch, float2 uv)
 {
     // 4차 베지에 곡선 계수 계산
     float uB[5], vB[5];
@@ -185,47 +192,57 @@ float3 CubicBezierSum5x5(OutputPatch<HSOutput, 25> patch, float2 uv)
         sum += vB[i] * subSum;
     }
     return sum;
-    
-    /*
-    float3 f3Sum = float3(0.0f, 0.0f, 0.0f);
-    f3Sum =  vB[0] * (uB[0] * patch[0].position +  uB[1] * patch[1].position +  uB[2] * patch[2].position +  uB[3] * patch[3].position +  uB[4] * patch[4].position);
-    f3Sum += vB[1] * (uB[0] * patch[5].position +  uB[1] * patch[6].position +  uB[2] * patch[7].position +  uB[3] * patch[8].position +  uB[4] * patch[9].position);
-    f3Sum += vB[2] * (uB[0] * patch[10].position + uB[1] * patch[11].position + uB[2] * patch[12].position + uB[3] * patch[13].position + uB[4] * patch[14].position);
-    f3Sum += vB[3] * (uB[0] * patch[15].position + uB[1] * patch[16].position + uB[2] * patch[17].position + uB[3] * patch[18].position + uB[4] * patch[19].position);
-    f3Sum += vB[4] * (uB[0] * patch[20].position + uB[1] * patch[21].position + uB[2] * patch[22].position + uB[3] * patch[23].position + uB[4] * patch[24].position);
-    return f3Sum;
-    */
 }
 
 [domain("quad")]
-DSOutput DSTerrainTessMain(PatchTess patchTess, float2 uv : SV_DomainLocation, const OutputPatch<HSOutput, 25> patch)
+PS_INPUT DSTerrainTessMain(PatchTess patchTess, float2 uv : SV_DomainLocation, const OutputPatch<VS_INPUT, 25> patch)
 {
-    DSOutput result;
+    PS_INPUT output;
     
     // 위치 좌표(베지에 곡면)
-    result.position = float4(CubicBezierSum5x5(patch, uv), 1.0f);
-    result.position = mul(result.position, viewMatrix);
-    result.position = mul(result.position, projMatrix);
+    output.positionW = float4(CubicBezierSum5x5(patch, uv), 1.0f);
+    output.positionH = mul(output.positionW, viewMatrix);
+    output.positionH = mul(output.positionH, projMatrix);
     
-    // 텍스쳐 좌표
-    result.uv0 = lerp(lerp(patch[0].uv0, patch[4].uv0, uv.x), lerp(patch[20].uv0, patch[24].uv0, uv.x), uv.y);
-    result.uv1 = lerp(lerp(patch[0].uv1, patch[4].uv1, uv.x), lerp(patch[20].uv1, patch[24].uv1, uv.x), uv.y);
+    // 노말 보간
+    output.normalW = lerp(lerp(patch[0].normal, patch[4].normal, uv.x), lerp(patch[20].normal, patch[24].normal, uv.x), uv.y);
     
-    return result;
+    // 텍스쳐 좌표 보간
+    output.uv0 = lerp(lerp(patch[0].uv0, patch[4].uv0, uv.x), lerp(patch[20].uv0, patch[24].uv0, uv.x), uv.y);
+    output.uv1 = lerp(lerp(patch[0].uv1, patch[4].uv1, uv.x), lerp(patch[20].uv1, patch[24].uv1, uv.x), uv.y);
+    
+    return output;
 }
 
-float4 PSTerrainTessMain(DSOutput pin) : SV_TARGET
+float4 PSTerrainTessMain(PS_INPUT input) : SV_TARGET
 {
-    float4 baseTextureColor = g_texture.Sample(g_sampler, pin.uv0);
-    float4 detailTextureColor = g_detailTexture.Sample(g_sampler, pin.uv1);
-    
+    float4 baseTextureColor = g_texture.Sample(g_sampler, input.uv0);
+    float4 detailTextureColor = g_detailTexture.Sample(g_sampler, input.uv1);
     float4 texColor = lerp(baseTextureColor, detailTextureColor, 0.4f);
-    return texColor;
+    
+    // 그림자 계산
+    float4 shadowPosH = mul(input.positionW, lightViewMatrix);
+    shadowPosH = mul(shadowPosH, lightProjMatrix);
+    shadowPosH = mul(shadowPosH, NDCToTextureMatrix);
+    float shadowFacter = CalcShadowFactor(shadowPosH);
+    
+    return texColor * shadowFacter;
 }
 
-float4 PSTerrainTessWireMain(DSOutput pin) : SV_TARGET
+float4 PSTerrainTessWireMain(PS_INPUT pin) : SV_TARGET
 {
     return float4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+// --------------------------------------
+
+PS_INPUT VSShadowMain(VS_INPUT input)
+{
+    PS_INPUT output;
+    output.positionW = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionW, lightViewMatrix);
+    output.positionH = mul(output.positionH, lightProjMatrix);
+    return output;
 }
 
 // --------------------------------------
@@ -233,11 +250,10 @@ float4 PSTerrainTessWireMain(DSOutput pin) : SV_TARGET
 PS_INPUT VSModelMain(VS_INPUT input)
 {
     PS_INPUT output;
-    output.positionH = mul(input.position, worldMatrix);
-    output.positionW = output.positionH;
-    output.positionH = mul(output.positionH, viewMatrix);
+    output.positionW = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionW, viewMatrix);
     output.positionH = mul(output.positionH, projMatrix);
-    output.normal = mul(float4(input.normal, 0.0f), worldMatrix).xyz;
+    output.normalW = mul(float4(input.normal, 0.0f), worldMatrix).xyz;
     output.color = input.color;
     return output;
 }
@@ -245,10 +261,10 @@ PS_INPUT VSModelMain(VS_INPUT input)
 float4 PSModelMain(PS_INPUT input) : SV_TARGET
 {
     // 노말 벡터 정규화
-    input.normal = normalize(input.normal);
+    input.normalW = normalize(input.normalW);
     
     // 조명 -> 눈 단위 벡터
-    float3 toEye = normalize(eye - input.positionH.xyz);
+    float3 toEye = normalize(eye - input.positionW.xyz);
     
     // 간접 조명(씬 전체에 비치는 간접광이 있어야되는데... 나는 안했음)
     float4 ambient = /* gAmbientLight */materials[0].diffuseAlbedo;
@@ -261,7 +277,7 @@ float4 PSModelMain(PS_INPUT input) : SV_TARGET
     {
         if (lights[i].type == DIRECTIONAL_LIGHT)
         {
-            litColor += float4(ComputeDirectionalLight(lights[0], materials[0], input.normal, toEye), 0.0f);
+            litColor += float4(ComputeDirectionalLight(lights[0], materials[0], input.normalW, toEye), 0.0f);
         }
         else if (lights[i].type == POINT_LIGHT)
         {
@@ -270,12 +286,5 @@ float4 PSModelMain(PS_INPUT input) : SV_TARGET
     }
     
     litColor.a = materials[0].diffuseAlbedo.a;
-    
-    // 그림자 계산
-    float4 shadowPosH = mul(input.positionW, lightViewMatrix);
-    shadowPosH = mul(shadowPosH, lightProjMatrix);
-    shadowPosH = shadowPosH * 0.5f + 0.5f;
-    float shadowFacter = CalcShadowFactor(shadowPosH);
-    
-    return litColor * shadowFacter;
+    return litColor;
 }

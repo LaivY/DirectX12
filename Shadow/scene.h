@@ -32,6 +32,7 @@ struct cbScene
 	Material	materials[MAX_MATERIAL];	// 재질들
 	XMFLOAT4X4	lightViewMatrix;			// 그림자를 만드는 조명 뷰 변환 행렬
 	XMFLOAT4X4	lightProjMatrix;			// 그림자를 만드는 조명 투영 변환 행렬
+	XMFLOAT4X4	NDCToTextureMatrix;			// NDC -> 텍스쳐 좌표계 변환 행렬
 };
 
 class ResourceManager

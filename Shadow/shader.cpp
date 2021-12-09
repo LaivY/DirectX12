@@ -1,6 +1,18 @@
 ﻿#include "shader.h"
 
-Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature)
+Shader::Shader()
+{
+	m_inputLayout =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+}
+
+Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature) : Shader{}
 {
 	ComPtr<ID3DBlob> vertexShader, pixelShader;
 
@@ -13,19 +25,9 @@ Shader::Shader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignat
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// 정점 셰이더 레이아웃 설정
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	// PSO 생성
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -54,19 +56,9 @@ TextureShader::TextureShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTextureMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// 정점 셰이더 레이아웃 설정
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	// PSO 생성
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -95,17 +87,8 @@ TerrainShader::TerrainShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTerrainMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTerrainMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -136,17 +119,8 @@ TerrainTessShader::TerrainTessShader(const ComPtr<ID3D12Device>& device, const C
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "DSTerrainTessMain", "ds_5_1", compileFlags, 0, &domainShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTerrainTessMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.HS = CD3DX12_SHADER_BYTECODE(hullShader.Get());
@@ -179,20 +153,11 @@ TerrainTessWireShader::TerrainTessWireShader(const ComPtr<ID3D12Device>& device,
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "DSTerrainTessMain", "ds_5_1", compileFlags, 0, &domainShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTerrainTessWireMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	auto RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.HS = CD3DX12_SHADER_BYTECODE(hullShader.Get());
@@ -223,15 +188,6 @@ SkyboxShader::SkyboxShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTextureMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	// 깊이 검사 OFF
 	// 깊이 쓰기 OFF
 	// 거울이 있는 부분에는 그리지않음
@@ -243,7 +199,7 @@ SkyboxShader::SkyboxShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	depthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -273,15 +229,6 @@ BlendingShader::BlendingShader(const ComPtr<ID3D12Device>& device, const ComPtr<
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "GSBillboardMain", "gs_5_1", compileFlags, 0, &geometryShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSBillboardMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	// 깊이 쓰기 OFF
 	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
 	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -295,7 +242,7 @@ BlendingShader::BlendingShader(const ComPtr<ID3D12Device>& device, const ComPtr<
 
 	// PSO 생성
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.GS = CD3DX12_SHADER_BYTECODE(geometryShader.Get());
@@ -325,16 +272,6 @@ BlendingDepthShader::BlendingDepthShader(const ComPtr<ID3D12Device>& device, con
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTextureMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// 정점 셰이더 레이아웃 설정
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	// 블렌딩 설정
 	CD3DX12_BLEND_DESC blendState{ D3D12_DEFAULT };
 	blendState.RenderTarget[0].BlendEnable = TRUE;
@@ -344,7 +281,7 @@ BlendingDepthShader::BlendingDepthShader(const ComPtr<ID3D12Device>& device, con
 
 	// PSO 생성
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -372,16 +309,6 @@ StencilShader::StencilShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 
-	// 정점 셰이더 레이아웃 설정
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	// 깊이 테스트		ON
 	// 깊이 버퍼 쓰기	OFF
 	// 스텐실 버퍼 쓰기	ON
@@ -396,7 +323,7 @@ StencilShader::StencilShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 	blendState.RenderTarget[0].RenderTargetWriteMask = 0;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -424,16 +351,6 @@ MirrorShader::MirrorShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// 정점 셰이더 레이아웃 설정
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	// 거울에서는 앞면이 뒷면으로 뒷면이 앞면으로 바뀐다.
 	CD3DX12_RASTERIZER_DESC rasterizerState{ D3D12_DEFAULT };
 	rasterizerState.FrontCounterClockwise = TRUE;
@@ -444,7 +361,7 @@ MirrorShader::MirrorShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	depthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -473,16 +390,6 @@ MirrorTextureShader::MirrorTextureShader(const ComPtr<ID3D12Device>& device, con
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSTextureMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("Shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSTextureMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	// 정점 셰이더 레이아웃 설정
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	CD3DX12_RASTERIZER_DESC rasterizerState{ D3D12_DEFAULT };
 	rasterizerState.FrontCounterClockwise = TRUE;
 
@@ -491,7 +398,7 @@ MirrorTextureShader::MirrorTextureShader(const ComPtr<ID3D12Device>& device, con
 	depthStencilState.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -520,17 +427,8 @@ ModelShader::ModelShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSModelMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSModelMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -557,16 +455,7 @@ ShadowShader::ShadowShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 #endif
 
 	// 픽셀 셰이더는 필요없음
-	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
-
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[]
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
+	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSShadowMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 
 	// 깊이값 바이어스 설정
 	CD3DX12_RASTERIZER_DESC rasterizerState{ D3D12_DEFAULT };
@@ -579,7 +468,7 @@ ShadowShader::ShadowShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 
 	// 깊이값만 쓸 것이므로 렌더타겟을 설정하지 않는다.
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.RasterizerState = rasterizerState;

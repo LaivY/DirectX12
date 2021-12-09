@@ -180,8 +180,8 @@ void GameFramework::CreateDepthStencilView()
 	D3D12_RESOURCE_DESC resourceDesc{};
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	resourceDesc.Alignment = 0;
-	resourceDesc.Width = m_width;
-	resourceDesc.Height = m_height;
+	resourceDesc.Width = SCREEN_WIDTH;
+	resourceDesc.Height = SCREEN_HEIGHT;
 	resourceDesc.DepthOrArraySize = 1;
 	resourceDesc.MipLevels = 1;
 	resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -345,8 +345,12 @@ void GameFramework::PopulateCommandList() const
 
 	// Set necessary state
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-	m_commandList->RSSetViewports(1, &m_viewport);
-	m_commandList->RSSetScissorRects(1, &m_scissorRect);
+
+	// 그림자맵에 깊이 버퍼 쓰기
+	if (m_scene) m_scene->RenderToShadowMap(m_commandList);
+
+	//m_commandList->RSSetViewports(1, &m_viewport);
+	//m_commandList->RSSetScissorRects(1, &m_scissorRect);
 
 	// Indicate that the back buffer will be used as a render target
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));

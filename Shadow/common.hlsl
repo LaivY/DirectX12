@@ -23,6 +23,7 @@ cbuffer cbScene : register(b2)
     
     matrix lightViewMatrix;
     matrix lightProjMatrix;
+    matrix NDCToTextureMatrix;
 }
 
 Texture2D g_texture                     : register(t0);
@@ -46,43 +47,16 @@ struct PS_INPUT
 {
     float4 positionH    : SV_POSITION;
     float4 positionW    : POSITION;
-    float3 normal       : NORMAL;
+    float3 normalW      : NORMAL;
     float4 color        : COLOR;
     float2 uv0          : TEXCOORD0;
     float2 uv1          : TEXCOORD1;
-};
-
-struct GSBillboardOutput
-{
-    float4 position : SV_POSITION;
-    float2 uv       : TEXCOORD;
-};
-
-struct VSTerrainOutput
-{
-    float4 position : SV_POSITION;
-    float2 uv0      : TEXCOORD0;
-    float2 uv1      : TEXCOORD1;
 };
 
 struct PatchTess
 {
     float EdgeTess[4]   : SV_TessFactor;
     float InsideTess[2] : SV_InsideTessFactor;
-};
-
-struct HSOutput
-{
-    float4 position : POSITION;
-    float2 uv0      : TEXCOORD0;
-    float2 uv1      : TEXCOORD1;
-};
-
-struct DSOutput
-{
-    float4 position : SV_POSITION;
-    float2 uv0      : TEXCOORD0;
-    float2 uv1      : TEXCOORD1;
 };
 
 // --------------------------------------

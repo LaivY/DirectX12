@@ -143,7 +143,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddTexture("INDOOR", indoorTexture);
 
 	// 그림자맵 생성
-	m_shadowMap = make_unique<ShadowMap>(device, 1024, 1024);
+	m_shadowMap = make_unique<ShadowMap>(device, 2048, 2048);
 
 	// 카메라 생성
 	auto camera{ make_shared<ThirdPersonCamera>() };
@@ -357,11 +357,11 @@ void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comman
 	if (m_cbScene)
 	{
 		// 씬을 모두 감싸는 바운딩 구
-		BoundingSphere sceneSphere{ XMFLOAT3{ 0.0f, 0.0f, 0.0f }, 150.0f };
+		BoundingSphere sceneSphere{ XMFLOAT3{ 0.0f, 0.0f, 0.0f }, 200.0f };
 
 		// 메쉬 정점을 조명 좌표계로 바꿔주는 행렬 계산
-		XMFLOAT3 lightDir{ 1.0f, -1.0f, 0.0f };
-		XMFLOAT3 lightPos{ Vector3::Mul(lightDir, -5.0f * sceneSphere.Radius) };
+		XMFLOAT3 lightDir{ 1.0f, -1.0f, 1.0f };
+		XMFLOAT3 lightPos{ Vector3::Mul(lightDir, -2.0f * sceneSphere.Radius) };
 		XMFLOAT3 targetPos{ sceneSphere.Center };
 		XMFLOAT3 lightUp{ 0.0f, 1.0f, 0.0f };
 
@@ -382,8 +382,15 @@ void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comman
 		XMStoreFloat4x4(&lightProjMatrix, XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f));
 
 		// 상수 버퍼 데이터에 저장
-		m_cbSceneData->lightViewMatrix = lightViewMatrix;
-		m_cbSceneData->lightProjMatrix = lightProjMatrix;
+		m_cbSceneData->lightViewMatrix = Matrix::Transpose(lightViewMatrix);
+		m_cbSceneData->lightProjMatrix = Matrix::Transpose(lightProjMatrix);
+		m_cbSceneData->NDCToTextureMatrix = Matrix::Transpose(
+		{
+			0.5f,  0.0f, 0.0f, 0.0f,
+			0.0f, -0.5f, 0.0f, 0.0f,
+			0.0f,  0.0f, 1.0f, 0.0f,
+			0.5f,  0.5f, 0.0f, 1.0f
+		});
 
 		// 셰이더로 복사
 		memcpy(m_pcbScene, m_cbSceneData.get(), sizeof(cbScene));
@@ -477,19 +484,19 @@ void Scene::UpdateObjectsTerrain()
 
 void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
+	// 씬 셰이더 변수 최신화
+	//UpdateShaderVariable(commandList);
+
+	// 카메라 셰이더 변수 최신화
+	if (m_camera) m_camera->UpdateShaderVariable(commandList);
+
 	// 그림자맵 렌더링
-	RenderToShadowMap(commandList);
+	//RenderToShadowMap(commandList);
 
 	// 뷰포트, 가위사각형, 렌더타겟 복구
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 	commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
-
-	// 씬 셰이더 변수(조명, 재질) 최신화
-	UpdateShaderVariable(commandList);
-
-	// 카메라 셰이더 변수(뷰, 투영 변환 행렬) 최신화
-	if (m_camera) m_camera->UpdateShaderVariable(commandList);
 
 	// 반사상, 거울 렌더링
 	if (m_mirror && m_player)
@@ -552,6 +559,7 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_C
 void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
 	if (!m_shadowMap) return;
+	UpdateShaderVariable(commandList);
 
 	ID3D12DescriptorHeap* ppHeaps[] = { m_shadowMap->GetSrvHeap().Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -564,7 +572,7 @@ void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandLi
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->GetShadowMap().Get(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
 	// 깊이스텐실 버퍼 초기화
-	commandList->ClearDepthStencilView(m_shadowMap->GetCpuDsvHandle(), D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
+	commandList->ClearDepthStencilView(m_shadowMap->GetCpuDsvHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 
 	// 렌더타겟 설정
 	commandList->OMSetRenderTargets(0, NULL, FALSE, &m_shadowMap->GetCpuDsvHandle());
@@ -572,7 +580,7 @@ void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandLi
 	// 렌더링
 	if (m_player) m_player->Render(commandList, m_resourceManager->GetShader("SHADOW"));
 	for (const auto& terrain : m_terrains)
-		terrain->Render(commandList, m_resourceManager->GetShader("SHADOW"));
+		terrain->Render(commandList);
 	
 	// 리소스배리어 설정(셰이더에서 읽기)
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->GetShadowMap().Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));

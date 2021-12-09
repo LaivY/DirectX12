@@ -136,6 +136,7 @@ HeightMapGridTessMesh::HeightMapGridTessMesh(const ComPtr<ID3D12Device>& device,
 		{
 			Vertex v;
 			v.position = { x * scale.x, heightMapImage->GetHeight(x, z) * scale.y, z * scale.z };
+			v.normal = heightMapImage->GetNormal(x, z);
 			v.uv0 = { (float)x / heightMapImageWidth, 1.0f - ((float)z / heightMapImageLength) };
 			v.uv1 = { (float)x / scale.x * 1.5f, (float)z / scale.z * 1.5f };
 			vertices.push_back(v);
