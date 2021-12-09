@@ -1,10 +1,7 @@
 ﻿#include "framework.h"
 
 GameFramework::GameFramework(UINT width, UINT height) :
-	m_width{ width }, m_height{ height }, m_frameIndex{ 0 },
-	m_viewport{ 0.0f, 0.0f, static_cast<FLOAT>(width), static_cast<FLOAT>(height), 0.0f, 1.0f },
-	m_scissorRect{ 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) },
-	m_rtvDescriptorSize{ 0 }
+	m_width{ width }, m_height{ height }, m_frameIndex{ 0 }, m_rtvDescriptorSize{ 0 }
 {
 	m_aspectRatio = static_cast<FLOAT>(width) / static_cast<FLOAT>(height);
 }
@@ -347,10 +344,7 @@ void GameFramework::PopulateCommandList() const
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
 	// 그림자맵에 깊이 버퍼 쓰기
-	if (m_scene) m_scene->RenderToShadowMap(m_commandList);
-
-	//m_commandList->RSSetViewports(1, &m_viewport);
-	//m_commandList->RSSetScissorRects(1, &m_scissorRect);
+	if (m_scene) m_scene->RenderShadowMap(m_commandList);
 
 	// Indicate that the back buffer will be used as a render target
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));

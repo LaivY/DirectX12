@@ -53,8 +53,6 @@ private:
 	BOOL								m_isActive;
 
 	// Pipeline
-	D3D12_VIEWPORT						m_viewport;
-	D3D12_RECT							m_scissorRect;
 	ComPtr<IDXGISwapChain3>				m_swapChain;
 	INT									m_MSAA4xQualityLevel;
 	ComPtr<ID3D12Device>				m_device;

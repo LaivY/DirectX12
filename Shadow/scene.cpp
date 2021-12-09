@@ -339,7 +339,7 @@ void Scene::CreateLightAndMeterial()
 	m_cbSceneData->ligths[0].isActivate = true;
 	m_cbSceneData->ligths[0].type = DIRECTIONAL_LIGHT;
 	m_cbSceneData->ligths[0].strength = XMFLOAT3{ 1.0f, 1.0f, 1.0f };
-	m_cbSceneData->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 0.0f };
+	m_cbSceneData->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 1.0f };
 
 	m_cbSceneData->materials[0].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
 	m_cbSceneData->materials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
@@ -354,6 +354,7 @@ void Scene::Update(FLOAT deltaTime)
 
 void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
+	// 씬 셰이더 변수 최신화
 	if (m_cbScene)
 	{
 		// 씬을 모두 감싸는 바운딩 구
@@ -484,58 +485,16 @@ void Scene::UpdateObjectsTerrain()
 
 void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
-	// 씬 셰이더 변수 최신화
-	//UpdateShaderVariable(commandList);
-
 	// 카메라 셰이더 변수 최신화
 	if (m_camera) m_camera->UpdateShaderVariable(commandList);
 
-	// 그림자맵 렌더링
-	//RenderToShadowMap(commandList);
-
-	// 뷰포트, 가위사각형, 렌더타겟 복구
+	// 뷰포트, 가위사각형, 렌더타겟 설정
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 	commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
 
 	// 반사상, 거울 렌더링
-	if (m_mirror && m_player)
-	{
-		// 스텐실 버퍼 초기화
-		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
-
-		// 스텐실 참조값 설정
-		commandList->OMSetStencilRef(1);
-
-		// 거울 위치를 스텐실 버퍼에 표시
-		m_mirror->Render(commandList, m_resourceManager->GetShader("STENCIL"));
-
-		// 반사 행렬
-		XMVECTOR mirrorPlane{ XMVectorSet(0.0f, 0.0f, -1.0f, m_mirror->GetPosition().z) };
-		XMFLOAT4X4 reflectMatrix;
-		XMStoreFloat4x4(&reflectMatrix, XMMatrixReflect(mirrorPlane));
-
-		// 실내 반사상 렌더링
-		for (const auto& object : m_gameObjects)
-		{
-			XMFLOAT4X4 temp{ object->GetWorldMatrix() };
-			object->SetWorldMatrix(Matrix::Mul(temp, reflectMatrix));
-			object->Render(commandList, m_resourceManager->GetShader("MIRRORTEXTURE"));
-			object->SetWorldMatrix(temp);
-		}
-
-		// 플레이어 반사상 렌더링
-		XMFLOAT4X4 originWorldMatrix{ m_player->GetWorldMatrix() };
-		m_player->SetWorldMatrix(Matrix::Mul(originWorldMatrix, reflectMatrix));
-		m_player->Render(commandList, m_resourceManager->GetShader("MIRROR"));
-		m_player->SetWorldMatrix(originWorldMatrix);
-
-		// 거울 렌더링
-		m_mirror->Render(commandList);
-
-		// 스텐실 참조값 초기화
-		commandList->OMSetStencilRef(0);
-	}
+	if (m_mirror && m_player) RenderMirror(commandList, dsvHandle);
 
 	// 스카이박스 렌더링
 	if (m_skybox) m_skybox->Render(commandList);
@@ -556,15 +515,57 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_C
 		particle->Render(commandList);
 }
 
-void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+void Scene::RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
+{
+	// 스텐실 버퍼 초기화
+	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
+
+	// 스텐실 참조값 설정
+	commandList->OMSetStencilRef(1);
+
+	// 거울 위치를 스텐실 버퍼에 표시
+	m_mirror->Render(commandList, m_resourceManager->GetShader("STENCIL"));
+
+	// 반사 행렬
+	XMVECTOR mirrorPlane{ XMVectorSet(0.0f, 0.0f, -1.0f, m_mirror->GetPosition().z) };
+	XMFLOAT4X4 reflectMatrix;
+	XMStoreFloat4x4(&reflectMatrix, XMMatrixReflect(mirrorPlane));
+
+	// 실내 반사상 렌더링
+	for (const auto& object : m_gameObjects)
+	{
+		XMFLOAT4X4 temp{ object->GetWorldMatrix() };
+		object->SetWorldMatrix(Matrix::Mul(temp, reflectMatrix));
+		object->Render(commandList, m_resourceManager->GetShader("MIRRORTEXTURE"));
+		object->SetWorldMatrix(temp);
+	}
+
+	// 플레이어 반사상 렌더링
+	XMFLOAT4X4 originWorldMatrix{ m_player->GetWorldMatrix() };
+	m_player->SetWorldMatrix(Matrix::Mul(originWorldMatrix, reflectMatrix));
+	m_player->Render(commandList, m_resourceManager->GetShader("MIRROR"));
+	m_player->SetWorldMatrix(originWorldMatrix);
+
+	// 거울 렌더링
+	m_mirror->Render(commandList);
+
+	// 스텐실 참조값 초기화
+	commandList->OMSetStencilRef(0);
+}
+
+void Scene::RenderShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
 	if (!m_shadowMap) return;
+
+	// 그림자맵 렌더링을 위한 셰이더 변수 최신화
 	UpdateShaderVariable(commandList);
 
+	// 셰이더에 묶기
 	ID3D12DescriptorHeap* ppHeaps[] = { m_shadowMap->GetSrvHeap().Get() };
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 	commandList->SetGraphicsRootDescriptorTable(4, m_shadowMap->GetGpuSrvHandle());
 
+	// 뷰포트, 가위사각형 설정
 	commandList->RSSetViewports(1, &m_shadowMap->GetViewport());
 	commandList->RSSetScissorRects(1, &m_shadowMap->GetScissorRect());
 

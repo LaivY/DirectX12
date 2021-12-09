@@ -71,15 +71,18 @@ public:
 	void OnUpdate(FLOAT deltaTime);
 
 	void CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void CreateLightAndMeterial();
 	void CreateBullet();
 
 	void Update(FLOAT deltaTime);
-	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void RemoveDeletedObjects();
 	void UpdateObjectsTerrain();
+
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
-	void RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+	void RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
+	void RenderShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+
 	void ReleaseUploadBuffer();
 
 	void SetSkybox(unique_ptr<Skybox>& skybox);
