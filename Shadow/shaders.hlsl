@@ -5,7 +5,7 @@ PS_INPUT VSMain(VS_INPUT input)
     PS_INPUT output;
     output.positionW = mul(input.position, worldMatrix);
     output.positionH = mul(output.positionW, viewMatrix);
-    output.positionH = mul(output.positionH, projMatrix);    
+    output.positionH = mul(output.positionH, projMatrix);
     output.color = input.color;
     return output;
 }
@@ -20,15 +20,15 @@ float4 PSMain(PS_INPUT input) : SV_TARGET
 PS_INPUT VSTextureMain(VS_INPUT input)
 {
     PS_INPUT output;
-    output.positionH = mul(input.position, worldMatrix);
-    output.positionH = mul(output.positionH, viewMatrix);
+    output.positionW = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionW, viewMatrix);
     output.positionH = mul(output.positionH, projMatrix);
     output.uv0 = input.uv0;
     return output;
 }
 
 float4 PSTextureMain(PS_INPUT input) : SV_TARGET
-{
+{    
     return g_texture.Sample(g_sampler, input.uv0);
 }
 
@@ -79,6 +79,7 @@ void GSBillboardMain(point VS_INPUT input[1], uint primID : SV_PrimitiveID, inou
         output.positionW = position[i];
         output.positionH = mul(output.positionW, viewMatrix);
         output.positionH = mul(output.positionH, projMatrix);
+        output.shadowPosH = float4(0.0f, 0.0f, 0.0f, 0.0f);
         output.normalW = float3(0.0f, 0.0f, 0.0f);
         output.color = float4(0.0f, 0.0f, 0.0f, 0.0f);
         output.uv0 = uv[i];
@@ -97,8 +98,8 @@ float4 PSBillboardMain(PS_INPUT input) : SV_TARGET
 PS_INPUT VSTerrainMain(VS_INPUT input)
 {
     PS_INPUT output;
-    output.positionH = mul(input.position, worldMatrix);
-    output.positionH = mul(output.positionH, viewMatrix);
+    output.positionW = mul(input.position, worldMatrix);
+    output.positionH = mul(output.positionW, viewMatrix);
     output.positionH = mul(output.positionH, projMatrix);
     output.uv0 = input.uv0;
     output.uv1 = input.uv1;
@@ -124,9 +125,9 @@ VS_INPUT VSTerrainTessMain(VS_INPUT input)
     return output;
 }
 
-float CalculateTessFactor(float3 f3Position)
+float CalculateTessFactor(float3 position)
 {
-    float fDistToCamera = distance(f3Position, eye);
+    float fDistToCamera = distance(position, eye);
     float s = saturate(fDistToCamera / 75.0f);
     return lerp(64.0f, 3.0f, s);
 }
@@ -144,6 +145,7 @@ PatchTess TerrainTessConstantHS(InputPatch<VS_INPUT, 25> patch, uint patchID : S
         center += patch[i].position.xyz;
     center /= 25.0f;
     output.InsideTess[0] = output.InsideTess[1] = CalculateTessFactor(center);
+
     return output;
 }
 
@@ -204,6 +206,11 @@ PS_INPUT DSTerrainTessMain(PatchTess patchTess, float2 uv : SV_DomainLocation, c
     output.positionH = mul(output.positionW, viewMatrix);
     output.positionH = mul(output.positionH, projMatrix);
     
+    // 그림자 텍스쳐 읽을 좌표
+    output.shadowPosH = mul(output.positionW, lightViewMatrix);
+    output.shadowPosH = mul(output.shadowPosH, lightProjMatrix);
+    output.shadowPosH = mul(output.shadowPosH, NDCToTextureMatrix);
+    
     // 노말 보간
     output.normalW = lerp(lerp(patch[0].normal, patch[4].normal, uv.x), lerp(patch[20].normal, patch[24].normal, uv.x), uv.y);
     
@@ -215,18 +222,16 @@ PS_INPUT DSTerrainTessMain(PatchTess patchTess, float2 uv : SV_DomainLocation, c
 }
 
 float4 PSTerrainTessMain(PS_INPUT input) : SV_TARGET
-{
+{   
+    // 텍스쳐 색깔
     float4 baseTextureColor = g_texture.Sample(g_sampler, input.uv0);
     float4 detailTextureColor = g_detailTexture.Sample(g_sampler, input.uv1);
     float4 texColor = lerp(baseTextureColor, detailTextureColor, 0.4f);
     
     // 그림자 계산
-    float4 shadowPosH = mul(input.positionW, lightViewMatrix);
-    shadowPosH = mul(shadowPosH, lightProjMatrix);
-    shadowPosH = mul(shadowPosH, NDCToTextureMatrix);
-    float shadowFacter = CalcShadowFactor(shadowPosH);
+    float shadowFacter = CalcShadowFactor(input.shadowPosH); // 그림자이면 0, 아니면 1 [0~1]
     
-    return texColor * shadowFacter;
+    return texColor * saturate(shadowFacter + 0.7f); // 그림자를 좀 흐리게 그림
 }
 
 float4 PSTerrainTessWireMain(PS_INPUT pin) : SV_TARGET
@@ -253,38 +258,16 @@ PS_INPUT VSModelMain(VS_INPUT input)
     output.positionW = mul(input.position, worldMatrix);
     output.positionH = mul(output.positionW, viewMatrix);
     output.positionH = mul(output.positionH, projMatrix);
-    output.normalW = mul(float4(input.normal, 0.0f), worldMatrix).xyz;
+    output.shadowPosH = mul(output.positionW, lightViewMatrix);
+    output.shadowPosH = mul(output.shadowPosH, lightProjMatrix);
+    output.shadowPosH = mul(output.shadowPosH, NDCToTextureMatrix);
+    output.normalW = mul(input.normal, (float3x3)worldMatrix);
     output.color = input.color;
     return output;
 }
 
 float4 PSModelMain(PS_INPUT input) : SV_TARGET
 {
-    // 노말 벡터 정규화
-    input.normalW = normalize(input.normalW);
-    
-    // 조명 -> 눈 단위 벡터
-    float3 toEye = normalize(eye - input.positionW.xyz);
-    
-    // 간접 조명(씬 전체에 비치는 간접광이 있어야되는데... 나는 안했음)
-    float4 ambient = /* gAmbientLight */materials[0].diffuseAlbedo;
-    
-    // 최종 조명 색깔
-    float4 litColor = ambient;
-    
-    // 모든 조명 계산
-    for (int i = 0; i < MAX_LIGHT; ++i)
-    {
-        if (lights[i].type == DIRECTIONAL_LIGHT)
-        {
-            litColor += float4(ComputeDirectionalLight(lights[0], materials[0], input.normalW, toEye), 0.0f);
-        }
-        else if (lights[i].type == POINT_LIGHT)
-        {
-            /* 점 조명 처리하는 코드 */
-        }
-    }
-    
-    litColor.a = materials[0].diffuseAlbedo.a;
-    return litColor;
+    float4 lightColor = Lighting(materials[0], input.positionW.xyz, input.normalW, false, input.shadowPosH);
+    return input.color + lightColor;
 }

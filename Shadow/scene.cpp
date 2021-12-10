@@ -58,7 +58,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 
 	// 메쉬 생성
 	auto tankMesh{ make_shared<Mesh>(device, commandList, sPATH("tank.obj")) };
-	auto cubeMesh{ make_shared<CubeMesh>(device, commandList, 0.5f, 0.5f, 0.5f) };
+	auto cubeMesh{ make_shared<CubeMesh>(device, commandList, 1.0f, 1.0f, 1.0f) };
 	auto indoorMesh{ make_shared<ReverseCubeMesh>(device, commandList, 15.0f, 15.0f, 15.0f) };
 	auto bulletMesh{ make_shared<CubeMesh>(device, commandList, 0.1f, 0.1f, 0.1f) };
 	auto explosionMesh{ make_shared<BillboardMesh>(device, commandList, XMFLOAT3{}, XMFLOAT2{ 5.0f, 5.0f }) };
@@ -143,7 +143,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddTexture("INDOOR", indoorTexture);
 
 	// 그림자맵 생성
-	m_shadowMap = make_unique<ShadowMap>(device, 2048, 2048);
+	m_shadowMap = make_unique<ShadowMap>(device, 1024 * 16, 1024 * 16);
 
 	// 카메라 생성
 	auto camera{ make_shared<ThirdPersonCamera>() };
@@ -178,14 +178,6 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	terrain->SetPosition({ -257.0f / 2.0f, 0.0f, -257.0f / 2.0f });
 	m_terrains.push_back(move(terrain));
 
-	// 빌보드 사각형 생성
-	auto billboardObject{ make_unique<GameObject>() };
-	billboardObject->SetPosition(XMFLOAT3{ 0.0f, 500.0f, 0.0f });
-	billboardObject->SetMesh(m_resourceManager->GetMesh("BILLBOARD"));
-	billboardObject->SetShader(m_resourceManager->GetShader("BILLBOARD"));
-	billboardObject->SetTexture(m_resourceManager->GetTexture("ROCK"));
-	m_gameObjects.push_back(move(billboardObject));
-
 	// 실내 생성
 	auto indoor{ make_unique<GameObject>() };
 	indoor->SetPosition(XMFLOAT3{ 0.0f, 500.0f, 0.0f });
@@ -201,6 +193,17 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	mirror->SetShader(m_resourceManager->GetShader("BLENDINGDEPTH"));
 	mirror->SetTexture(m_resourceManager->GetTexture("MIRROR"));
 	m_mirror = move(mirror);
+
+	// 그림자 테스트용 육면체 생성
+	for(int i = 0; i < 9; ++i)
+	{
+		auto testCube{ make_unique<GameObject>() };
+		testCube->SetPosition(XMFLOAT3{ 5.0f * (i / 3), 30.0f, 5.0f * (i % 3) });
+		testCube->SetMesh(m_resourceManager->GetMesh("CUBE"));
+		testCube->SetShader(m_resourceManager->GetShader("TEXTURE"));
+		testCube->SetTexture(m_resourceManager->GetTexture("INDOOR"));
+		m_gameObjects.push_back(move(testCube));
+	}
 }
 
 void Scene::OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime)
@@ -341,9 +344,15 @@ void Scene::CreateLightAndMeterial()
 	m_cbSceneData->ligths[0].strength = XMFLOAT3{ 1.0f, 1.0f, 1.0f };
 	m_cbSceneData->ligths[0].direction = XMFLOAT3{ 1.0f, -1.0f, 1.0f };
 
+	// 탱크
 	m_cbSceneData->materials[0].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
 	m_cbSceneData->materials[0].fresnelR0 = XMFLOAT3{ 0.95f, 0.93f, 0.88f };
 	m_cbSceneData->materials[0].roughness = 0.05f;
+
+	// 지형
+	m_cbSceneData->materials[1].diffuseAlbedo = XMFLOAT4{ 0.1f, 0.1f, 0.1f, 1.0f };
+	m_cbSceneData->materials[1].fresnelR0 = XMFLOAT3{ 0.0f, 0.0f, 0.0f };
+	m_cbSceneData->materials[1].roughness = 0.95f;
 }
 
 void Scene::Update(FLOAT deltaTime)
@@ -355,48 +364,48 @@ void Scene::Update(FLOAT deltaTime)
 void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
 	// 씬 셰이더 변수 최신화
-	if (m_cbScene)
+	// 씬을 모두 감싸는 바운딩 구
+	BoundingSphere sceneSphere{ XMFLOAT3{ 0.0f, 0.0f, 0.0f }, 128.5f * sqrt(2.0f) };
+
+	// 메쉬 정점을 조명 좌표계로 바꿔주는 행렬 계산
+	XMFLOAT3 lightDir{ 1.0f, -1.0f, 1.0f };
+	XMFLOAT3 lightPos{ Vector3::Mul(lightDir, -2.0f * sceneSphere.Radius) };
+	XMFLOAT3 targetPos{ sceneSphere.Center };
+	XMFLOAT3 lightUp{ 0.0f, 1.0f, 0.0f };
+
+	XMFLOAT4X4 lightViewMatrix; 
+	XMStoreFloat4x4(&lightViewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&lightPos), XMLoadFloat3(&targetPos), XMLoadFloat3(&lightUp)));
+
+	// 조명 좌표계에서의 씬 구 원점
+	XMFLOAT3 sphereCenterLS{ Vector3::TransformCoord(targetPos, lightViewMatrix) };
+
+	// 직교 투영 행렬 설정
+	float l = sphereCenterLS.x - sceneSphere.Radius;
+	float b = sphereCenterLS.y - sceneSphere.Radius;
+	float n = sphereCenterLS.z - sceneSphere.Radius;
+	float r = sphereCenterLS.x + sceneSphere.Radius;
+	float t = sphereCenterLS.y + sceneSphere.Radius;
+	float f = sphereCenterLS.z + sceneSphere.Radius;
+	XMFLOAT4X4 lightProjMatrix;
+	XMStoreFloat4x4(&lightProjMatrix, XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f));
+
+	// 상수 버퍼 데이터에 저장
+	m_cbSceneData->lightViewMatrix = Matrix::Transpose(lightViewMatrix);
+	m_cbSceneData->lightProjMatrix = Matrix::Transpose(lightProjMatrix);
+	m_cbSceneData->NDCToTextureMatrix = Matrix::Transpose(
 	{
-		// 씬을 모두 감싸는 바운딩 구
-		BoundingSphere sceneSphere{ XMFLOAT3{ 0.0f, 0.0f, 0.0f }, 200.0f };
+		0.5f,  0.0f, 0.0f, 0.0f,
+		0.0f, -0.5f, 0.0f, 0.0f,
+		0.0f,  0.0f, 1.0f, 0.0f,
+		0.5f,  0.5f, 0.0f, 1.0f
+	});
 
-		// 메쉬 정점을 조명 좌표계로 바꿔주는 행렬 계산
-		XMFLOAT3 lightDir{ 1.0f, -1.0f, 1.0f };
-		XMFLOAT3 lightPos{ Vector3::Mul(lightDir, -2.0f * sceneSphere.Radius) };
-		XMFLOAT3 targetPos{ sceneSphere.Center };
-		XMFLOAT3 lightUp{ 0.0f, 1.0f, 0.0f };
+	// 셰이더로 복사
+	memcpy(m_pcbScene, m_cbSceneData.get(), sizeof(cbScene));
+	commandList->SetGraphicsRootConstantBufferView(5, m_cbScene->GetGPUVirtualAddress());
 
-		XMFLOAT4X4 lightViewMatrix; 
-		XMStoreFloat4x4(&lightViewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&lightPos), XMLoadFloat3(&targetPos), XMLoadFloat3(&lightUp)));
-
-		// 조명 좌표계에서의 씬 구 원점
-		XMFLOAT3 sphereCenterLS{ Vector3::TransformCoord(sceneSphere.Center, lightViewMatrix) };
-
-		// 직교 투영 행렬 설정
-		float l = sphereCenterLS.x - sceneSphere.Radius;
-		float b = sphereCenterLS.y - sceneSphere.Radius;
-		float n = sphereCenterLS.z - sceneSphere.Radius;
-		float r = sphereCenterLS.x + sceneSphere.Radius;
-		float t = sphereCenterLS.y + sceneSphere.Radius;
-		float f = sphereCenterLS.z + sceneSphere.Radius;
-		XMFLOAT4X4 lightProjMatrix;
-		XMStoreFloat4x4(&lightProjMatrix, XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f));
-
-		// 상수 버퍼 데이터에 저장
-		m_cbSceneData->lightViewMatrix = Matrix::Transpose(lightViewMatrix);
-		m_cbSceneData->lightProjMatrix = Matrix::Transpose(lightProjMatrix);
-		m_cbSceneData->NDCToTextureMatrix = Matrix::Transpose(
-		{
-			0.5f,  0.0f, 0.0f, 0.0f,
-			0.0f, -0.5f, 0.0f, 0.0f,
-			0.0f,  0.0f, 1.0f, 0.0f,
-			0.5f,  0.5f, 0.0f, 1.0f
-		});
-
-		// 셰이더로 복사
-		memcpy(m_pcbScene, m_cbSceneData.get(), sizeof(cbScene));
-		commandList->SetGraphicsRootConstantBufferView(5, m_cbScene->GetGPUVirtualAddress());
-	}
+	// 카메라 셰이더 변수 최신화
+	if (m_camera) m_camera->UpdateShaderVariable(commandList);
 }
 
 void Scene::RemoveDeletedObjects()
@@ -485,9 +494,6 @@ void Scene::UpdateObjectsTerrain()
 
 void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
-	// 카메라 셰이더 변수 최신화
-	if (m_camera) m_camera->UpdateShaderVariable(commandList);
-
 	// 뷰포트, 가위사각형, 렌더타겟 설정
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->RSSetScissorRects(1, &m_scissorRect);
@@ -553,12 +559,9 @@ void Scene::RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D
 	commandList->OMSetStencilRef(0);
 }
 
-void Scene::RenderShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+void Scene::RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
 {
 	if (!m_shadowMap) return;
-
-	// 그림자맵 렌더링을 위한 셰이더 변수 최신화
-	UpdateShaderVariable(commandList);
 
 	// 셰이더에 묶기
 	ID3D12DescriptorHeap* ppHeaps[] = { m_shadowMap->GetSrvHeap().Get() };
@@ -580,8 +583,8 @@ void Scene::RenderShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList
 
 	// 렌더링
 	if (m_player) m_player->Render(commandList, m_resourceManager->GetShader("SHADOW"));
-	for (const auto& terrain : m_terrains)
-		terrain->Render(commandList);
+	for (const auto& object : m_gameObjects)
+		object->Render(commandList, m_resourceManager->GetShader("SHADOW"));
 	
 	// 리소스배리어 설정(셰이더에서 읽기)
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_shadowMap->GetShadowMap().Get(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ));
@@ -595,7 +598,7 @@ void Scene::ReleaseUploadBuffer()
 void Scene::CreateBullet()
 {
 	unique_ptr<Bullet> bullet{ make_unique<Bullet>(m_player->GetPosition(), m_player->GetLook(), m_player->GetNormal(), 100.0f) };
-	bullet->SetPosition(Vector3::Add(m_player->GetPosition(), XMFLOAT3{ 0.0f, 0.5f, 0.0f }));
+	bullet->SetPosition(Vector3::Add(m_player->GetPosition(), Vector3::Mul(m_player->GetNormal(), 0.5f)));
 	bullet->SetMesh(m_resourceManager->GetMesh("BULLET"));
 	bullet->SetShader(m_resourceManager->GetShader("TEXTURE"));
 	bullet->SetTexture(m_resourceManager->GetTexture("ROCK"));

@@ -70,19 +70,19 @@ public:
 	void OnKeyboardEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	void OnUpdate(FLOAT deltaTime);
 
-	void CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void Update(FLOAT deltaTime);
+	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
+
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+	void RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
+	void RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+
+	void CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
 	void CreateLightAndMeterial();
 	void CreateBullet();
 
-	void Update(FLOAT deltaTime);
 	void RemoveDeletedObjects();
 	void UpdateObjectsTerrain();
-
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
-	void RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
-	void RenderShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
-
 	void ReleaseUploadBuffer();
 
 	void SetSkybox(unique_ptr<Skybox>& skybox);
@@ -95,8 +95,8 @@ public:
 	HeightMapTerrain* GetTerrain(FLOAT x, FLOAT z) const;
 
 private:
-	D3D12_VIEWPORT							m_viewport;
-	D3D12_RECT								m_scissorRect;
+	D3D12_VIEWPORT							m_viewport;			// 뷰포트
+	D3D12_RECT								m_scissorRect;		// 가위사각형
 
 	unique_ptr<ResourceManager>				m_resourceManager;	// 모든 메쉬, 셰이더, 텍스쳐들
 
@@ -107,7 +107,6 @@ private:
 	unique_ptr<Skybox>						m_skybox;			// 스카이박스
 	shared_ptr<Player>						m_player;			// 플레이어
 	shared_ptr<Camera>						m_camera;			// 카메라
-
 	unique_ptr<ShadowMap>					m_shadowMap;		// 그림자맵
 
 	ComPtr<ID3D12Resource>					m_cbScene;			// 씬 상수 버퍼

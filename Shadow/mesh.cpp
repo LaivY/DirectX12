@@ -50,12 +50,12 @@ Mesh::Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsComman
 				int vi, vni; ss >> vi >> vni;
 
 				Vertex v;
-				v.position	= positions[vi - 1];
-				v.normal	= normals[vni - 1];
-				v.color.x	= static_cast<float>(rand());
-				v.color.y	= static_cast<float>(rand());
-				v.color.z	= static_cast<float>(rand());
-				v.color.w	= 1.0f;
+				v.position = positions[vi - 1];
+				v.normal = normals[vni - 1];
+				v.color.x = 0.5f;
+				v.color.y = 0.5f;
+				v.color.z = 0.5f;
+				v.color.w = 1.0f;
 				vertices.push_back(v);
 			}
 		}

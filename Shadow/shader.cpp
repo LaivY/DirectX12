@@ -446,7 +446,7 @@ ModelShader::ModelShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12
 
 ShadowShader::ShadowShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature)
 {
-	ComPtr<ID3DBlob> vertexShader;
+	ComPtr<ID3DBlob> vertexShader, pixelShader;
 
 #if defined(_DEBUG)
 	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
@@ -454,17 +454,13 @@ ShadowShader::ShadowShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	UINT compileFlags = 0;
 #endif
 
-	// 픽셀 셰이더는 필요없음
 	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("shaders.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSShadowMain", "vs_5_1", compileFlags, 0, &vertexShader, NULL));
 
 	// 깊이값 바이어스 설정
 	CD3DX12_RASTERIZER_DESC rasterizerState{ D3D12_DEFAULT };
-	rasterizerState.DepthBias = 100'000;
+	rasterizerState.DepthBias = 250'000;
 	rasterizerState.DepthBiasClamp = 0.0f;
 	rasterizerState.SlopeScaledDepthBias = 1.0f;
-
-	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
-	depthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
 	// 깊이값만 쓸 것이므로 렌더타겟을 설정하지 않는다.
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
@@ -472,7 +468,7 @@ ShadowShader::ShadowShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	psoDesc.pRootSignature = rootSignature.Get();
 	psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
 	psoDesc.RasterizerState = rasterizerState;
-	psoDesc.DepthStencilState = depthStencilState;
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;

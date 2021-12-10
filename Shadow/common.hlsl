@@ -1,6 +1,6 @@
 #include "lighting.hlsl"
 #define MAX_LIGHT       1
-#define MAX_MATERIAL    1
+#define MAX_MATERIAL    2
 
 // --------------------------------------
 
@@ -46,7 +46,8 @@ struct VS_INPUT
 struct PS_INPUT
 {
     float4 positionH    : SV_POSITION;
-    float4 positionW    : POSITION;
+    float4 positionW    : POSITION0;
+    float4 shadowPosH   : POSITION1;
     float3 normalW      : NORMAL;
     float4 color        : COLOR;
     float2 uv0          : TEXCOORD0;
@@ -73,7 +74,7 @@ float CalcShadowFactor(float4 shadowPosH)
     g_shadowMap.GetDimensions(0, width, height, numMips);
 
     // Texel size.
-    float dx = 1.0f / (float) width;
+    float dx = 1.0f / (float)width;
 
     float percentLit = 0.0f;
     const float2 offsets[9] =
@@ -88,7 +89,35 @@ float CalcShadowFactor(float4 shadowPosH)
     {
         percentLit += g_shadowMap.SampleCmpLevelZero(g_shadowSampler, shadowPosH.xy + offsets[i], depth).r;
     }
-    
     return percentLit / 9.0f;
 }
 
+float4 Lighting(Material material, float3 positionW, float3 normalW, bool shadowing, float4 shadowPosH)
+{
+    float3 output = float3(0.0f, 0.0f, 0.0f);
+    
+    // 노말, 점에서 카메라를 바라보는 방향 벡터
+    normalW = normalize(normalW);
+    float3 toEye = normalize(eye - positionW);
+    
+    for (int i = 0; i < MAX_LIGHT; ++i)
+    {
+        // 꺼져있는 조명은 패스
+        if (!lights[i].isActivate)
+            continue;
+        
+        // 그림자 계수 계산
+        float shadowFactor = 1.0f;
+        if (shadowing)
+        {
+            shadowFactor = CalcShadowFactor(shadowPosH);
+        }
+        
+        // 조명 계산
+        if (lights[i].type == DIRECTIONAL_LIGHT)
+        {
+            output += ComputeDirectionalLight(lights[i], material, normalW, toEye) * shadowFactor;
+        }
+    }
+    return float4(output, material.diffuseAlbedo.a);
+}

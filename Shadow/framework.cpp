@@ -343,8 +343,11 @@ void GameFramework::PopulateCommandList() const
 	// Set necessary state
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
+	// 씬 셰이더 변수 최신화
+	if (m_scene) m_scene->UpdateShaderVariable(m_commandList);
+
 	// 그림자맵에 깊이 버퍼 쓰기
-	if (m_scene) m_scene->RenderShadowMap(m_commandList);
+	if (m_scene) m_scene->RenderToShadowMap(m_commandList);
 
 	// Indicate that the back buffer will be used as a render target
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -359,7 +362,7 @@ void GameFramework::PopulateCommandList() const
 	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, NULL);
 	m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 
-	// 렌더링
+	// 씬 렌더링
 	if (m_scene) m_scene->Render(m_commandList, rtvHandle, dsvHandle);
 
 	// Indicate back buffer will now be used to present
