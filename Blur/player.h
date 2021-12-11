@@ -25,6 +25,8 @@ public:
 	void SetVelocity(const XMFLOAT3& velocity) { m_velocity = velocity; }
 	void SetCamera(const shared_ptr<Camera>& camera) { m_camera = camera; }
 
+	XMFLOAT3 GetVelocity() const { return m_velocity; }
+
 private:
 	XMFLOAT3			m_velocity;		// 속도
 	FLOAT				m_maxVelocity;	// 최대속도

@@ -478,3 +478,46 @@ ShadowShader::ShadowShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	psoDesc.SampleDesc.Count = 1;
 	DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
+
+HorzBlurShader::HorzBlurShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature)
+{
+	ComPtr<ID3DBlob> computeShader, error;
+
+#if defined(_DEBUG)
+	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+	UINT compileFlags = 0;
+#endif
+
+	auto hr = 
+	//DX::ThrowIfFailed(D3DCompileFromFile(TEXT("blur.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "HorzBlurCS", "cs_5_1", compileFlags, 0, &computeShader, NULL));
+	(D3DCompileFromFile(TEXT("blur.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "HorzBlurCS", "cs_5_1", compileFlags, 0, &computeShader, &error));
+
+	if (error) OutputDebugStringA((char*)error->GetBufferPointer());
+	DX::ThrowIfFailed(hr);
+
+	D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc{};
+	psoDesc.pRootSignature = rootSignature.Get();
+	psoDesc.CS = CD3DX12_SHADER_BYTECODE(computeShader.Get());
+	psoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	DX::ThrowIfFailed(device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+}
+
+VertBlurShader::VertBlurShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature)
+{
+	ComPtr<ID3DBlob> computeShader;
+
+#if defined(_DEBUG)
+	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+	UINT compileFlags = 0;
+#endif
+
+	DX::ThrowIfFailed(D3DCompileFromFile(TEXT("blur.hlsl"), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VertBlurCS", "cs_5_1", compileFlags, 0, &computeShader, NULL));
+
+	D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc{};
+	psoDesc.pRootSignature = rootSignature.Get();
+	psoDesc.CS = CD3DX12_SHADER_BYTECODE(computeShader.Get());
+	psoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	DX::ThrowIfFailed(device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+}

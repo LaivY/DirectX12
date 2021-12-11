@@ -30,6 +30,7 @@ public:
 	void CreateRenderTargetView();
 	void CreateDepthStencilView();
 	void CreateRootSignature();
+	void CreatePostProcessRootSignature();
 	void LoadPipeline();
 	void LoadAssets();
 
@@ -65,6 +66,9 @@ private:
 	ComPtr<ID3D12Resource>				m_depthStencil;
 	ComPtr<ID3D12DescriptorHeap>		m_dsvHeap;
 	ComPtr<ID3D12RootSignature>			m_rootSignature;
+
+	// Blur
+	ComPtr<ID3D12RootSignature>			m_postProcessRootSignature;
 
 	// Synchronization
 	ComPtr<ID3D12Fence>					m_fence;

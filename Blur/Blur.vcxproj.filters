@@ -72,6 +72,9 @@
     <ClInclude Include="timer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="blurFilter.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -119,6 +122,9 @@
     <ClCompile Include="timer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="blurFilter.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Blur.rc">
@@ -141,6 +147,9 @@
       <Filter>셰이더 파일</Filter>
     </FxCompile>
     <FxCompile Include="shaders.hlsl">
+      <Filter>셰이더 파일</Filter>
+    </FxCompile>
+    <FxCompile Include="blur.hlsl">
       <Filter>셰이더 파일</Filter>
     </FxCompile>
   </ItemGroup>

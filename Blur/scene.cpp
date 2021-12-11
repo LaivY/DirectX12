@@ -47,7 +47,8 @@ Scene::~Scene()
 	if (m_cbScene) m_cbScene->Unmap(0, NULL);
 }
 
-void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio)
+void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
+				   const ComPtr<ID3D12RootSignature>& rootSignature, const ComPtr<ID3D12RootSignature>& postProcessRootSignature)
 {
 	// 리소스매니저 생성
 	m_resourceManager = make_unique<ResourceManager>();
@@ -78,6 +79,8 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	auto mirrorTextureShader{ make_shared<MirrorTextureShader>(device, rootSignature) };
 	auto modelShader{ make_shared<ModelShader>(device, rootSignature) };
 	auto shadowShader{ make_shared<ShadowShader>(device, rootSignature) };
+	auto horzBlurShader{ make_shared<HorzBlurShader>(device, postProcessRootSignature) };
+	auto vertBlurShader{ make_shared<VertBlurShader>(device, postProcessRootSignature) };
 
 	// 텍스쳐 생성
 	auto rockTexture{ make_shared<Texture>() };
@@ -134,6 +137,8 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	m_resourceManager->AddShader("MIRRORTEXTURE", mirrorTextureShader);
 	m_resourceManager->AddShader("MODEL", modelShader);
 	m_resourceManager->AddShader("SHADOW", shadowShader);
+	m_resourceManager->AddShader("HORZBLUR", horzBlurShader);
+	m_resourceManager->AddShader("VERTBLUR", vertBlurShader);
 
 	m_resourceManager->AddTexture("ROCK", rockTexture);
 	m_resourceManager->AddTexture("TERRAIN", terrainTexture);
@@ -145,6 +150,9 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 	// 그림자맵 생성
 	m_shadowMap = make_unique<ShadowMap>(device, 1024 * 16, 1024 * 16);
 
+	// 블러 필터 생성
+	m_blurFilter = make_unique<BlurFilter>(device);
+
 	// 카메라 생성
 	auto camera{ make_shared<ThirdPersonCamera>() };
 	camera->CreateShaderVariable(device, commandList);
@@ -152,7 +160,7 @@ void Scene::OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12Graphi
 
 	// 카메라 투영 행렬 설정
 	XMFLOAT4X4 projMatrix;
-	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, aspectRatio, 1.0f, 5000.0f));
+	XMStoreFloat4x4(&projMatrix, XMMatrixPerspectiveFovLH(0.25f * XM_PI, static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT), 1.0f, 5000.0f));
 	camera->SetProjMatrix(projMatrix);
 
 	// 플레이어 생성
@@ -514,6 +522,11 @@ void Scene::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_C
 		particle->Render(commandList);
 }
 
+void Scene::PostRenderProcess(const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, const ComPtr<ID3D12Resource>& input)
+{
+	if (m_blurFilter) m_blurFilter->Excute(commandList, rootSignature, m_resourceManager->GetShader("HORZBLUR"), m_resourceManager->GetShader("VERTBLUR"), input);
+}
+
 void Scene::RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const
 {
 	// 스텐실 버퍼 초기화
@@ -636,4 +649,10 @@ HeightMapTerrain* Scene::GetTerrain(FLOAT x, FLOAT z) const
 		});
 
 	return terrain != m_terrains.end() ? terrain->get() : nullptr;
+}
+
+ComPtr<ID3D12Resource> Scene::GetPostRenderProcessResult() const
+{
+	if (m_blurFilter) return m_blurFilter->GetResult();
+	return nullptr;
 }

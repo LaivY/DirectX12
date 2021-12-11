@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "stdafx.h"
+#include "blurFilter.h"
 #include "camera.h"
 #include "object.h"
 #include "player.h"
@@ -63,7 +64,8 @@ public:
 	Scene();
 	~Scene();
 
-	void OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, FLOAT aspectRatio);
+	void OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, 
+				const ComPtr<ID3D12RootSignature>& rootSignature, const ComPtr<ID3D12RootSignature>& postProcessRootSignature);
 	void OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime);
 	void OnMouseEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	void OnKeyboardEvent(FLOAT deltaTime);
@@ -72,6 +74,7 @@ public:
 
 	void Update(FLOAT deltaTime);
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
+	void PostRenderProcess(const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, const ComPtr<ID3D12Resource>& input);
 
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
@@ -93,6 +96,8 @@ public:
 	shared_ptr<Player> GetPlayer() const { return m_player; }
 	shared_ptr<Camera> GetCamera() const { return m_camera; }
 	HeightMapTerrain* GetTerrain(FLOAT x, FLOAT z) const;
+	ComPtr<ID3D12Resource> GetPostRenderProcessResult() const;
+	bool doPostProcess() const { return Vector3::Length(m_player->GetVelocity()) >= 0.16f; }
 
 private:
 	D3D12_VIEWPORT							m_viewport;			// 뷰포트
@@ -108,6 +113,7 @@ private:
 	shared_ptr<Player>						m_player;			// 플레이어
 	shared_ptr<Camera>						m_camera;			// 카메라
 	unique_ptr<ShadowMap>					m_shadowMap;		// 그림자맵
+	unique_ptr<BlurFilter>					m_blurFilter;		// 블러
 
 	ComPtr<ID3D12Resource>					m_cbScene;			// 씬 상수 버퍼
 	cbScene*								m_pcbScene;			// 씬 상수 버퍼 포인터
