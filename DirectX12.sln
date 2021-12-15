@@ -3,27 +3,29 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31424.327
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "01.Framework", "Framework\DirectX12.vcxproj", "{B8575145-2654-4C74-B0A4-37FD7F5C1899}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "01.Framework", "01.Framework\DirectX12.vcxproj", "{B8575145-2654-4C74-B0A4-37FD7F5C1899}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "02.Instancing", "Instancing\Instancing.vcxproj", "{82620D25-E751-4A9D-B2D1-8E4BF687B106}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "02.Instancing", "02.Instancing\Instancing.vcxproj", "{82620D25-E751-4A9D-B2D1-8E4BF687B106}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "03.Picking", "Picking\Picking.vcxproj", "{E549A56E-E702-4549-A69A-359EBAB674D3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "03.Picking", "03.Picking\Picking.vcxproj", "{E549A56E-E702-4549-A69A-359EBAB674D3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "04.Texture", "Texture\Texture.vcxproj", "{02B2CD97-5015-451F-8B22-5F365F51F8F1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "04.Texture", "04.Texture\Texture.vcxproj", "{02B2CD97-5015-451F-8B22-5F365F51F8F1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "05.Terrain", "Terrain\Terrain.vcxproj", "{4CF9EDA6-3739-4B89-AFD0-AB53BF82E263}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "05.Terrain", "05.Terrain\Terrain.vcxproj", "{4CF9EDA6-3739-4B89-AFD0-AB53BF82E263}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "06.Tessellation", "Tessellation\Tessellation.vcxproj", "{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "06.Tessellation", "06.Tessellation\Tessellation.vcxproj", "{3F0A8ED3-4621-4504-B2D6-D0F3EC1426DD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "07.Blending", "Blending\Blending.vcxproj", "{360E8036-E7C2-4F5A-A5FB-ED25CA8DCBD7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "07.Blending", "07.Blending\Blending.vcxproj", "{360E8036-E7C2-4F5A-A5FB-ED25CA8DCBD7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "08.Mirror", "Mirror\Mirror.vcxproj", "{B7B8F104-4347-4651-925C-FF21DD337AE5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "08.Mirror", "08.Mirror\Mirror.vcxproj", "{B7B8F104-4347-4651-925C-FF21DD337AE5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FBXLoader", "FBXLoader\FBXLoader.vcxproj", "{783676D0-F76B-4CBC-A802-3D5E8B9BD408}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "09.Shadow", "Shadow\Shadow.vcxproj", "{3821769F-944A-4688-88B5-39760722DBF0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "09.Shadow", "09.Shadow\Shadow.vcxproj", "{3821769F-944A-4688-88B5-39760722DBF0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "10.Blur", "Blur\Blur.vcxproj", "{79F38ED9-8215-4437-9F37-D55D1AF7B986}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "10.Blur", "10.Blur\Blur.vcxproj", "{79F38ED9-8215-4437-9F37-D55D1AF7B986}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "11.StreamOutput", "11.StreamOutput\StreamOutput.vcxproj", "{065F290B-6C7D-46C8-B64B-91698E5DBA8C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -121,6 +123,14 @@ Global
 		{79F38ED9-8215-4437-9F37-D55D1AF7B986}.Release|x64.Build.0 = Release|x64
 		{79F38ED9-8215-4437-9F37-D55D1AF7B986}.Release|x86.ActiveCfg = Release|Win32
 		{79F38ED9-8215-4437-9F37-D55D1AF7B986}.Release|x86.Build.0 = Release|Win32
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Debug|x64.ActiveCfg = Debug|x64
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Debug|x64.Build.0 = Debug|x64
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Debug|x86.ActiveCfg = Debug|Win32
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Debug|x86.Build.0 = Debug|Win32
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Release|x64.ActiveCfg = Release|x64
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Release|x64.Build.0 = Release|x64
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Release|x86.ActiveCfg = Release|Win32
+		{065F290B-6C7D-46C8-B64B-91698E5DBA8C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

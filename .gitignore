@@ -36,4 +36,5 @@
 .git/
 x64/
 Debug/
-Resources/
+resource/
+FBXLoader/
