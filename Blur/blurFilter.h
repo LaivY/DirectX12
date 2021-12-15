@@ -18,7 +18,7 @@ public:
 	ComPtr<ID3D12Resource> GetResult() const { return m_blurMap0; }
 
 private:
-	ComPtr<ID3D12Resource> m_blurMap0; // 1. 렌더 타겟 복사 본, 3. 최종 결과물
+	ComPtr<ID3D12Resource> m_blurMap0; // 1. 렌더 타겟 복사본, 3. 최종 결과물
 	ComPtr<ID3D12Resource> m_blurMap1; // 2. 가로 블러 결과
 
 	ComPtr<ID3D12DescriptorHeap> m_srvUavHeap;

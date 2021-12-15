@@ -6,7 +6,7 @@
 class Skybox
 {
 public:
-	Skybox(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature);
+	Skybox(const array<shared_ptr<Mesh>, 6>& meshes, const shared_ptr<Shader>& shader, const array<shared_ptr<Texture>, 6>& textures);
 	~Skybox() = default;
 
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;

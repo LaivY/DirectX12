@@ -36,34 +36,13 @@ struct cbScene
 	XMFLOAT4X4	NDCToTextureMatrix;			// NDC -> 텍스쳐 좌표계 변환 행렬
 };
 
-class ResourceManager
-{
-public:
-	ResourceManager() = default;
-	~ResourceManager() = default;
-
-	void ReleaseUploadBuffer() const;
-
-	void AddMesh(const string& key, const shared_ptr<Mesh>& mesh) { m_meshes[key] = mesh; }
-	void AddShader(const string & key, const shared_ptr<Shader>&shader) { m_shaders[key] = shader; }
-	void AddTexture(const string & key, const shared_ptr<Texture>&texture) { m_textures[key] = texture; }
-
-	shared_ptr<Mesh> GetMesh(const string & key) const;
-	shared_ptr<Shader> GetShader(const string & key) const;
-	shared_ptr<Texture> GetTexture(const string & key) const;
-
-private:
-	map<string, shared_ptr<Mesh>>		m_meshes;
-	map<string, shared_ptr<Shader>>		m_shaders;
-	map<string, shared_ptr<Texture>>	m_textures;
-};
-
 class Scene
 {
 public:
 	Scene();
 	~Scene();
 
+	// 이벤트 함수
 	void OnInit(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, 
 				const ComPtr<ID3D12RootSignature>& rootSignature, const ComPtr<ID3D12RootSignature>& postProcessRootSignature);
 	void OnMouseEvent(HWND hWnd, UINT width, UINT height, FLOAT deltaTime);
@@ -72,50 +51,62 @@ public:
 	void OnKeyboardEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	void OnUpdate(FLOAT deltaTime);
 
+	// 초기화 함수
+	void CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void CreateMeshes(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void CreateShaders(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12RootSignature>& rootSignature, const ComPtr<ID3D12RootSignature>& postProcessRootSignature);
+	void CreateTextures(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void CreateLightAndMeterial();
+	void CreateGameObjects(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+
+	// 초기화 후 호출되는 함수
+	void ReleaseUploadBuffer();
+
+	// 게임루프 함수
 	void Update(FLOAT deltaTime);
 	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
 	void PostRenderProcess(const ComPtr<ID3D12GraphicsCommandList>& commandList, const ComPtr<ID3D12RootSignature>& rootSignature, const ComPtr<ID3D12Resource>& input);
-
+	
+	// 위의 함수를 구현하기 위한 함수
+	void RemoveDeletedObjects();
+	void UpdateObjectsTerrain();
 	void UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
 	void RenderMirror(const ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) const;
 	void RenderToShadowMap(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
-
-	void CreateShaderVariable(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
-	void CreateLightAndMeterial();
 	void CreateBullet();
 
-	void RemoveDeletedObjects();
-	void UpdateObjectsTerrain();
-	void ReleaseUploadBuffer();
-
+	// 세터
 	void SetSkybox(unique_ptr<Skybox>& skybox);
 	void SetPlayer(const shared_ptr<Player>& player);
 	void SetCamera(const shared_ptr<Camera>& camera);
 
+	// 게터
 	Skybox* GetSkybox() const { return m_skybox.get(); }
 	shared_ptr<Player> GetPlayer() const { return m_player; }
 	shared_ptr<Camera> GetCamera() const { return m_camera; }
 	HeightMapTerrain* GetTerrain(FLOAT x, FLOAT z) const;
-	ComPtr<ID3D12Resource> GetPostRenderProcessResult() const;
 	bool doPostProcess() const { return Vector3::Length(m_player->GetVelocity()) >= 0.16f; }
-
+	ComPtr<ID3D12Resource> GetPostRenderProcessResult() const;
+	
 private:
-	D3D12_VIEWPORT							m_viewport;			// 뷰포트
-	D3D12_RECT								m_scissorRect;		// 가위사각형
+	D3D12_VIEWPORT								m_viewport;		// 뷰포트
+	D3D12_RECT									m_scissorRect;	// 가위사각형
 
-	unique_ptr<ResourceManager>				m_resourceManager;	// 모든 메쉬, 셰이더, 텍스쳐들
+	ComPtr<ID3D12Resource>						m_cbScene;		// 씬 상수 버퍼
+	cbScene*									m_pcbScene;		// 씬 상수 버퍼 포인터
+	unique_ptr<cbScene>							m_cbSceneData;	// 씬 상수 버퍼 데이터
 
-	vector<unique_ptr<GameObject>>			m_gameObjects;		// 게임오브젝트
-	vector<unique_ptr<GameObject>>			m_particles;		// 반투명 객체
-	vector<unique_ptr<HeightMapTerrain>>	m_terrains;			// 지형
-	unique_ptr<GameObject>					m_mirror;			// 거울
-	unique_ptr<Skybox>						m_skybox;			// 스카이박스
-	shared_ptr<Player>						m_player;			// 플레이어
-	shared_ptr<Camera>						m_camera;			// 카메라
-	unique_ptr<ShadowMap>					m_shadowMap;		// 그림자맵
-	unique_ptr<BlurFilter>					m_blurFilter;		// 블러
+	unordered_map<string, shared_ptr<Mesh>>		m_meshes;		// 메쉬들
+	unordered_map<string, shared_ptr<Shader>>	m_shaders;		// 셰이더들
+	unordered_map<string, shared_ptr<Texture>>	m_textures;		// 텍스쳐들
+	unique_ptr<ShadowMap>						m_shadowMap;	// 그림자맵
+	unique_ptr<BlurFilter>						m_blurFilter;	// 블러
 
-	ComPtr<ID3D12Resource>					m_cbScene;			// 씬 상수 버퍼
-	cbScene*								m_pcbScene;			// 씬 상수 버퍼 포인터
-	unique_ptr<cbScene>						m_cbSceneData;		// 씬 상수 버퍼 데이터
+	shared_ptr<Camera>							m_camera;		// 카메라
+	shared_ptr<Player>							m_player;		// 플레이어
+	unique_ptr<Skybox>							m_skybox;		// 스카이박스
+	vector<unique_ptr<HeightMapTerrain>>		m_terrains;		// 지형
+	vector<unique_ptr<GameObject>>				m_gameObjects;	// 게임오브젝트들
+	vector<unique_ptr<GameObject>>				m_particles;	// 반투명 객체
+	unique_ptr<GameObject>						m_mirror;		// 거울
 };

@@ -20,6 +20,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <unordered_map>
 #include <vector>
 using namespace std;
 using Microsoft::WRL::ComPtr;
