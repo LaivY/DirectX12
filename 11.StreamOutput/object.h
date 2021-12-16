@@ -77,3 +77,12 @@ private:
 	FLOAT		m_speed;		 // 날아가는 속도
 	FLOAT		m_damage;		 // 피해량
 };
+
+class Particle : public GameObject
+{
+public:
+	Particle() = default;
+	~Particle() = default;
+
+	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+};

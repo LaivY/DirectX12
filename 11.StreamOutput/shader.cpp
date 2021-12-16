@@ -547,6 +547,23 @@ StreamShader::StreamShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	DX::ThrowIfFailed(D3DCompileFromFile(PATH("particle.hlsl").c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "GSParticleStreamOutput", "gs_5_1", compileFlags, 0, &streamGeometryShader, NULL));
 	DX::ThrowIfFailed(D3DCompileFromFile(PATH("particle.hlsl").c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSParticleMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
+	// 스트림 출력
+	D3D12_SO_DECLARATION_ENTRY* SODeclaration{ new D3D12_SO_DECLARATION_ENTRY[4] };
+	SODeclaration[0] = { 0, "POSITION", 0, 0, 3, 0 };
+	SODeclaration[1] = { 0, "SIZE", 0, 0, 2, 0 };
+	SODeclaration[2] = { 0, "LIFETIME", 0, 0, 1, 0 };
+	SODeclaration[3] = { 0, "AGE", 0, 0, 1, 0 };
+
+	UINT* bufferStrides{ new UINT[1] };
+	bufferStrides[0] = sizeof(ParticleVertex);
+
+	D3D12_STREAM_OUTPUT_DESC streamOutput{};
+	streamOutput.NumEntries = 4;
+	streamOutput.pSODeclaration = SODeclaration;
+	streamOutput.NumStrides = 1;
+	streamOutput.pBufferStrides = bufferStrides;
+	streamOutput.RasterizedStream = D3D12_SO_NO_RASTERIZED_STREAM;
+
 	// 깊이 쓰기 OFF
 	CD3DX12_DEPTH_STENCIL_DESC depthStencilState{ D3D12_DEFAULT };
 	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -558,26 +575,6 @@ StreamShader::StreamShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	blendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
 	blendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 	blendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-
-	// 스트림 출력
-	// 배열로 해서 안되면 new로 할당해서 시도해봐야함
-	D3D12_SO_DECLARATION_ENTRY SODeclaration[] =
-	{
-		{ 0, "POSITION", 0, 0, 3, 0 },
-		{ 0, "SIZE", 0, 0, 2, 0 },
-		{ 0, "LIFETIME", 0, 0, 1, 0 },
-		{ 0, "AGE", 0, 0, 1, 0 }
-	};
-
-	// 이것도 위와 마찬가지
-	UINT bufferStrides[1]{ sizeof(ParticleVertex) };
-
-	D3D12_STREAM_OUTPUT_DESC streamOutput{};
-	streamOutput.NumEntries = _countof(SODeclaration);
-	streamOutput.pSODeclaration = SODeclaration;
-	streamOutput.NumStrides = 1;
-	streamOutput.pBufferStrides = bufferStrides;
-	streamOutput.RasterizedStream = D3D12_SO_NO_RASTERIZED_STREAM;
 
 	// 스트림 출력용 PSO
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC streamPsoDesc{};

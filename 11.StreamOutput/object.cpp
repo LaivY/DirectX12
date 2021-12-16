@@ -16,13 +16,6 @@ void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, co
 	// 셰이더 변수 최신화
 	UpdateShaderVariable(commandList);
 
-	// 텍스쳐
-	if (m_texture)
-	{
-		if (m_textureInfo) m_texture->SetTextureInfo(m_textureInfo.get());
-		m_texture->UpdateShaderVariable(commandList);
-	}
-
 	// 메쉬 렌더링
 	if (m_mesh) m_mesh->Render(commandList);
 }
@@ -72,6 +65,13 @@ void GameObject::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& c
 {
 	// 게임오브젝트의 월드 변환 행렬 최신화
 	commandList->SetGraphicsRoot32BitConstants(0, 16, &Matrix::Transpose(m_worldMatrix), 0);
+
+	// 텍스쳐 최신화
+	if (m_texture)
+	{
+		if (m_textureInfo) m_texture->SetTextureInfo(m_textureInfo.get());
+		m_texture->UpdateShaderVariable(commandList);
+	}
 }
 
 void GameObject::SetPosition(const XMFLOAT3& position)
@@ -156,4 +156,24 @@ void Bullet::Update(FLOAT deltaTime)
 
 	// 총알 진행 방향으로 이동
 	Move(Vector3::Mul(m_direction, m_speed * deltaTime));
+}
+
+void Particle::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+{
+	// 파티클 객체가 갖고있는 셰이더는 반드시 class StreamShader이다.
+	StreamShader* streamShader{ reinterpret_cast<StreamShader*>(m_shader.get()) };
+
+	// 파티클 객체가 갖고있는 메쉬는 반드시 ParticleMesh이다.
+	ParticleMesh* particleMesh{ reinterpret_cast<ParticleMesh*>(m_mesh.get()) };
+
+	// 셰이더 변수 최신화
+	UpdateShaderVariable(commandList);
+
+	// 스트림 출력 패스
+	commandList->SetPipelineState(streamShader->GetStreamPipelineState().Get());
+	if (particleMesh) particleMesh->RenderStreamOutput(commandList);
+
+	// 통상 렌더링 패스
+	commandList->SetPipelineState(streamShader->GetPipelineState().Get());
+	if (particleMesh) particleMesh->Render(commandList);
 }

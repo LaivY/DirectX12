@@ -21,16 +21,18 @@ struct ParticleVertex
 class Mesh
 {
 public:
-	Mesh() = default;
+	Mesh();
 	Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList,
 		void* vertexData, UINT sizePerVertexData, UINT vertexDataCount, void* indexData, UINT indexDataCount, D3D_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	Mesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const string& fileName, D3D_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	~Mesh() = default;
 
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& m_commandList) const;
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const D3D12_VERTEX_BUFFER_VIEW& instanceBufferView, UINT count) const;
 	void CreateVertexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, void* data, UINT sizePerData, UINT dataCount);
 	void CreateIndexBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, void* data, UINT dataCount);
+
+	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const D3D12_VERTEX_BUFFER_VIEW& instanceBufferView, UINT count) const;
+
 	void ReleaseUploadBuffer();
 
 protected:
@@ -73,4 +75,28 @@ class BillboardMesh : public Mesh
 public:
 	BillboardMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size);
 	~BillboardMesh() = default;
+};
+
+class ParticleMesh : public Mesh
+{
+public:
+	ParticleMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size);
+	~ParticleMesh() = default;
+
+	void CreateStreamOutputBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
+
+	void RenderStreamOutput(const ComPtr<ID3D12GraphicsCommandList>& commandList);
+	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList);
+
+private:
+	ComPtr<ID3D12Resource>			m_streamOutputBuffer;				// 스트림 출력 버퍼
+	D3D12_STREAM_OUTPUT_BUFFER_VIEW m_streamOutputBufferView;			// 스트림 출력 버퍼 뷰
+	
+	ComPtr<ID3D12Resource>			m_streamFilledSizeBuffer;			// 스트림 버퍼에 쓰여진 데이터 크기를 받을 버퍼
+	ComPtr<ID3D12Resource>			m_streamFilledSizeUploadBuffer;		// 위의 버퍼에 복사할 때 쓰일 업로드 버퍼
+	UINT*							m_pFilledSize;						// 스트림 버퍼에 쓰여진 데이터 크기
+
+	ComPtr<ID3D12Resource>			m_streamFilledSizeReadBackBuffer;	// 쓰여진 데이터 크기를 읽어올 때 쓰일 리드백 버퍼
+
+	ComPtr<ID3D12Resource>			m_drawBuffer;						// 스트림 출력된 결과를 복사해서 출력할 때 쓰일 버퍼
 };
