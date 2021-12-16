@@ -22,7 +22,7 @@ VS_PARTICLE_INPUT VSParticleMain(VS_PARTICLE_INPUT input)
     return input;
 }
 
-[maxvertexcount(9)]
+[maxvertexcount(1)]
 void GSParticleStreamOutput(point VS_PARTICLE_INPUT input[1], inout PointStream<VS_PARTICLE_INPUT> output)
 {
     VS_PARTICLE_INPUT particle = input[0];
@@ -34,7 +34,7 @@ void GSParticleStreamOutput(point VS_PARTICLE_INPUT input[1], inout PointStream<
     if (particle.age > particle.lifeTime)
     {
         particle.age = 0;
-        particle.position += float3(0.0f, 10.0f, 0.0f);
+        particle.position += float3(0.0f, 100.0f, 0.0f);
     }
     else
     {
@@ -92,5 +92,5 @@ void GSParticleDraw(point VS_PARTICLE_INPUT input[1], inout TriangleStream<GS_PA
 
 float4 PSParticleMain(GS_PARTICLE_OUTPUT input) : SV_TARGET
 {
-    return float4(0.0f, 0.0f, 0.0f, 1.0f);
+    return g_texture.Sample(g_sampler, input.uv);
 }

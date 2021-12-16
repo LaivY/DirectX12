@@ -287,7 +287,7 @@ void GameFramework::CreateShaderVariable()
 	m_cbGameFrameworkData = make_unique<cbGameFramework>();
 }
 
-void GameFramework::UpdateShaderVariable()
+void GameFramework::UpdateShaderVariable() const
 {
 	m_cbGameFrameworkData->deltaTime = m_timer.GetDeltaTime();
 	memcpy(m_pcbGameFramework, m_cbGameFrameworkData.get(), sizeof(cbGameFramework));
@@ -355,7 +355,7 @@ void GameFramework::LoadAssets()
 	m_commandList->Reset(m_commandAllocator.Get(), NULL);
 
 	// 셰이더 변수 생성
-	
+	CreateShaderVariable();
 
 	// 씬 생성, 초기화
 	m_scene = make_unique<Scene>();
@@ -383,6 +383,9 @@ void GameFramework::PopulateCommandList() const
 
 	// Set necessary state
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+	// 프레임워크 셰이더 변수 최신화
+	UpdateShaderVariable();
 
 	// 씬 셰이더 변수 최신화
 	if (m_scene) m_scene->UpdateShaderVariable(m_commandList);

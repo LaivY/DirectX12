@@ -37,7 +37,7 @@ public:
 	void CreateRootSignature();
 	void CreatePostProcessRootSignature();
 	void CreateShaderVariable();
-	void UpdateShaderVariable();
+	void UpdateShaderVariable() const;
 	void LoadPipeline();
 	void LoadAssets();
 

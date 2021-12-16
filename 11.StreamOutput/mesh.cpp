@@ -360,14 +360,14 @@ BillboardMesh::BillboardMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 	CreateVertexBuffer(device, commandList, &v, sizeof(Vertex), 1);
 }
 
-ParticleMesh::ParticleMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size)
+ParticleMesh::ParticleMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size, const FLOAT& lifeTime)
 {
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
 
 	ParticleVertex v;
 	v.position = position;
 	v.size = size;
-	v.lifeTime = 10.0f;
+	v.lifeTime = lifeTime;
 	v.age = 0.0f;
 	CreateVertexBuffer(device, commandList, &v, sizeof(ParticleVertex), 1);
 	CreateStreamOutputBuffer(device, commandList);
@@ -379,7 +379,7 @@ void ParticleMesh::CreateStreamOutputBuffer(const ComPtr<ID3D12Device>& device, 
 
 	// 최대 파티클 분열 개수
 	// 나의 경우 파티클이 파티클을 만들지 않음
-	const UINT nMaxParticles{ 1 };
+	const UINT nMaxParticles{ 2 };
 
 	// 스트림출력 버퍼 생성
 	m_streamOutputBuffer = CreateBufferResource(device, commandList, NULL, sizeof(ParticleVertex) * nMaxParticles, 1, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_STREAM_OUT, dummy);
@@ -405,11 +405,18 @@ void ParticleMesh::CreateStreamOutputBuffer(const ComPtr<ID3D12Device>& device, 
 
 void ParticleMesh::RenderStreamOutput(const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
-	// 스트림 출력 패스 시작
-	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(ParticleVertex);
-	m_vertexBufferView.SizeInBytes = sizeof(ParticleVertex) * m_nVertices;
+	// 맨 처음 한번만 정점와 바인딩한다.
+	// 그 이후로는 스트림 출력 결과와 바인딩한다.
+	static bool isFirst = true;
+	if (isFirst)
+	{
+		isFirst = false;
+		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+		m_vertexBufferView.StrideInBytes = sizeof(ParticleVertex);
+		m_vertexBufferView.SizeInBytes = sizeof(ParticleVertex) * m_nVertices;
+	}
 
+	// 스트림 출력 패스 시작
 	// m_pFilledSize를 m_streamFilledSizeBuffer에 복사
 	*m_pFilledSize = 0;
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_streamFilledSizeBuffer.Get(), D3D12_RESOURCE_STATE_STREAM_OUT, D3D12_RESOURCE_STATE_COPY_DEST));
