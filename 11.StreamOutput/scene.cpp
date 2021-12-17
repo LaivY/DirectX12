@@ -173,7 +173,7 @@ void Scene::CreateMeshes(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12
 	m_meshes["EXPLOSION"] = make_shared<BillboardMesh>(device, commandList, XMFLOAT3{}, XMFLOAT2{ 5.0f, 5.0f });
 	m_meshes["SMOKE"] = make_shared<BillboardMesh>(device, commandList, XMFLOAT3{}, XMFLOAT2{ 5.0f, 5.0f });
 	m_meshes["MIRROR"] = make_shared<TextureRectMesh>(device, commandList, 15.0f, 0.0f, 15.0f, XMFLOAT3{ 0.0f, 0.0f, 0.1f });
-	m_meshes["PARTICLE"] = make_shared<ParticleMesh>(device, commandList, XMFLOAT3{ 0.0f, 0.0f, 0.0f }, XMFLOAT2{ 10.0f, 10.0f }, 10.0f);
+	m_meshes["PARTICLE"] = make_shared<ParticleMesh>(device, commandList, XMFLOAT2{ 0.1f, 5.0f });
 
 	m_meshes["SKYBOX_FRONT"] = make_shared<TextureRectMesh>(device, commandList, 20.0f, 0.0f, 20.0f, XMFLOAT3{ 0.0f, 0.0f, 10.0f });
 	m_meshes["SKYBOX_LEFT"] = make_shared<TextureRectMesh>(device, commandList, 0.0f, 20.0f, 20.0f, XMFLOAT3{ -10.0f, 0.0f, 0.0f });
@@ -368,16 +368,12 @@ void Scene::CreateGameObjects(const ComPtr<ID3D12Device>& device, const ComPtr<I
 		m_gameObjects.push_back(move(testCube));
 	}
 
-	// 파티클 객체 생성
-	for (int i = 0; i < 10; ++i)
-	{
-		auto particle{ make_unique<Particle>() };
-		particle->SetPosition(XMFLOAT3{ 0.0f, 30.0f, 10.0f * i });
-		particle->SetMesh(m_meshes.at("PARTICLE"));
-		particle->SetShader(m_shaders.at("STREAM"));
-		particle->SetTexture(m_textures.at("SMOKE"));
-		m_particles.push_back(move(particle));
-	}
+	// 파티클 객체 생성(비)
+	auto particle{ make_unique<Particle>() };
+	particle->SetPosition(XMFLOAT3{ 0.0f, 50.0f, 0.0f });
+	particle->SetMesh(m_meshes.at("PARTICLE"));
+	particle->SetShader(m_shaders.at("STREAM"));
+	m_particles.push_back(move(particle));
 }
 
 void Scene::ReleaseUploadBuffer()

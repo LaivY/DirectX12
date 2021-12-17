@@ -4,16 +4,13 @@ struct VS_PARTICLE_INPUT
 {
     float3 position : POSITION;
     float2 size     : SIZE;
-    float lifeTime  : LIFETIME;
-    float age       : AGE;
+    float speed     : SPEED;
 };
 
 struct GS_PARTICLE_OUTPUT
 {
     float4 position : SV_POSITION;
     float2 uv       : TEXCOORD;
-    float lifeTime  : LIFETIME;
-    float age       : AGE;
 };
 
 VS_PARTICLE_INPUT VSParticleMain(VS_PARTICLE_INPUT input)
@@ -27,19 +24,13 @@ void GSParticleStreamOutput(point VS_PARTICLE_INPUT input[1], inout PointStream<
 {
     VS_PARTICLE_INPUT particle = input[0];
     
-    // 나이 증가
-    particle.age += g_deltaTime;
+    // 밑으로 떨어짐
+    particle.position.y -= particle.speed * g_deltaTime;
     
-    // 수명이 다했다면 나이와 위치를 재설정해줌
-    if (particle.age > particle.lifeTime)
+    // 일정 높이 미만이면 위치 재설정
+    if (particle.position.y < -50.0f)
     {
-        particle.age = 0;
-        particle.position += float3(0.0f, 100.0f, 0.0f);
-    }
-    else
-    {
-        // 수명이 남았다면 밑으로 떨어짐
-        particle.position -= float3(0.0f, 10.0f * g_deltaTime, 0.0f);
+        particle.position.y = 50.0f;
     }
     output.Append(particle);
 }
@@ -77,9 +68,6 @@ void GSParticleDraw(point VS_PARTICLE_INPUT input[1], inout TriangleStream<GS_PA
     };
 
     GS_PARTICLE_OUTPUT output = (GS_PARTICLE_OUTPUT)0;
-    output.lifeTime = input[0].lifeTime;
-    output.age = input[0].age;
-    
     [unroll]
     for (int i = 0; i < 4; ++i)
     {
@@ -92,5 +80,5 @@ void GSParticleDraw(point VS_PARTICLE_INPUT input[1], inout TriangleStream<GS_PA
 
 float4 PSParticleMain(GS_PARTICLE_OUTPUT input) : SV_TARGET
 {
-    return g_texture.Sample(g_sampler, input.uv);
+    return float4(1.0f, 1.0f, 1.0f, 0.5f);
 }

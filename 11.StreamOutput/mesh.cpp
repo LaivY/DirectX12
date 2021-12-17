@@ -360,16 +360,21 @@ BillboardMesh::BillboardMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID
 	CreateVertexBuffer(device, commandList, &v, sizeof(Vertex), 1);
 }
 
-ParticleMesh::ParticleMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size, const FLOAT& lifeTime)
+ParticleMesh::ParticleMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT2& size) : m_isFirst{ TRUE }
 {
 	m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
 
-	ParticleVertex v;
-	v.position = position;
-	v.size = size;
-	v.lifeTime = lifeTime;
-	v.age = 0.0f;
-	CreateVertexBuffer(device, commandList, &v, sizeof(ParticleVertex), 1);
+	vector<ParticleVertex> vertices;
+	for (int i = 0; i < 81; ++i)
+	{
+		ParticleVertex v;
+		v.position = XMFLOAT3{ i % 9 * 5.0f - 20.0f, 0.0f, i / 9 * 5.0f - 20.0f };
+		v.size = size;
+		v.speed = static_cast<float>(100 + rand() % 200);
+		vertices.push_back(v);
+	}
+
+	CreateVertexBuffer(device, commandList, vertices.data(), sizeof(ParticleVertex), vertices.size());
 	CreateStreamOutputBuffer(device, commandList);
 }
 
@@ -379,7 +384,7 @@ void ParticleMesh::CreateStreamOutputBuffer(const ComPtr<ID3D12Device>& device, 
 
 	// 최대 파티클 분열 개수
 	// 나의 경우 파티클이 파티클을 만들지 않음
-	const UINT nMaxParticles{ 2 };
+	const UINT nMaxParticles{ 81 };
 
 	// 스트림출력 버퍼 생성
 	m_streamOutputBuffer = CreateBufferResource(device, commandList, NULL, sizeof(ParticleVertex) * nMaxParticles, 1, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_STREAM_OUT, dummy);
@@ -405,12 +410,11 @@ void ParticleMesh::CreateStreamOutputBuffer(const ComPtr<ID3D12Device>& device, 
 
 void ParticleMesh::RenderStreamOutput(const ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
-	// 맨 처음 한번만 정점와 바인딩한다.
-	// 그 이후로는 스트림 출력 결과와 바인딩한다.
-	static bool isFirst = true;
-	if (isFirst)
+	// 맨 처음 한번만 정점 버퍼와 바인딩한다.
+	// 그 이후로는 렌더링 출력 결과와 바인딩한다.
+	if (m_isFirst)
 	{
-		isFirst = false;
+		m_isFirst = FALSE;
 		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 		m_vertexBufferView.StrideInBytes = sizeof(ParticleVertex);
 		m_vertexBufferView.SizeInBytes = sizeof(ParticleVertex) * m_nVertices;
@@ -439,7 +443,7 @@ void ParticleMesh::RenderStreamOutput(const ComPtr<ID3D12GraphicsCommandList>& c
 	m_nVertices = UINT(*pFilledSize) / sizeof(ParticleVertex);
 	m_streamFilledSizeReadBackBuffer->Unmap(0, NULL);
 
-	// 스트림 출력한 화면을 m_drawBuffer로 복사
+	// 스트림 출력 결과를 m_drawBuffer로 복사
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_drawBuffer.Get(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST));
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_streamOutputBuffer.Get(), D3D12_RESOURCE_STATE_STREAM_OUT, D3D12_RESOURCE_STATE_COPY_SOURCE));
 	commandList->CopyResource(m_drawBuffer.Get(), m_streamOutputBuffer.Get());

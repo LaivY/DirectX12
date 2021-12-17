@@ -217,13 +217,13 @@ void GameFramework::CreateRootSignature()
 
 	// 자주 갱신하는 순서대로 해야 성능에 좋음
 	CD3DX12_ROOT_PARAMETER rootParameter[7];
-	rootParameter[0].InitAsConstants(16, 0, 0);		// cbGameObject	: 월드 변환 행렬(16)
-	rootParameter[1].InitAsConstantBufferView(1);	// cbCamera
+	rootParameter[0].InitAsConstants(16, 0, 0);		// cbGameObject : b0
+	rootParameter[1].InitAsConstantBufferView(1);	// cbCamera : b1
 	rootParameter[2].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameter[3].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParameter[4].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParameter[5].InitAsConstantBufferView(2);	// cbScene
-	rootParameter[6].InitAsConstantBufferView(3);	// cbFramework
+	rootParameter[5].InitAsConstantBufferView(2);	// cbScene : b2
+	rootParameter[6].InitAsConstantBufferView(3);	// cbGameFramework : b3
 
 	CD3DX12_STATIC_SAMPLER_DESC samplerDesc[2];
 	samplerDesc[0].Init(

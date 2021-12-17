@@ -530,11 +530,10 @@ StreamShader::StreamShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "LIFETIME", 0, DXGI_FORMAT_R32_FLOAT,	0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "AGE", 0, DXGI_FORMAT_R32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "SPEED", 0, DXGI_FORMAT_R32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	ComPtr<ID3DBlob> vertexShader, geometryShader, streamGeometryShader, pixelShader, error;
+	ComPtr<ID3DBlob> vertexShader, geometryShader, streamGeometryShader, pixelShader;
 
 #if defined(_DEBUG)
 	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
@@ -548,17 +547,16 @@ StreamShader::StreamShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 	DX::ThrowIfFailed(D3DCompileFromFile(PATH("particle.hlsl").c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSParticleMain", "ps_5_1", compileFlags, 0, &pixelShader, NULL));
 
 	// 스트림 출력
-	D3D12_SO_DECLARATION_ENTRY* SODeclaration{ new D3D12_SO_DECLARATION_ENTRY[4] };
+	D3D12_SO_DECLARATION_ENTRY* SODeclaration{ new D3D12_SO_DECLARATION_ENTRY[3] };
 	SODeclaration[0] = { 0, "POSITION", 0, 0, 3, 0 };
 	SODeclaration[1] = { 0, "SIZE", 0, 0, 2, 0 };
-	SODeclaration[2] = { 0, "LIFETIME", 0, 0, 1, 0 };
-	SODeclaration[3] = { 0, "AGE", 0, 0, 1, 0 };
+	SODeclaration[2] = { 0, "SPEED", 0, 0, 1, 0 };
 
 	UINT* bufferStrides{ new UINT[1] };
 	bufferStrides[0] = sizeof(ParticleVertex);
 
 	D3D12_STREAM_OUTPUT_DESC streamOutput{};
-	streamOutput.NumEntries = 4;
+	streamOutput.NumEntries = 3;
 	streamOutput.pSODeclaration = SODeclaration;
 	streamOutput.NumStrides = 1;
 	streamOutput.pBufferStrides = bufferStrides;
@@ -570,7 +568,6 @@ StreamShader::StreamShader(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D
 
 	// 알파 블렌딩
 	CD3DX12_BLEND_DESC blendState{ D3D12_DEFAULT };
-	blendState.AlphaToCoverageEnable = TRUE; // 알파값 멀티샘플링?
 	blendState.RenderTarget[0].BlendEnable = TRUE;
 	blendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
 	blendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;

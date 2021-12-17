@@ -14,8 +14,7 @@ struct ParticleVertex
 {
 	XMFLOAT3 position{};
 	XMFLOAT2 size{};
-	FLOAT lifeTime{};
-	FLOAT age{};
+	FLOAT speed{};
 };
 
 class Mesh
@@ -80,7 +79,7 @@ public:
 class ParticleMesh : public Mesh
 {
 public:
-	ParticleMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT3& position, const XMFLOAT2& size, const FLOAT& lifeTime);
+	ParticleMesh(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList, const XMFLOAT2& size);
 	~ParticleMesh() = default;
 
 	void CreateStreamOutputBuffer(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12GraphicsCommandList>& commandList);
@@ -99,4 +98,6 @@ private:
 	ComPtr<ID3D12Resource>			m_streamFilledSizeReadBackBuffer;	// 쓰여진 데이터 크기를 읽어올 때 쓰일 리드백 버퍼
 
 	ComPtr<ID3D12Resource>			m_drawBuffer;						// 스트림 출력된 결과를 복사해서 출력할 때 쓰일 버퍼
+
+	BOOL							m_isFirst;							// 처음 시작할때는 정점 버퍼와 바인딩, 그 이후엔 렌더링 결과와 바인딩
 };

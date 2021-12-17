@@ -108,6 +108,6 @@ private:
 	vector<unique_ptr<HeightMapTerrain>>		m_terrains;		// 지형
 	vector<unique_ptr<GameObject>>				m_gameObjects;	// 게임오브젝트들
 	vector<unique_ptr<GameObject>>				m_translucences;// 반투명 오브젝트들
-	vector<unique_ptr<Particle>>				m_particles;	// 파티클들
+	vector<unique_ptr<GameObject>>				m_particles;	// 파티클들
 	unique_ptr<GameObject>						m_mirror;		// 거울
 };

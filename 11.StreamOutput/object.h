@@ -84,5 +84,5 @@ public:
 	Particle() = default;
 	~Particle() = default;
 
-	void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const;
+	virtual void Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const shared_ptr<Shader>& shader = nullptr) const;
 };

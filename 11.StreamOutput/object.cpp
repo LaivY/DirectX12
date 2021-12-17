@@ -9,12 +9,12 @@ GameObject::GameObject() : m_type{ GameObjectType::DEFAULT }, m_isDeleted{ false
 
 void GameObject::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const shared_ptr<Shader>& shader) const
 {
+	// 셰이더 변수 최신화
+	UpdateShaderVariable(commandList);
+
 	// PSO 설정
 	if (shader) commandList->SetPipelineState(shader->GetPipelineState().Get());
 	else if (m_shader) commandList->SetPipelineState(m_shader->GetPipelineState().Get());
-
-	// 셰이더 변수 최신화
-	UpdateShaderVariable(commandList);
 
 	// 메쉬 렌더링
 	if (m_mesh) m_mesh->Render(commandList);
@@ -158,16 +158,16 @@ void Bullet::Update(FLOAT deltaTime)
 	Move(Vector3::Mul(m_direction, m_speed * deltaTime));
 }
 
-void Particle::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList) const
+void Particle::Render(const ComPtr<ID3D12GraphicsCommandList>& commandList, const shared_ptr<Shader>& shader) const
 {
+	// 셰이더 변수 최신화
+	UpdateShaderVariable(commandList);
+
 	// 파티클 객체가 갖고있는 셰이더는 반드시 class StreamShader이다.
 	StreamShader* streamShader{ reinterpret_cast<StreamShader*>(m_shader.get()) };
 
 	// 파티클 객체가 갖고있는 메쉬는 반드시 ParticleMesh이다.
 	ParticleMesh* particleMesh{ reinterpret_cast<ParticleMesh*>(m_mesh.get()) };
-
-	// 셰이더 변수 최신화
-	UpdateShaderVariable(commandList);
 
 	// 스트림 출력 패스
 	commandList->SetPipelineState(streamShader->GetStreamPipelineState().Get());
