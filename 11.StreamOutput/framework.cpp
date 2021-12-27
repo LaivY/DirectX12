@@ -379,7 +379,7 @@ void GameFramework::LoadAssets()
 void GameFramework::PopulateCommandList() const
 {
 	DX::ThrowIfFailed(m_commandAllocator->Reset());
-	DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+	DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), NULL));
 
 	// Set necessary state
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -416,7 +416,7 @@ void GameFramework::PopulateCommandList() const
 		m_scene->PostRenderProcess(m_commandList, m_postProcessRootSignature, m_renderTargets[m_frameIndex]);
 
 		// 블러링한 결과를 렌더 타겟으로 복사하기 위한 리소스 베리어 설정
-		m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST));
+		m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST));
 
 		// 복사
 		m_commandList->CopyResource(m_renderTargets[m_frameIndex].Get(), m_scene->GetPostRenderProcessResult().Get());

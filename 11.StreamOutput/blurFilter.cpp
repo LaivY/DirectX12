@@ -4,7 +4,7 @@ BlurFilter::BlurFilter(const ComPtr<ID3D12Device>& device)
 {
 	CreateBlurTexture(device);
 	CreateSrvDsvDescriptorHeap(device);
-	CreateSrvDsv(device);
+	CreateSrvUav(device);
 }
 
 void BlurFilter::CreateBlurTexture(const ComPtr<ID3D12Device>& device)
@@ -49,7 +49,7 @@ void BlurFilter::CreateSrvDsvDescriptorHeap(const ComPtr<ID3D12Device>& device)
 	m_blur1GpuUavHandle = gpuSrvUavHeapStart.Offset(g_cbvSrvDescriptorIncrementSize);
 }
 
-void BlurFilter::CreateSrvDsv(const ComPtr<ID3D12Device>& device)
+void BlurFilter::CreateSrvUav(const ComPtr<ID3D12Device>& device)
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -80,6 +80,7 @@ void BlurFilter::Excute(const ComPtr<ID3D12GraphicsCommandList>& commandList, co
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(input.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE));
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_blurMap0.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
 	commandList->CopyResource(m_blurMap0.Get(), input.Get());
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(input.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_blurMap0.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 
 	// 계산 셰이더에서 읽을 수 있게 리소스 베리어 설정

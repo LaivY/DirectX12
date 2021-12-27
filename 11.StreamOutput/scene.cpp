@@ -173,7 +173,7 @@ void Scene::CreateMeshes(const ComPtr<ID3D12Device>& device, const ComPtr<ID3D12
 	m_meshes["EXPLOSION"] = make_shared<BillboardMesh>(device, commandList, XMFLOAT3{}, XMFLOAT2{ 5.0f, 5.0f });
 	m_meshes["SMOKE"] = make_shared<BillboardMesh>(device, commandList, XMFLOAT3{}, XMFLOAT2{ 5.0f, 5.0f });
 	m_meshes["MIRROR"] = make_shared<TextureRectMesh>(device, commandList, 15.0f, 0.0f, 15.0f, XMFLOAT3{ 0.0f, 0.0f, 0.1f });
-	m_meshes["PARTICLE"] = make_shared<ParticleMesh>(device, commandList, XMFLOAT2{ 0.1f, 5.0f });
+	m_meshes["PARTICLE"] = make_shared<ParticleMesh>(device, commandList, XMFLOAT2{ 0.05f, 5.0f });
 
 	m_meshes["SKYBOX_FRONT"] = make_shared<TextureRectMesh>(device, commandList, 20.0f, 0.0f, 20.0f, XMFLOAT3{ 0.0f, 0.0f, 10.0f });
 	m_meshes["SKYBOX_LEFT"] = make_shared<TextureRectMesh>(device, commandList, 0.0f, 20.0f, 20.0f, XMFLOAT3{ -10.0f, 0.0f, 0.0f });
@@ -530,7 +530,7 @@ void Scene::UpdateShaderVariable(const ComPtr<ID3D12GraphicsCommandList>& comman
 	XMFLOAT3 targetPos{ sceneSphere.Center };
 	XMFLOAT3 lightUp{ 0.0f, 1.0f, 0.0f };
 
-	XMFLOAT4X4 lightViewMatrix; 
+	XMFLOAT4X4 lightViewMatrix;
 	XMStoreFloat4x4(&lightViewMatrix, XMMatrixLookAtLH(XMLoadFloat3(&lightPos), XMLoadFloat3(&targetPos), XMLoadFloat3(&lightUp)));
 
 	// 조명 좌표계에서의 씬 구 원점

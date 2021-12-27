@@ -29,7 +29,7 @@ void HorzBlurCS(int3 groupThreadID : SV_GroupThreadID, int3 dispatchThreadID : S
         g_cache[groupThreadID.x + 2 * g_blurRadius] = g_input[int2(x, dispatchThreadID.y)];
     }
     g_cache[groupThreadID.x + g_blurRadius] = g_input[min(dispatchThreadID.xy, g_input.Length.xy - 1)];
-    
+
     // 모든 쓰레드가 종료될 때까지 대기
     GroupMemoryBarrierWithGroupSync();
     
