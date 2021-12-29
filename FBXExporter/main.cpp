@@ -1,8 +1,7 @@
-﻿#include "main.h"
-#include "FBXExporter.h"
+﻿#include "FBXExporter.h"
 
 int main()
 {
-	FBXExporter fbxLoader{};
-	fbxLoader.Process("../Resource/CUBE.fbx");
+	FBXExporter fbxExporter{};
+	fbxExporter.Process("../Resource/CUBE.fbx", "result.bin");
 }

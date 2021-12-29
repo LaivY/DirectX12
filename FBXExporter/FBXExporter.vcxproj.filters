@@ -9,10 +9,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="main.h">
+    <ClInclude Include="FBXExporter.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="FBXExporter.h">
+    <ClInclude Include="utilities.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

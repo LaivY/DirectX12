@@ -1,26 +1,15 @@
 ﻿#pragma once
-
-// C/C++
+#include <algorithm>
+#include <DirectXMath.h>
+#include <fbxsdk.h>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-using namespace std;
-
-// DIRECTX
-#include <DirectXMath.h>
+#include "utilities.h"
 using namespace DirectX;
-
-// FBX SDK
-#include <fbxsdk.h>
-
-struct Vertex
-{
-	XMFLOAT3 position;	// 위치
-	XMFLOAT3 normal;	// 노말
-	XMFLOAT2 uv;		// 텍스쳐 좌표
-};
+using namespace std;
 
 class FBXExporter
 {
@@ -28,20 +17,27 @@ public:
 	FBXExporter();
 	~FBXExporter();
 
-	void Process(const string& fbxFileName);
-	void LoadNode(FbxNode* node);
-	void LoadMesh(FbxMesh* mesh);
+	void Process(const string& inputFileName, const string& outputFileName);
+	void LoadSkeleton(FbxNode* node, int index, int parentIndex);
+	void LoadMesh(FbxNode* node);
+	void LoadCtrlPoints(FbxNode* node);
 	void LoadAnimation(FbxNode* node);
+	void LoadVertices(FbxNode* node);
 
+	int GetJointIndexByName(const string& name);
 	XMFLOAT3 GetNormal(FbxMesh* mesh, int controlPointIndex, int vertexCountIndex);
 	XMFLOAT2 GetUV(FbxMesh* mesh, int controlPointIndex, int vertexCountIndex);
 
-	void Export();
+	//void Export();
 
 private:
-	FbxManager*		m_manager;
-	FbxScene*		m_scene;
+	FbxManager*				m_manager;			// FBX 매니저
+	FbxScene*				m_scene;			// FBX 씬
 
-	string			m_name;
-	vector<Vertex>	m_vertices;
+	string					m_inputFileName;	// 변환할 FBX 파일 이름
+	string					m_outputFileName;	// 결과 파일 이름
+
+	unique_ptr<Skeleton>	m_skeleton;			// 스켈레톤(조인트들)
+	vector<CtrlPoint>		m_ctrlPoints;		// 제어점들
+	vector<Vertex>			m_vertices;			// 정점들
 };
