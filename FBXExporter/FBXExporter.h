@@ -28,7 +28,7 @@ public:
 	XMFLOAT3 GetNormal(FbxMesh* mesh, int controlPointIndex, int vertexCountIndex);
 	XMFLOAT2 GetUV(FbxMesh* mesh, int controlPointIndex, int vertexCountIndex);
 
-	//void Export();
+	void Export();
 
 private:
 	FbxManager*				m_manager;			// FBX 매니저
@@ -37,7 +37,7 @@ private:
 	string					m_inputFileName;	// 변환할 FBX 파일 이름
 	string					m_outputFileName;	// 결과 파일 이름
 
-	unique_ptr<Skeleton>	m_skeleton;			// 스켈레톤(조인트들)
+	vector<Joint>			m_joints;			// 스켈레톤(조인트들)
 	vector<CtrlPoint>		m_ctrlPoints;		// 제어점들
 	vector<Vertex>			m_vertices;			// 정점들
 };

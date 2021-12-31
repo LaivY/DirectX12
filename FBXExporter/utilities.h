@@ -6,8 +6,10 @@
 using namespace DirectX;
 using namespace std;
 
+// 참고한 깃허브 주소
 // https://github.com/lang1991/FBXExporter
 
+// 블렌딩 정보는 조인트 인덱스와 가중치를 갖는다.
 struct BlendingDatum
 {
 	BlendingDatum() : blendingIndex{}, blendingWeight{}
@@ -19,8 +21,7 @@ struct BlendingDatum
 	double	blendingWeight;
 };
 
-// 제어점
-// 각 제어점은 위치와 4개의 블렌딩 정보를 갖는다.
+// 제어점은 좌표와 4개의 가중치 정보를 갖는다.
 struct CtrlPoint
 {
 	CtrlPoint() : position{}
@@ -32,7 +33,7 @@ struct CtrlPoint
 	vector<BlendingDatum>	blendingData;
 };
 
-// 키프레임
+// 키프레임은 몇 번째 프레임인지와 해당 프레임일 때 제어점의 모델 좌표계 변환 행렬을 갖는다.
 struct Keyframe
 {
 	Keyframe() : frameNum{}
@@ -44,6 +45,7 @@ struct Keyframe
 	FbxAMatrix	globalTransformMatrix;
 };
 
+// 조인트는 이름, 부모 조인트의 인덱스, 로컬 -> 모델 좌표계 변환 행렬, 노드, 키프레임을 갖는다.
 struct Joint
 {
 	Joint() : name{}, parentIndex{ -1 }, node{ nullptr }
@@ -51,20 +53,14 @@ struct Joint
 		globalBindposeInverseMatrix.SetIdentity();
 	}
 
-	string				name;							// 이름
-	int					parentIndex;					// 부모 인덱스
-	FbxAMatrix			globalBindposeInverseMatrix;	// 로컬 -> 월드좌표계 변환 행렬
-	FbxNode*			node;							// 노드
-	vector<Keyframe>	keyframes;						// 애니메이션 키프레임
+	string				name;
+	int					parentIndex;
+	FbxAMatrix			globalBindposeInverseMatrix;
+	FbxNode*			node;
+	vector<Keyframe>	keyframes;
 };
 
-struct Skeleton
-{
-	vector<Joint> joints;
-};
-
-// 정점
-// 내가 클라이언트에서 사용할 정점 구조체
+// 정점은 좌표, 노말, 텍스쳐 좌표, 블렌딩 정보를 갖는다.
 struct Vertex
 {
 	Vertex() : position{}, normal{}, uv{}
@@ -72,10 +68,10 @@ struct Vertex
 
 	}
 
-	XMFLOAT3				position;		// 위치
-	XMFLOAT3				normal;			// 노말
-	XMFLOAT2				uv;				// 텍스쳐 좌표
-	vector<BlendingDatum>	blendingData;	// 가중치
+	XMFLOAT3				position;
+	XMFLOAT3				normal;
+	XMFLOAT2				uv;
+	vector<BlendingDatum>	blendingData;
 };
 
 namespace Utilities

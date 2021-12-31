@@ -48,8 +48,11 @@ void FBXExporter::Process(const string& inputFileName, const string& outputFileN
 	for (int i = 0; i < rootNode->GetChildCount(); ++i)
 	{
 		LoadSkeleton(rootNode->GetChild(i), 0, -1);
-		LoadMesh(rootNode);
+		LoadMesh(rootNode->GetChild(i));
 	}
+
+	// 출력
+	Export();
 }
 
 void FBXExporter::LoadSkeleton(FbxNode* node, int index, int parentIndex)
@@ -59,11 +62,11 @@ void FBXExporter::LoadSkeleton(FbxNode* node, int index, int parentIndex)
 		Joint joint;
 		joint.parentIndex = parentIndex;
 		joint.name = node->GetName();
-		m_skeleton->joints.push_back(joint);
+		m_joints.push_back(joint);
 	}
 	for (int i = 0; i < node->GetChildCount(); ++i)
 	{
-		LoadSkeleton(node->GetChild(i), m_skeleton->joints.size(), index);
+		LoadSkeleton(node->GetChild(i), m_joints.size(), index);
 	}
 }
 
@@ -75,6 +78,9 @@ void FBXExporter::LoadMesh(FbxNode* node)
 		LoadAnimation(node);
 		LoadVertices(node);
 	}
+
+	for (int i = 0; i < node->GetChildCount(); ++i)
+		LoadMesh(node->GetChild(i));
 }
 
 void FBXExporter::LoadCtrlPoints(FbxNode* node)
@@ -110,8 +116,8 @@ void FBXExporter::LoadAnimation(FbxNode* node)
 			FbxAMatrix transformMatrix;		// 메쉬의 모델좌표계 행렬
 			FbxAMatrix transformLinkMatrix;	// 모델좌표계 -> 자신의 조인트 좌표계 변환 행렬
 
-			m_skeleton->joints[ji].globalBindposeInverseMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
-			m_skeleton->joints[ji].node = cluster->GetLink();
+			m_joints[ji].globalBindposeInverseMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
+			m_joints[ji].node = cluster->GetLink();
 			for (int cpi = 0; cpi < cluster->GetControlPointIndicesCount(); ++cpi)
 			{
 				BlendingDatum blendingDatum;
@@ -137,7 +143,7 @@ void FBXExporter::LoadAnimation(FbxNode* node)
 				Keyframe keyframe;
 				keyframe.frameNum = i;
 				keyframe.globalTransformMatrix = transformOffset.Inverse() * cluster->GetLink()->EvaluateGlobalTransform(curr);
-				m_skeleton->joints[ji].keyframes.push_back(keyframe);
+				m_joints[ji].keyframes.push_back(keyframe);
 			}
 		}
 	}
@@ -172,18 +178,20 @@ void FBXExporter::LoadVertices(FbxNode* node)
 			sort(vertex.blendingData.begin(), vertex.blendingData.end(), [](const BlendingDatum& a, const BlendingDatum& b) {
 				return a.blendingWeight < b.blendingWeight;
 				});
-
 			m_vertices.push_back(vertex);
+
+			// 정점 개수 증가
+			++vertexCountIndex;
 		}
 	}
 }
 
 int FBXExporter::GetJointIndexByName(const string & name)
 {
-	auto i = find_if(m_skeleton->joints.begin(), m_skeleton->joints.end(), [&name](const Joint& joint) {
+	auto i = find_if(m_joints.begin(), m_joints.end(), [&name](const Joint& joint) {
 		return joint.name == name;
 		});
-	return distance(m_skeleton->joints.begin(), i) - 1;
+	return distance(m_joints.begin(), i) - 1;
 }
 
 XMFLOAT3 FBXExporter::GetNormal(FbxMesh* mesh, int controlPointIndex, int vertexCountIndex)
@@ -252,4 +260,44 @@ XMFLOAT2 FBXExporter::GetUV(FbxMesh* mesh, int controlPointIndex, int vertexCoun
 		}
 	}
 	return XMFLOAT2(result[0], result[1]);
+}
+
+void FBXExporter::Export()
+{
+	ofstream file{ m_outputFileName, ios::binary };
+
+	// 총 정점 개수
+	int nVertices{ static_cast<int>(m_vertices.size()) };
+	file.write(reinterpret_cast<char*>(&nVertices), sizeof(int));
+
+	// 정점 좌표, 노말, 텍스쳐좌표
+	for (auto& v : m_vertices)
+	{
+		file.write(reinterpret_cast<char*>(&v.position), sizeof(XMFLOAT3));
+		file.write(reinterpret_cast<char*>(&v.normal), sizeof(XMFLOAT3));
+		file.write(reinterpret_cast<char*>(&v.uv), sizeof(XMFLOAT2));
+	}
+
+	//file.close();
+
+	//ifstream _file{ m_outputFileName, ios::binary };
+
+	//int _nVertices{ 0 };
+	//_file.read(reinterpret_cast<char*>(&_nVertices), sizeof(int));
+	//cout << _nVertices << endl;
+
+	//for (int i = 0; i < _nVertices; ++i)
+	//{
+	//	XMFLOAT3 _position{};
+	//	XMFLOAT3 _normal{};
+	//	XMFLOAT2 _uv{};
+
+	//	_file.read(reinterpret_cast<char*>(&_position), sizeof(XMFLOAT3));
+	//	_file.read(reinterpret_cast<char*>(&_normal), sizeof(XMFLOAT3));
+	//	_file.read(reinterpret_cast<char*>(&_uv), sizeof(XMFLOAT2));
+
+	//	cout << _position.x << ", " << _position.y	<< ", " << _position.z << endl;
+	//	cout << _normal.x	<< ", " << _normal.y	<< ", " << _normal.z << endl;
+	//	cout << _uv.x		<< ", " << _uv.y		<< endl << endl;
+	//}
 }
