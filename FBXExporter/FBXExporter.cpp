@@ -46,10 +46,9 @@ void FBXExporter::Process(const string& inputFileName, const string& outputFileN
 
 	// 데이터 로딩
 	for (int i = 0; i < rootNode->GetChildCount(); ++i)
-	{
 		LoadSkeleton(rootNode->GetChild(i), 0, -1);
+	for (int i = 0; i < rootNode->GetChildCount(); ++i)
 		LoadMesh(rootNode->GetChild(i));
-	}
 
 	// 출력
 	Export();
@@ -103,7 +102,7 @@ void FBXExporter::LoadAnimation(FbxNode* node)
 	FbxMesh* mesh{ node->GetMesh() };
 	FbxAMatrix geometryTransform{ Utilities::GetGeometryTransformation(node) };
 
-	for (int di = 0; di < mesh->GetDeformerCount(); ++di)
+	for (int di = 0; di < mesh->GetDeformerCount(FbxDeformer::eSkin); ++di)
 	{
 		FbxSkin* skin{ reinterpret_cast<FbxSkin*>(mesh->GetDeformer(di, FbxDeformer::eSkin)) };
 		if (!skin) continue;
@@ -112,6 +111,8 @@ void FBXExporter::LoadAnimation(FbxNode* node)
 		{
 			FbxCluster* cluster{ skin->GetCluster(ci) };
 			int ji{ GetJointIndexByName(cluster->GetLink()->GetName()) };
+
+				cout << cluster->GetLink()->GetName() << " : " << ji << endl;
 
 			FbxAMatrix transformMatrix;		// 메쉬의 모델좌표계 행렬
 			FbxAMatrix transformLinkMatrix;	// 모델좌표계 -> 자신의 조인트 좌표계 변환 행렬
@@ -129,10 +130,12 @@ void FBXExporter::LoadAnimation(FbxNode* node)
 			// 애니메이션 정보
 			FbxAnimStack* animStack{ m_scene->GetSrcObject<FbxAnimStack>(0) };
 			FbxString animStackName{ animStack->GetName() };
+			m_animationName = animStackName.Buffer();
 
 			FbxTakeInfo* takeInfo{ m_scene->GetTakeInfo(animStackName) };
 			FbxTime start{ takeInfo->mLocalTimeSpan.GetStart() };
 			FbxTime end{ takeInfo->mLocalTimeSpan.GetStop() };
+			m_animationLength = end.GetFrameCount(FbxTime::eFrames24) - start.GetFrameCount(FbxTime::eFrames24) + 1;
 
 			for (FbxLongLong i = start.GetFrameCount(FbxTime::eFrames24); i <= end.GetFrameCount(FbxTime::eFrames24); ++i)
 			{
@@ -151,8 +154,10 @@ void FBXExporter::LoadAnimation(FbxNode* node)
 	// 제어점 중 가충치를 4개 이하로 갖고있는 제어점들은 4개로 채워줌
 	BlendingDatum dumyBlendingDatum;
 	for (CtrlPoint& ctrlPoint : m_ctrlPoints)
-		for (int i = 0; i < 4 - ctrlPoint.blendingData.size(); ++i)
+	{
+		for (int i = ctrlPoint.blendingData.size(); i < 4; ++i)
 			ctrlPoint.blendingData.push_back(dumyBlendingDatum);
+	}
 }
 
 void FBXExporter::LoadVertices(FbxNode* node)
@@ -191,7 +196,9 @@ int FBXExporter::GetJointIndexByName(const string & name)
 	auto i = find_if(m_joints.begin(), m_joints.end(), [&name](const Joint& joint) {
 		return joint.name == name;
 		});
-	return distance(m_joints.begin(), i) - 1;
+	if (i == m_joints.end())
+		return -1;
+	return distance(m_joints.begin(), i);
 }
 
 XMFLOAT3 FBXExporter::GetNormal(FbxMesh* mesh, int controlPointIndex, int vertexCountIndex)
@@ -264,40 +271,41 @@ XMFLOAT2 FBXExporter::GetUV(FbxMesh* mesh, int controlPointIndex, int vertexCoun
 
 void FBXExporter::Export()
 {
-	ofstream file{ m_outputFileName, ios::binary };
+	/*
+	아직 개발 단계이기 때문에 직접 확인할 수 있도록 바이너리로 저장하지 않음
+	추후 완성되면 바이너리로 저장하여 불러올 때 빠르게 읽어올 수 있도록함
 
-	// 총 정점 개수
-	int nVertices{ static_cast<int>(m_vertices.size()) };
-	file.write(reinterpret_cast<char*>(&nVertices), sizeof(int));
+	3ds Max와 DirectX의 좌표계가 다르기 때문에 수정이 필요하다.
+	(FBX로 저장할 때 y-up 옵션으로 저장한다.)
+	*/
 
-	// 정점 좌표, 노말, 텍스쳐좌표
-	for (auto& v : m_vertices)
+	ofstream file{ m_outputFileName };
+
+	// 정점 개수, 좌표, 노말, 텍스쳐좌표
+	file << m_vertices.size() << endl;
+	for (const auto& v : m_vertices)
 	{
-		file.write(reinterpret_cast<char*>(&v.position), sizeof(XMFLOAT3));
-		file.write(reinterpret_cast<char*>(&v.normal), sizeof(XMFLOAT3));
-		file.write(reinterpret_cast<char*>(&v.uv), sizeof(XMFLOAT2));
+		file << v.position.x << " " << v.position.y << " " << v.position.z << " ";
+		file << v.normal.x << " " << v.normal.y << " " << v.normal.z << " ";
+		file << v.uv.x << " " << v.uv.y << endl;
 	}
 
-	//file.close();
+	// 조인트 개수, 인덱스, 이름 길이, 이름, 부모 인덱스, 자신의 좌표계로의 변환 행렬
+	file << endl << m_joints.size() << endl;
+	for (int i = 0; i < m_joints.size(); ++i)
+	{
+		file << i << " " << m_joints[i].name.size() << " " << m_joints[i].name << " " << m_joints[i].parentIndex << endl;
+		Utilities::WriteFbxAMatrixToStream(file, m_joints[i].globalBindposeInverseMatrix);
+	}
 
-	//ifstream _file{ m_outputFileName, ios::binary };
-
-	//int _nVertices{ 0 };
-	//_file.read(reinterpret_cast<char*>(&_nVertices), sizeof(int));
-	//cout << _nVertices << endl;
-
-	//for (int i = 0; i < _nVertices; ++i)
-	//{
-	//	XMFLOAT3 _position{};
-	//	XMFLOAT3 _normal{};
-	//	XMFLOAT2 _uv{};
-
-	//	_file.read(reinterpret_cast<char*>(&_position), sizeof(XMFLOAT3));
-	//	_file.read(reinterpret_cast<char*>(&_normal), sizeof(XMFLOAT3));
-	//	_file.read(reinterpret_cast<char*>(&_uv), sizeof(XMFLOAT2));
-
-	//	cout << _position.x << ", " << _position.y	<< ", " << _position.z << endl;
-	//	cout << _normal.x	<< ", " << _normal.y	<< ", " << _normal.z << endl;
-	//	cout << _uv.x		<< ", " << _uv.y		<< endl << endl;
-	//}
+	// 애니메이션 길이, 이름 길이, 이름
+	file << endl << m_animationLength << " " << m_animationName.size() << " " << m_animationName << endl;
+	for (int i = 0; i < m_joints.size(); ++i)
+	{
+		for (const auto& k : m_joints[i].keyframes)
+		{
+			file << k.frameNum << " ";
+			Utilities::WriteFbxAMatrixToStream(file, k.globalTransformMatrix);
+		}
+	}
 }

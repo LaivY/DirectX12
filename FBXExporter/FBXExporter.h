@@ -40,4 +40,6 @@ private:
 	vector<Joint>			m_joints;			// 스켈레톤(조인트들)
 	vector<CtrlPoint>		m_ctrlPoints;		// 제어점들
 	vector<Vertex>			m_vertices;			// 정점들
+	string					m_animationName;	// 애니메이션 이름
+	FbxLongLong				m_animationLength;	// 애니메이션 길이
 };

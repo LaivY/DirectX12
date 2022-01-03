@@ -3,5 +3,5 @@
 int main()
 {
 	FBXExporter fbxExporter{};
-	fbxExporter.Process("../Resource/CUBE.fbx", "result.bin");
+	fbxExporter.Process("target.fbx", "result.txt");
 }

@@ -84,4 +84,22 @@ namespace Utilities
 			node->GetGeometricScaling(FbxNode::eSourcePivot)
 		);
 	}
+
+	inline XMFLOAT4 FbxVector4ToXMFLOAT4(const FbxVector4& v)
+	{
+		return XMFLOAT4{ 
+			static_cast<float>(v.mData[0]),
+			static_cast<float>(v.mData[1]),
+			static_cast<float>(v.mData[2]),
+			static_cast<float>(v.mData[3])
+		};
+	}
+
+	inline void WriteFbxAMatrixToStream(ostream& s, const FbxAMatrix& m)
+	{
+		for (int i = 0; i < 4; ++i)
+			for (int j = 0; j < 4; ++j)
+				s << static_cast<float>(m.Get(i, j)) << " ";
+		s << endl;
+	}
 }
