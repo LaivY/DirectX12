@@ -6,15 +6,16 @@ using namespace std;
 
 namespace Utilities
 {
-	inline string GetOnlyPath(const string& path)
+	inline string GetFilePath(const string& path)
 	{
 		size_t p{ path.find_last_of('/') };
 		return path.substr(0, p + 1);
 	}
-	inline string GetOnlyFileName(const string& path)
+	inline string GetFileName(const string& path)
 	{
-		size_t p{ path.find_last_of('/') };
-		return path.substr(p + 1);
+		size_t p1{ path.find_last_of('/') };
+		size_t p2{ path.find_last_of('.') };
+		return path.substr(p1 + 1, p2 - p1 - 1);
 	}
 	inline FbxAMatrix GetGeometryTransformation(FbxNode* node)
 	{

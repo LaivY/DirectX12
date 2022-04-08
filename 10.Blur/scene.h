@@ -85,7 +85,7 @@ public:
 	shared_ptr<Player> GetPlayer() const { return m_player; }
 	shared_ptr<Camera> GetCamera() const { return m_camera; }
 	HeightMapTerrain* GetTerrain(FLOAT x, FLOAT z) const;
-	bool doPostProcess() const { return Vector3::Length(m_player->GetVelocity()) >= 0.16f; }
+	bool doPostProcess() const { return Vector3::Length(m_player->GetVelocity()) >= 0.0f; }
 	ComPtr<ID3D12Resource> GetPostRenderProcessResult() const;
 	
 private:

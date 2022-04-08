@@ -31,6 +31,8 @@ struct Material
 
 	string		name;
 	XMFLOAT4	baseColor;
+	XMFLOAT3	reflection;
+	float		roughness;
 };
 
 struct CtrlPoint

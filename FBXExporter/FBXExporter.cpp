@@ -119,6 +119,16 @@ void FBXExporter::LoadMaterials(FbxNode* node, Mesh& mesh)
 			FbxColor baseColor{ p.Get<FbxColor>() };
 			m.baseColor = XMFLOAT4{ static_cast<float>(baseColor[0]), static_cast<float>(baseColor[1]), static_cast<float>(baseColor[2]), static_cast<float>(baseColor[3]) };
 		}
+		if (FbxProperty p{ material->FindPropertyHierarchical("3dsMax|Parameters|reflectivity") }; p.IsValid())
+		{
+			FbxDouble3 reflection{ p.Get<FbxDouble3>() };
+			m.reflection = XMFLOAT3{ static_cast<float>(reflection[0]), static_cast<float>(reflection[1]), static_cast<float>(reflection[2]) };
+		}
+		if (FbxProperty p{ material->FindPropertyHierarchical("3dsMax|Parameters|roughness") }; p.IsValid())
+		{
+			FbxDouble reflection{ p.Get<FbxDouble>() };
+			m.roughness = static_cast<float>(reflection);
+		}
 		//if (FbxProperty p{ material->FindProperty("AmbientColor") }; p.IsValid())
 		//{
 		//	FbxColor ambientColor{ p.Get<FbxColor>() };
@@ -312,6 +322,8 @@ void FBXExporter::ProcessLink()
 	*/
 
 	FbxAnimStack* animStack{ m_scene->GetSrcObject<FbxAnimStack>(0) };
+	if (!animStack) return;
+
 	FbxString animStackName{ animStack->GetName() };
 	FbxTakeInfo* takeInfo{ m_scene->GetTakeInfo(animStackName) };
 	FbxTime start{ takeInfo->mLocalTimeSpan.GetStart() };
@@ -328,7 +340,8 @@ void FBXExporter::ProcessLink()
 		joint.globalBindposeInverseMatrix = identity;
 		for (FbxLongLong i = start.GetFrameCount(FbxTime::eFrames24); i <= end.GetFrameCount(FbxTime::eFrames24); ++i)
 		{
-			FbxTime curr; curr.SetFrame(i, FbxTime::eFrames24);
+			FbxTime curr;
+			curr.SetFrame(i, FbxTime::eFrames24);
 
 			FbxAMatrix transformMatrix{ mesh.node->EvaluateGlobalTransform(curr) };
 			FbxAMatrix halfScaling{ Utilities::toFbxAMatrix(XMMatrixScaling(0.5f, 0.5f, 0.5f)) };
@@ -423,12 +436,15 @@ XMFLOAT2 FBXExporter::GetUV(FbxMesh* mesh, int controlPointIndex, int vertexCoun
 			result = uv->GetDirectArray().GetAt(index);
 		}
 	}
-	return XMFLOAT2(result[0], result[1]);
+
+	// 3DS MAX의 UV좌표계는 좌측하단이 (0, 0)이다.
+	return XMFLOAT2(result[0], 1.0f - result[1]);
 }
 
 int FBXExporter::GetMaterial(FbxMesh* mesh, int polygonIndex) const
 {
 	FbxGeometryElementMaterial* material{ mesh->GetElementMaterial(0) };
+	if (!material) return -1;
 	if (material->GetMappingMode() == FbxGeometryElement::eByPolygon &&
 		material->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
 	{
@@ -441,70 +457,69 @@ void FBXExporter::ExportMesh() const
 {
 	for (const Mesh& mesh : m_meshes)
 	{
-		ofstream file{ Utilities::GetOnlyPath(m_inputFileName) + mesh.name + ".txt"};
+		ofstream file{ Utilities::GetFilePath(m_inputFileName) + mesh.name + ".bin", ios::binary };
 
 		// 변환 행렬
-		file << "TRANSFORM_MATRIX: ";
-		Utilities::WriteToStream(file, mesh.transformMatrix.Transpose());
-		file << endl;
+		XMFLOAT4X4 transformMatrix{ Utilities::toXMFLOAT4X4(mesh.transformMatrix.Transpose()) };		
+		file.write(reinterpret_cast<char*>(&transformMatrix), sizeof(XMFLOAT4X4));
+
+		// 정점 개수
+		int vertexCount{ mesh.vertices.size() };
+		file.write(reinterpret_cast<char*>(&vertexCount), sizeof(int));
 
 		// 정점 데이터
-		file << "VERTEX_COUNT: " << mesh.vertices.size() << endl << endl;
-		for (const Vertex& vertex : mesh.vertices)
+		for (auto v : mesh.vertices)
 		{
-			file << "P: " << vertex.position.x << " " << vertex.position.y << " " << vertex.position.z << endl;
-			file << "N: " << vertex.normal.x << " " << vertex.normal.y << " " << vertex.normal.z << endl;
-			file << "T: " << vertex.uv.x << " " << vertex.uv.y << endl;
-			file << "MI: " << vertex.materialIndex << endl;
-			file << "BI: " << vertex.boneIndices.x << " " << vertex.boneIndices.y << " " << vertex.boneIndices.z << " " << vertex.boneIndices.w << endl;
-			file << "BW: " << vertex.boneWeights.x << " " << vertex.boneWeights.y << " " << vertex.boneWeights.z << " " << vertex.boneWeights.w << endl;
-			file << endl;
+			file.write(reinterpret_cast<char*>(&v.position), sizeof(XMFLOAT3));
+			file.write(reinterpret_cast<char*>(&v.normal), sizeof(XMFLOAT3));
+			file.write(reinterpret_cast<char*>(&v.uv), sizeof(XMFLOAT2));
+			file.write(reinterpret_cast<char*>(&v.materialIndex), sizeof(int));
+			file.write(reinterpret_cast<char*>(&v.boneIndices), sizeof(XMFLOAT4));
+			file.write(reinterpret_cast<char*>(&v.boneWeights), sizeof(XMFLOAT4));
 		}
 
+		// 재질 개수
+		int materialCount{ mesh.materials.size() };
+		file.write(reinterpret_cast<char*>(&materialCount), sizeof(int));
+
 		// 재질 데이터
-		file << "MATERIAL_COUNT: " << mesh.materials.size() << endl << endl;
-		for (const Material& material : mesh.materials)
+		for (auto m : mesh.materials)
 		{
-			file << "NAME: " << material.name << endl;
-			file << "COLOR: " << material.baseColor.x << " " << material.baseColor.y << " " << material.baseColor.z << " " << material.baseColor.w << endl;
-			file << endl;
+			file.write(reinterpret_cast<char*>(&m.baseColor), sizeof(XMFLOAT4));
+			file.write(reinterpret_cast<char*>(&m.reflection), sizeof(XMFLOAT3));
+			file.write(reinterpret_cast<char*>(&m.roughness), sizeof(float));
 		}
 	}
 }
 
 void FBXExporter::ExportAnimation() const
 {
-	ofstream file{ Utilities::GetOnlyPath(m_inputFileName) + "animation.txt" };
+	ofstream file{ Utilities::GetFilePath(m_inputFileName) + Utilities::GetFileName(m_inputFileName) + "_animation.bin", ios::binary };
 
-	// 조인트 개수, 애니메이션 길이
-	file << "JOINT_COUNT: " << m_joints.size() << endl;
-	file << "FRAME_LENGTH: " << m_animationLength << endl << endl;
+	// 조인트 개수
+	int jointCount{ m_joints.size() };
+	file.write(reinterpret_cast<char*>(&jointCount), sizeof(int));
 
-	// 애니메이션 변환 행렬
-	for (const Joint& joint : m_joints)
+	// 애니메이션 길이
+	int animationLength{ m_animationLength };
+	file.write(reinterpret_cast<char*>(&animationLength), sizeof(int));
+
+	// 애니메이션 데이터
+	for (Joint j : m_joints)
 	{
-		file << joint.name << endl;
-
-		// 애니메이션 데이터가 없으면 프레임 길이만큼 항등행렬을 저장
-		if (joint.keyframes.empty())
+		// 애니메이션 데이터가 없으면 항등행렬을 저장
+		if (j.keyframes.empty())
 		{
-			FbxAMatrix identity;
-			identity.SetIdentity();
+			XMFLOAT4X4 identity{ Utilities::Identity() };
 			for (int i = 0; i < m_animationLength; ++i)
-			{
-				Utilities::WriteToStream(file, identity);
-				file << endl;
-			}
-			file << endl;
+				file.write(reinterpret_cast<char*>(&identity), sizeof(XMFLOAT4X4));
 			continue;
 		}
 
-		// 애니메이션 데이터가 있으면 해당 데이터를 저장
-		for (const Keyframe& keyframe : joint.keyframes)
+		for (Keyframe k : j.keyframes)
 		{
-			Utilities::WriteToStream(file, (keyframe.transformMatrix * joint.globalBindposeInverseMatrix).Transpose());
-			file << endl;
+			XMFLOAT4X4 temp{ Utilities::toXMFLOAT4X4((k.transformMatrix * j.globalBindposeInverseMatrix).Transpose()) };
+			file.write(reinterpret_cast<char*>(&temp), sizeof(XMFLOAT4X4));
 		}
-		file << endl;
 	}
 }
