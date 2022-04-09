@@ -27,9 +27,8 @@ struct Vertex
 
 struct Material
 {
-	Material() : name{}, baseColor{} { }
+	Material() : baseColor{}, reflection{}, roughness{} { }
 
-	string		name;
 	XMFLOAT4	baseColor;
 	XMFLOAT3	reflection;
 	float		roughness;
@@ -90,7 +89,7 @@ public:
 	FBXExporter();
 	~FBXExporter();
 
-	void Process(const string& inputFileName, bool doExportMesh = true, bool doExportAnimation = true);
+	void Process(const string& inputFileName, bool doExportMesh = true, bool doExportAnimation = true, bool exportToBinary = true);
 	void LoadSkeleton(FbxNode* node, int index, int parentIndex);
 	void LoadMesh(FbxNode* node);
 	void LoadInfo(FbxNode* node, Mesh& mesh);
@@ -106,7 +105,9 @@ public:
 	int GetMaterial(FbxMesh* mesh, int polygonIndex) const;
 
 	void ExportMesh() const;
+	void ExportMeshBinary();
 	void ExportAnimation() const;
+	void ExportAnimationBinary() const;
 
 private:
 	string					m_inputFileName;	// 변환할 FBX 파일 이름

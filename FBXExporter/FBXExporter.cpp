@@ -18,7 +18,7 @@ FBXExporter::~FBXExporter()
 	if (m_manager) m_manager->Destroy();
 }
 
-void FBXExporter::Process(const string& inputFileName, bool doExportMesh, bool doExportAnimation)
+void FBXExporter::Process(const string& inputFileName, bool doExportMesh, bool doExportAnimation, bool exportToBinary)
 {
 	// 입력, 출력 파일 이름 저장
 	m_inputFileName = inputFileName;
@@ -51,8 +51,22 @@ void FBXExporter::Process(const string& inputFileName, bool doExportMesh, bool d
 	ProcessLink();
 
 	// 출력
-	if (doExportMesh)ExportMesh();
-	if (doExportAnimation)ExportAnimation();
+	if (doExportMesh)
+	{
+		if (exportToBinary)
+			ExportMeshBinary();
+		else
+			ExportMesh();
+	}
+
+	if (doExportAnimation)
+	{
+		if (exportToBinary)
+			ExportAnimationBinary();
+		else
+			ExportAnimation();
+	}
+
 }
 
 void FBXExporter::LoadSkeleton(FbxNode* node, int index, int parentIndex)
@@ -113,7 +127,6 @@ void FBXExporter::LoadMaterials(FbxNode* node, Mesh& mesh)
 		FbxSurfaceMaterial* material{ node->GetMaterial(i) };
 
 		Material m;
-		m.name = material->GetName();
 		if (FbxProperty p{ material->FindPropertyHierarchical("3dsMax|Parameters|base_color") }; p.IsValid())
 		{
 			FbxColor baseColor{ p.Get<FbxColor>() };
@@ -343,6 +356,7 @@ void FBXExporter::ProcessLink()
 			FbxTime curr;
 			curr.SetFrame(i, FbxTime::eFrames24);
 
+			//mesh.node->EvaluateLocalTransform(curr);
 			FbxAMatrix transformMatrix{ mesh.node->EvaluateGlobalTransform(curr) };
 			FbxAMatrix halfScaling{ Utilities::toFbxAMatrix(XMMatrixScaling(0.5f, 0.5f, 0.5f)) };
 			transformMatrix = halfScaling * transformMatrix;
@@ -457,51 +471,114 @@ void FBXExporter::ExportMesh() const
 {
 	for (const Mesh& mesh : m_meshes)
 	{
+		ofstream file{ Utilities::GetFilePath(m_inputFileName) + mesh.name + ".txt" };
+
+		// 변환 행렬
+		file << "TRANSFORM_MATRIX: ";
+		Utilities::WriteToStream(file, mesh.transformMatrix.Transpose());
+		file << endl;
+
+		// 정점 데이터
+		file << "VERTEX_COUNT: " << mesh.vertices.size() << endl << endl;
+		for (const Vertex& vertex : mesh.vertices)
+		{
+			file << "P: " << vertex.position.x << " " << vertex.position.y << " " << vertex.position.z << endl;
+			file << "N: " << vertex.normal.x << " " << vertex.normal.y << " " << vertex.normal.z << endl;
+			file << "T: " << vertex.uv.x << " " << vertex.uv.y << endl;
+			file << "MI: " << vertex.materialIndex << endl;
+			file << "BI: " << vertex.boneIndices.x << " " << vertex.boneIndices.y << " " << vertex.boneIndices.z << " " << vertex.boneIndices.w << endl;
+			file << "BW: " << vertex.boneWeights.x << " " << vertex.boneWeights.y << " " << vertex.boneWeights.z << " " << vertex.boneWeights.w << endl;
+			file << endl;
+		}
+
+		// 재질 데이터
+		file << "MATERIAL_COUNT: " << mesh.materials.size() << endl << endl;
+		for (const Material& material : mesh.materials)
+		{
+			file << "COLOR: " << material.baseColor.x << " " << material.baseColor.y << " " << material.baseColor.z << " " << material.baseColor.w << endl;
+			file << "REFLECTION: " << material.reflection.x << " " << material.reflection.y << " " << material.reflection.z << endl;
+			file << "ROUGHNESS: " << material.roughness << endl;
+			file << endl;
+		}
+	}
+}
+
+void FBXExporter::ExportMeshBinary()
+{
+	for (Mesh& mesh : m_meshes)
+	{
 		ofstream file{ Utilities::GetFilePath(m_inputFileName) + mesh.name + ".bin", ios::binary };
 
 		// 변환 행렬
-		XMFLOAT4X4 transformMatrix{ Utilities::toXMFLOAT4X4(mesh.transformMatrix.Transpose()) };		
+		XMFLOAT4X4 transformMatrix{ Utilities::toXMFLOAT4X4(mesh.transformMatrix.Transpose()) };
 		file.write(reinterpret_cast<char*>(&transformMatrix), sizeof(XMFLOAT4X4));
 
 		// 정점 개수
-		int vertexCount{ mesh.vertices.size() };
+		int vertexCount(mesh.vertices.size());
 		file.write(reinterpret_cast<char*>(&vertexCount), sizeof(int));
 
 		// 정점 데이터
+		reverse(mesh.vertices.begin(), mesh.vertices.end());
 		for (auto v : mesh.vertices)
-		{
-			file.write(reinterpret_cast<char*>(&v.position), sizeof(XMFLOAT3));
-			file.write(reinterpret_cast<char*>(&v.normal), sizeof(XMFLOAT3));
-			file.write(reinterpret_cast<char*>(&v.uv), sizeof(XMFLOAT2));
-			file.write(reinterpret_cast<char*>(&v.materialIndex), sizeof(int));
-			file.write(reinterpret_cast<char*>(&v.boneIndices), sizeof(XMFLOAT4));
-			file.write(reinterpret_cast<char*>(&v.boneWeights), sizeof(XMFLOAT4));
-		}
+			file.write(reinterpret_cast<char*>(&v), sizeof(Vertex));
 
 		// 재질 개수
-		int materialCount{ mesh.materials.size() };
+		int materialCount(mesh.materials.size());
 		file.write(reinterpret_cast<char*>(&materialCount), sizeof(int));
 
 		// 재질 데이터
 		for (auto m : mesh.materials)
-		{
-			file.write(reinterpret_cast<char*>(&m.baseColor), sizeof(XMFLOAT4));
-			file.write(reinterpret_cast<char*>(&m.reflection), sizeof(XMFLOAT3));
-			file.write(reinterpret_cast<char*>(&m.roughness), sizeof(float));
-		}
+			file.write(reinterpret_cast<char*>(&m), sizeof(Material));
 	}
 }
 
 void FBXExporter::ExportAnimation() const
 {
+	ofstream file{ Utilities::GetFilePath(m_inputFileName) + "_animation.txt" };
+
+	// 조인트 개수, 애니메이션 길이
+	file << "JOINT_COUNT: " << m_joints.size() << endl;
+	file << "FRAME_LENGTH: " << m_animationLength << endl << endl;
+
+	// 애니메이션 변환 행렬
+	for (const Joint& joint : m_joints)
+	{
+		file << joint.name << endl;
+
+		// 애니메이션 데이터가 없으면 프레임 길이만큼 항등행렬을 저장
+		if (joint.keyframes.empty())
+		{
+			FbxAMatrix identity;
+			identity.SetIdentity();
+			for (int i = 0; i < m_animationLength; ++i)
+			{
+				Utilities::WriteToStream(file, identity);
+				file << endl;
+			}
+			file << endl;
+			continue;
+		}
+
+		// 애니메이션 데이터가 있으면 해당 데이터를 저장
+		for (const Keyframe& keyframe : joint.keyframes)
+		{
+			Utilities::WriteToStream(file, (keyframe.transformMatrix * joint.globalBindposeInverseMatrix).Transpose());
+			file << endl;
+		}
+		file << endl;
+	}
+}
+
+void FBXExporter::ExportAnimationBinary() const
+{
 	ofstream file{ Utilities::GetFilePath(m_inputFileName) + Utilities::GetFileName(m_inputFileName) + "_animation.bin", ios::binary };
 
 	// 조인트 개수
-	int jointCount{ m_joints.size() };
+	int jointCount(m_joints.size());
 	file.write(reinterpret_cast<char*>(&jointCount), sizeof(int));
 
 	// 애니메이션 길이
-	int animationLength{ m_animationLength };
+	int animationLength(m_animationLength);
 	file.write(reinterpret_cast<char*>(&animationLength), sizeof(int));
 
 	// 애니메이션 데이터
